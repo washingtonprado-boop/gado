@@ -7,8 +7,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
         * {margin: 0; padding: 0; box-sizing: border-box;}
         body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;}
@@ -16,10 +14,8 @@
         .header {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative;}
         .header h1 {font-size: 2rem; margin-bottom: 0.5rem;}
         .header p {opacity: 0.9;}
-        .sync-status {position: absolute; top: 2rem; right: 2rem; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;}
-        .sync-indicator {width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; animation: pulse 2s infinite;}
-        .sync-indicator.connected {background: #22c55e;}
-        .sync-indicator.error {background: #ef4444;}
+        .sync-status {position: absolute; top: 2rem; right: 2rem; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;}
+        .sync-indicator {width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite;}
         @keyframes pulse {0%, 100% {opacity: 1;} 50% {opacity: 0.5;}}
         .nav-tabs {background: white; border-bottom: 2px solid #e2e8f0; padding: 0 2rem; display: flex; gap: 1rem; overflow-x: auto;}
         .nav-tab {padding: 1rem 1.5rem; border: none; background: none; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #64748b; border-bottom: 3px solid transparent; transition: all 0.3s;}
@@ -70,14 +66,7 @@
         .genealogy-tree {padding: 2rem; background: #f8fafc; border-radius: 1rem; margin-top: 1.5rem; border: 2px solid #e2e8f0;}
         .tree-node {background: white; padding: 1rem; border-radius: 0.75rem; margin: 0.5rem 0; border: 2px solid #e2e8f0;}
         .tree-branch {margin-left: 2rem; border-left: 2px solid #cbd5e1; padding-left: 1rem;}
-        .modal {display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6);}
-        .modal.active {display: flex; align-items: center; justify-content: center;}
-        .modal-content {background: white; padding: 2rem; border-radius: 1rem; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;}
         .hidden {display: none;}
-        .alert {padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;}
-        .alert-success {background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7;}
-        .alert-error {background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;}
-        .alert-info {background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd;}
         @media (max-width: 1024px) {.main-grid, .chart-grid {grid-template-columns: 1fr;} .sync-status {position: relative; top: auto; right: auto; margin-top: 1rem;}}
     </style>
 </head>
@@ -86,9 +75,9 @@
         <div class="header">
             <h1>🐄 Sistema de Controle de Animais</h1>
             <p>Gestão completa do seu rebanho</p>
-            <div class="sync-status" onclick="abrirModalFirebase()">
-                <div class="sync-indicator" id="syncIndicator"></div>
-                <span id="syncStatus">Clique para configurar Firebase</span>
+            <div class="sync-status">
+                <div class="sync-indicator"></div>
+                <span id="syncStatus">Firebase conectado ✓</span>
             </div>
         </div>
 
@@ -303,36 +292,59 @@
         </div>
     </div>
 
-    <div id="firebaseModal" class="modal">
-        <div class="modal-content">
-            <h2>🔥 Configurar Firebase</h2>
-            <div id="firebaseAlerts"></div>
-            <p style="margin-bottom: 1.5rem; color: #64748b; font-size: 0.875rem;">
-                Configure sua conexão com o Firebase Realtime Database. Seus dados serão sincronizados automaticamente.
-            </p>
-            <div class="form-group">
-                <label>Database URL * (ex: https://seu-projeto.firebaseio.com)</label>
-                <input type="text" id="firebaseDatabaseURL" value="https://gado-5821a-default-rtdb.firebaseio.com">
-            </div>
-            <div class="form-group">
-                <label>API Key *</label>
-                <input type="text" id="firebaseApiKey" value="AIzaSyC7SscZZ2uhic2JXaQYfmnvh5mRgwpk0y8">
-            </div>
-            <div class="form-group">
-                <label>Auth Domain</label>
-                <input type="text" id="firebaseAuthDomain" value="gado-5821a.firebaseapp.com">
-            </div>
-            <div class="form-group">
-                <label>Project ID</label>
-                <input type="text" id="firebaseProjectId" value="gado-5821a">
-            </div>
-            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                <button class="btn btn-secondary" onclick="fecharModalFirebase()">Cancelar</button>
-                <button class="btn btn-primary" onclick="salvarConfigFirebase()">💾 Conectar</button>
-                <button class="btn btn-danger" onclick="desconectarFirebase()">🔌 Desconectar</button>
-            </div>
-        </div>
-    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC7SscZZ2uhic2JXaQYfmnvh5mRgwpk0y8",
+            authDomain: "gado-5821a.firebaseapp.com",
+            databaseURL: "https://gado-5821a-default-rtdb.firebaseio.com",
+            projectId: "gado-5821a",
+            storageBucket: "gado-5821a.firebasestorage.app",
+            messagingSenderId: "1065455551718",
+            appId: "1:1065455551718:web:09fb220ded000eddae6727",
+            measurementId: "G-Q9F83YLGJW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        window.firebaseDB = database;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebaseGet = get;
+        window.firebaseOnValue = onValue;
+
+        console.log('✅ Firebase inicializado com sucesso!');
+
+        onValue(ref(database, '.info/connected'), (snapshot) => {
+            if (snapshot.val() === true) {
+                console.log('✅ Conectado ao Firebase Realtime Database');
+                document.getElementById('syncStatus').textContent = 'Firebase conectado ✓';
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const snapshot = await get(ref(database, '/'));
+                const dados = snapshot.val();
+                
+                if (dados) {
+                    if (dados.animais) window.animais = dados.animais;
+                    if (dados.proprietarios) window.proprietarios = dados.proprietarios;
+                    if (dados.racas) window.racas = dados.racas;
+                    if (dados.locais) window.locais = dados.locais;
+                    
+                    console.log('✅ Dados carregados do Firebase');
+                }
+            } catch (error) {
+                console.log('Carregando dados locais...', error);
+            }
+            
+            window.carregarDados();
+        });
+    </script>
 
     <script>
         let animais = [];
@@ -341,38 +353,6 @@
         let locais = ['PASTO 1','PASTO 2','CURRAL'];
         let animalAtualId = null;
         let charts = {};
-        let database = null;
-        let firebaseApp = null;
-
-        window.addEventListener('DOMContentLoaded', function() {
-            carregarDados();
-            tentarConectarFirebase();
-        });
-
-        function updateSyncStatus(status, message) {
-            const indicator = document.getElementById('syncIndicator');
-            const statusText = document.getElementById('syncStatus');
-            
-            indicator.className = 'sync-indicator';
-            
-            if (status === 'connected') {
-                indicator.classList.add('connected');
-                statusText.textContent = message || 'Firebase conectado ✓';
-            } else if (status === 'error') {
-                indicator.classList.add('error');
-                statusText.textContent = message || 'Erro na conexão';
-            } else {
-                statusText.textContent = message || 'Clique para configurar Firebase';
-            }
-        }
-
-        function showFirebaseAlert(type, message) {
-            const alertsDiv = document.getElementById('firebaseAlerts');
-            alertsDiv.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
-            setTimeout(() => {
-                alertsDiv.innerHTML = '';
-            }, 5000);
-        }
 
         async function carregarDados() {
             try {
@@ -381,12 +361,12 @@
                 const storageRacas = await window.storage.get('racas').catch(() => null);
                 const storageLocais = await window.storage.get('locais').catch(() => null);
 
-                animais = storageAnimais ? JSON.parse(storageAnimais.value) : [];
-                proprietarios = storageProp ? JSON.parse(storageProp.value) : [];
-                racas = storageRacas ? JSON.parse(storageRacas.value) : ['NELORE','ANGUS','BRAHMAN','TABAPUÃ','SENEPOL','GIROLANDO','HOLANDESA','GIR','JERSEY'];
-                locais = storageLocais ? JSON.parse(storageLocais.value) : ['PASTO 1','PASTO 2','CURRAL'];
+                if (storageAnimais) animais = JSON.parse(storageAnimais.value);
+                if (storageProp) proprietarios = JSON.parse(storageProp.value);
+                if (storageRacas) racas = JSON.parse(storageRacas.value);
+                if (storageLocais) locais = JSON.parse(storageLocais.value);
             } catch (error) {
-                console.log('Erro ao carregar do storage', error);
+                console.log('Usando dados padrão');
             }
 
             renderizarTabela();
@@ -404,112 +384,85 @@
                 await window.storage.set('racas', JSON.stringify(racas));
                 await window.storage.set('locais', JSON.stringify(locais));
             } catch (error) {
-                console.log('Erro ao salvar no storage local', error);
+                console.log('Erro ao salvar localmente', error);
             }
 
-            if (database) {
+            if (window.firebaseDB) {
                 try {
-                    await database.ref('animais').set(animais);
-                    await database.ref('proprietarios').set(proprietarios);
-                    await database.ref('racas').set(racas);
-                    await database.ref('locais').set(locais);
-                    updateSyncStatus('connected', 'Sincronizado com Firebase ✓');
+                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'animais'), animais);
+                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'proprietarios'), proprietarios);
+                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'racas'), racas);
+                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'locais'), locais);
+                    console.log('✅ Sincronizado com Firebase');
                 } catch (error) {
-                    console.error('Erro ao sincronizar com Firebase:', error);
-                    updateSyncStatus('error', 'Erro ao sincronizar');
+                    console.error('Erro ao sincronizar:', error);
                 }
             }
         }
 
-        async function tentarConectarFirebase() {
-            try {
-                const configData = await window.storage.get('firebaseConfig').catch(() => null);
-                if (configData) {
-                    const config = JSON.parse(configData.value);
-                    conectarFirebase(config);
-                }
-            } catch (error) {
-                console.log('Firebase não configurado ainda', error);
-                updateSyncStatus('disconnected', 'Clique para configurar Firebase');
+        function toggleBrinco() {
+            const usaBrinco = document.getElementById('usaBrinco').checked;
+            const campoBrinco = document.getElementById('campoBrinco');
+            if (usaBrinco) {
+                campoBrinco.classList.remove('hidden');
+            } else {
+                campoBrinco.classList.add('hidden');
+                document.getElementById('brinco').value = '';
             }
         }
 
-        function conectarFirebase(config) {
-            try {
-                if (firebaseApp) {
-                    firebase.app().delete();
-                }
+        function gerarNumero() {
+            const numero = Math.floor(Math.random() * 900000) + 100000;
+            document.getElementById('numero').value = numero;
+        }
 
-                firebaseApp = firebase.initializeApp(config);
-                database = firebase.database();
-
-                database.ref('.info/connected').on('value', (snapshot) => {
-                    if (snapshot.val() === true) {
-                        updateSyncStatus('connected', 'Firebase conectado ✓');
-                        sincronizarDoFirebase();
-                    } else {
-                        updateSyncStatus('error', 'Conexão perdida');
-                    }
-                });
-
-            } catch (error) {
-                console.error('Erro ao conectar Firebase:', error);
-                updateSyncStatus('error', 'Erro: ' + error.message);
-                throw error;
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.add('hidden'));
+            
+            const navTabs = document.querySelectorAll('.nav-tab');
+            navTabs.forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            event.target.classList.add('active');
+            
+            if (tabName === 'reports') {
+                atualizarRelatorios();
             }
         }
 
-        async function sincronizarDoFirebase() {
-            if (!database) return;
+        function salvarAnimal(event) {
+            event.preventDefault();
+            
+            const animal = {
+                id: animalAtualId || Date.now().toString(),
+                numero: document.getElementById('numero').value,
+                brinco: document.getElementById('brinco').value,
+                nome: document.getElementById('nome').value,
+                sexo: document.getElementById('sexo').value,
+                raca: document.getElementById('raca').value,
+                local: document.getElementById('local').value,
+                proprietario: document.getElementById('proprietario').value,
+                dataNascimento: document.getElementById('dataNascimento').value,
+                pai: document.getElementById('pai').value,
+                mae: document.getElementById('mae').value,
+                semFerro: document.getElementById('semFerro').checked,
+                amamentando: document.getElementById('amamentando').checked,
+                observacoes: document.getElementById('observacoes').value
+            };
 
-            try {
-                const snapshot = await database.ref().once('value');
-                const dados = snapshot.val();
-
-                if (dados) {
-                    if (dados.animais && Array.isArray(dados.animais)) {
-                        animais = dados.animais;
-                    }
-                    if (dados.proprietarios && Array.isArray(dados.proprietarios)) {
-                        proprietarios = dados.proprietarios;
-                    }
-                    if (dados.racas && Array.isArray(dados.racas)) {
-                        racas = dados.racas;
-                    }
-                    if (dados.locais && Array.isArray(dados.locais)) {
-                        locais = dados.locais;
-                    }
-
-                    await window.storage.set('animais', JSON.stringify(animais));
-                    await window.storage.set('proprietarios', JSON.stringify(proprietarios));
-                    await window.storage.set('racas', JSON.stringify(racas));
-                    await window.storage.set('locais', JSON.stringify(locais));
-
-                    renderizarTabela();
-                    atualizarSelects();
-                    atualizarListaProprietarios();
-                    atualizarListaRacas();
-                    atualizarListaLocais();
-                    atualizarSelectGenealogia();
-                }
-            } catch (error) {
-                console.error('Erro ao sincronizar do Firebase:', error);
+            if (animalAtualId) {
+                const index = animais.findIndex(a => a.id === animalAtualId);
+                if (index !== -1) animais[index] = animal;
+            } else {
+                animais.push(animal);
             }
+
+            salvarDados();
+            renderizarTabela();
+            limparForm();
+            alert('✅ Animal salvo com sucesso!');
         }
 
-        async function desconectarFirebase() {
-            try {
-                if (firebaseApp) {
-                    await firebaseApp.delete();
-                    firebaseApp = null;
-                    database = null;
-                }
-                await window.storage.delete('firebaseConfig');
-                updateSyncStatus('disconnected', 'Firebase desconectado');
-                fecharModalFirebase();
-                alert('✅ Firebase desconectado com sucesso!');
-            } catch (error) {
-                console.error('Erro ao desconectar:', error);
-                alert('❌ Erro ao desconectar: ' + error.message);
-            }
-        }
+        function limparForm() {
+            document.getElementById('animalForm').reset();
