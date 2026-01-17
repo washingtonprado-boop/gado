@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Controle de Animais</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            color: #334155;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-top: 0.25rem;
+        }
+
+        .nav-tabs {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 0 2rem;
+            display: flex;
+            gap: 2rem;
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 1rem 0.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #64748b;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .nav-tab:hover {
+            color: #334155;
+        }
+
+        .nav-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.125rem;
+            margin-bottom: 1rem;
+            color: #1e293b;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .btn-group .btn {
+            flex: 1;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .search-box {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .table-actions {
+            padding: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8fafc;
+        }
+
+        th {
+            padding: 0.875rem 1rem;
+            text-align: left;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 0.875rem 1rem;
+            font-size: 0.875rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        tbody tr {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .empty-state {
+            padding: 3rem;
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+            border-top: 4px solid;
+        }
+
+        .stat-card.blue { border-top-color: #3b82f6; }
+        .stat-card.green { border-top-color: #22c55e; }
+        .stat-card.red { border-top-color: #ef4444; }
+        .stat-card.purple { border-top-color: #a855f7; }
+        .stat-card.yellow { border-top-color: #f59e0b; }
+        .stat-card.pink { border-top-color: #ec4899; }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .stat-value.blue { color: #3b82f6; }
+        .stat-value.green { color: #22c55e; }
+        .stat-value.red { color: #ef4444; }
+        .stat-value.purple { color: #a855f7; }
+        .stat-value.yellow { color: #f59e0b; }
+        .stat-value.pink { color: #ec4899; }
+
+        .chart-container {
+            background: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .item-list {
+            margin-top: 1rem;
+        }
+
+        .item-box {
+            padding: 0.75rem;
+            background: #f8fafc;
+            margin-top: 0.5rem;
+            border-radius: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐄 Sistema de Controle de Animais</h1>
+        <p>Gestão completa do seu rebanho</p>
+    </div>
+
+    <div class="nav-tabs">
+        <button class="nav-tab active" onclick="showTab('animals')">🐮 Animais</button>
+        <button class="nav-tab" onclick="showTab('reports')">📊 Relatórios</button>
+        <button class="nav-tab" onclick="showTab('racas')">🏷️ Raças</button>
+        <button class="nav-tab" onclick="showTab('locais')">📍 Locais</button>
+        <button class="nav-tab" onclick="showTab('tools')">🧮 Ferramentas</button>
+        <button class="nav-tab" onclick="showTab('owners')">👥 Proprietários</button>
+    </div>
+
+    <div class="container">
+        <!-- Aba Animais -->
+        <div id="tab-animals" class="tab-content">
+            <div class="main-grid">
+                <div class="card">
+                    <h2>📝 Dados do Animal</h2>
+                    <form id="animalForm" onsubmit="return salvarAnimal(event)">
+                        <div class="form-group">
+                            <label>NÚMERO *</label>
+                            <div class="input-group">
+                                <input type="text" id="numero" required>
+                                <button type="button" class="btn btn-primary" onclick="gerarNumero()">Gerar</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Brinco</label>
+                            <input type="text" id="brinco">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Nome</label>
+                            <input type="text" id="nome">
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>Sexo</label>
+                                <select id="sexo">
+                                    <option value="M">M</option>
+                                    <option value="F">F</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Raça</label>
+                                <select id="raca"></select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Local/Pasto</label>
+                            <select id="local"></select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Proprietário</label>
+                            <select id="proprietario">
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Data de Nascimento</label>
+                            <input type="date" id="dataNascimento">
+                        </div>
+
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="semFerro">
+                                Sem Ferro
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="amamentando">
+                                Amamentando
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Observações</label>
+                            <textarea id="observacoes" rows="3"></textarea>
+                        </div>
+
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-secondary" onclick="limparForm()">Novo</button>
+                            <button type="submit" class="btn btn-primary">Salvar</button>
+                            <button type="button" class="btn btn-danger" onclick="excluirAnimal()">Excluir</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="search-box">
+                        <input type="text" class="search-input" placeholder="Pesquisar..." onkeyup="pesquisarAnimais(this.value)">
+                    </div>
+
+                    <div class="table-actions">
+                        <button class="btn btn-success" onclick="exportarExcel()">📥 Excel</button>
+                        <button class="btn btn-danger" onclick="exportarPDF()">📄 PDF</button>
+                        <button class="btn btn-warning" onclick="atualizarEstatisticas()">🔄 Atualizar</button>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>NÚMERO</th>
+                                <th>Brinco</th>
+                                <th>Nome</th>
+                                <th>Sexo</th>
+                                <th>Raça</th>
+                                <th>Local</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelaAnimais">
+                            <tr>
+                                <td colspan="6" class="empty-state">Nenhum animal cadastrado</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aba Relatórios -->
+        <div id="tab-reports" class="tab-content hidden">
+            <h2 style="margin-bottom: 1.5rem; color: #1e293b;">📊 Dashboard e Relatórios</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-card blue">
+                    <div class="stat-value blue" id="totalAnimais">0</div>
+                    <div class="stat-label">Total de Animais</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-value green" id="totalFemeas">0</div>
+                    <div class="stat-label">Fêmeas</div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-value purple" id="totalMachos">0</div>
+                    <div class="stat-label">Machos</div>
+                </div>
+                <div class="stat-card yellow">
+                    <div class="stat-value yellow" id="totalAmamentando">0</div>
+                    <div class="stat-label">Amamentando</div>
+                </div>
+                <div class="stat-card red">
+                    <div class="stat-value red" id="totalSemFerro">0</div>
+                    <div class="stat-label">Sem Ferro</div>
+                </div>
+                <div class="stat-card pink">
+                    <div class="stat-value pink" id="totalRacas">0</div>
+                    <div class="stat-label">Raças Diferentes</div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <h2>📊 Distribuição por Raça</h2>
+                    <canvas id="racaChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h2>📊 Distribuição por Sexo</h2>
+                    <canvas id="sexoChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-container">
+                    <h2>📊 Animais por Local</h2>
+                    <canvas id="localChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h2>📊 Animais por Proprietário</h2>
+                    <canvas id="proprietarioChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h2>📊 Distribuição por Idade</h2>
+                <canvas id="idadeChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Aba Raças -->
+        <div id="tab-racas" class="tab-content hidden">
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <h2>🏷️ Gerenciar Raças</h2>
+                <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">
+                    Adicione ou remova raças personalizadas para seu rebanho
+                </p>
+                <div class="form-group">
+                    <label>Nome da Raça</label>
+                    <input type="text" id="nomeRaca" placeholder="Ex: ANGUS, NELORE, GIROLANDO">
+                </div>
+                <button class="btn btn-primary" onclick="adicionarRaca()">Adicionar Raça</button>
+                <div id="listaRacas" class="item-list"></div>
+            </div>
+        </div>
+
+        <!-- Aba Locais -->
+        <div id="tab-locais" class="tab-content hidden">
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <h2>📍 Gerenciar Locais/Pastos</h2>
+                <p style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">
+                    Cadastre os locais, pastos ou áreas do seu rebanho
+                </p>
+                <div class="form-group">
+                    <label>Nome do Local</label>
+                    <input type="text" id="nomeLocal" placeholder="Ex: PASTO 1, CURRAL A, ÁREA NORTE">
+                </div>
+                <button class="btn btn-primary" onclick="adicionarLocal()">Adicionar Local</button>
+                <div id="listaLocais" class="item-list"></div>
+            </div>
+        </div>
+
+        <!-- Aba Ferramentas -->
+        <div id="tab-tools" class="tab-content hidden">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                <div class="card">
+                    <h2>⚖️ Cálculo de Arrobas</h2>
+                    <div class="form-group">
+                        <label>Peso Vivo (KG)</label>
+                        <input type="number" id="pesoVivo" step="0.01" placeholder="Ex: 500">
+                    </div>
+                    <div class="form-group">
+                        <label>Peso Morto (KG)</label>
+                        <input type="number" id="pesoMorto" step="0.01" placeholder="Ex: 250">
+                    </div>
+                    <button class="btn btn-primary" onclick="calcularArrobas()">Calcular</button>
+                    <p id="resultadoArrobas" style="margin-top: 1rem; font-weight: bold; color: #667eea;"></p>
+                </div>
+
+                <div class="card">
+                    <h2>🤰 Previsão de Parto</h2>
+                    <div class="form-group">
+                        <label>Data de Inseminação/Monta</label>
+                        <input type="date" id="dataInseminacao">
+                    </div>
+                    <button class="btn btn-primary" onclick="calcularParto()">Calcular</button>
+                    <p id="resultadoParto" style="margin-top: 1rem; font-weight: bold; color: #667eea;"></p>
+                </div>
+
+                <div class="card">
+                    <h2>📅 Calcular Idade</h2>
+                    <div class="form-group">
+                        <label>Data de Nascimento</label>
+                        <input type="date" id="dataNascIdade">
+                    </div>
+                    <button class="btn btn-primary" onclick="calcularIdade()">Calcular</button>
+                    <p id="resultadoIdade" style="margin-top: 1rem; font-weight: bold; color: #667eea;"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Aba Proprietários -->
+        <div id="tab-owners" class="tab-content hidden">
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <h2>👥 Gerenciar Proprietários</h2>
+                <div class="form-group">
+                    <label>Nome do Proprietário</label>
+                    <input type="text" id="nomeProprietario" placeholder="Digite o nome completo">
+                </div>
+                <button class="btn btn-primary" onclick="adicionarProprietario()">Adicionar Proprietário</button>
+                <div id="listaProprietarios" class="item-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let animais = [];
+        let proprietarios = [];
+        let racas = ['NELORE', 'ANGUS', 'BRAHMAN', 'TABAPUÃ', 'SENEPOL', 'GIROLANDO', 'HOLANDESA', 'GIR', 'JERSEY'];
+        let locais = ['PASTO 1', 'PASTO 2', 'CURRAL'];
+        let animalAtualId = null;
+        let charts = {};
+
+        // Carregar dados ao iniciar
+        carregarDados();
+
+        function carregarDados() {
+            animais = JSON.parse(localStorage.getItem('animais') || '[]');
+            proprietarios = JSON.parse(localStorage.getItem('proprietarios') || '[]');
+            racas = JSON.parse(localStorage.getItem('racas') || '["NELORE","ANGUS","BRAHMAN","TABAPUÃ","SENEPOL","GIROLANDO","HOLANDESA","GIR","JERSEY"]');
+            locais = JSON.parse(localStorage.getItem('locais') || '["PASTO 1","PASTO 2","CURRAL"]');
+            renderizarTabela();
+            atualizarListaProprietarios();
+            atualizarListaRacas();
+            atualizarListaLocais();
+            atualizarSelects();
+        }
+
+        function salvarDados() {
+            localStorage.setItem('animais', JSON.stringify(animais));
+            localStorage.setItem('proprietarios', JSON.stringify(proprietarios));
+            localStorage.setItem('racas', JSON.stringify(racas));
+            localStorage.setItem('locais', JSON.stringify(locais));
+        }
+
+        function atualizarSelects() {
+            // Atualizar select de raças
+            const selectRaca = document.getElementById('raca');
+            selectRaca.innerHTML = racas.map(r => `<option value="${r}">${r}</option>`).join('');
+
+            // Atualizar select de locais
+            const selectLocal = document.getElementById('local');
+            selectLocal.innerHTML = '<option value="">Selecione...</option>' + 
+                locais.map(l => `<option value="${l}">${l}</option>`).join('');
+        }
+
+        function salvarAnimal(event) {
+            event.preventDefault();
+            
+            const dados = {
+                id: animalAtualId || Date.now().toString(),
+                numero: document.getElementById('numero').value.toUpperCase(),
+                brinco: document.getElementById('brinco').value.toUpperCase(),
+                nome: document.getElementById('nome').value.toUpperCase(),
+                sexo: document.getElementById('sexo').value,
+                raca: document.getElementById('raca').value,
+                local: document.getElementById('local').value,
+                proprietario: document.getElementById('proprietario').value,
+                dataNascimento: document.getElementById('dataNascimento').value,
+                semFerro: document.getElementById('semFerro').checked,
+                amamentando: document.getElementById('amamentando').checked,
+                observacoes: document.getElementById('observacoes').value
+            };
+
+            if (animalAtualId) {
+                const index = animais.findIndex(a => a.id === animalAtualId);
+                animais[index] = dados;
+            } else {
+                animais.push(dados);
+            }
+
+            salvarDados();
+            renderizarTabela();
+            limparForm();
+            alert('✅ Animal salvo com sucesso!');
+            return false;
+        }
+
+        function renderizarTabela(lista = animais) {
+            const tbody = document.getElementById('tabelaAnimais');
+            
+            if (lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum animal encontrado</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = lista.map(a => `
+                <tr onclick="selecionarAnimal('${a.id}')">
+                    <td>${a.numero}</td>
+                    <td>${a.brinco || ''}</td>
+                    <td>${a.nome || ''}</td>
+                    <td>${a.sexo}</td>
+                    <td>${a.raca}</td>
+                    <td>${a.local || ''}</td>
+                </tr>
+            `).join('');
+        }
+
+        function selecionarAnimal(id) {
+            const animal = animais.find(a => a.id === id);
+            if (!animal) return;
+
+            animalAtualId = id;
+            document.getElementById('numero').value = animal.numero;
+            document.getElementById('brinco').value = animal.brinco || '';
+            document.getElementById('nome').value = animal.nome || '';
+            document.getElementById('sexo').value = animal.sexo;
+            document.getElementById('raca').value = animal.raca;
+            document.getElementById('local').value = animal.local || '';
+            document.getElementById('proprietario').value = animal.proprietario || '';
+            document.getElementById('dataNascimento').value = animal.dataNascimento || '';
+            document.getElementById('semFerro').checked = animal.semFerro || false;
+            document.getElementById('amamentando').checked = animal.amamentando || false;
+            document.getElementById('observacoes').value = animal.observacoes || '';
+        }
+
+        function limparForm() {
+            document.getElementById('animalForm').reset();
+            animalAtualId = null;
+            atualizarSelects();
+        }
+
+        function excluirAnimal() {
+            if (!animalAtualId) {
+                alert('Selecione um animal para excluir');
+                return;
+            }
+            if (confirm('Deseja realmente excluir este animal?')) {
+                animais = animais.filter(a => a.id !== animalAtualId);
+                salvarDados();
+                renderizarTabela();
+                limparForm();
+                alert('✅ Animal excluído!');
+            }
+        }
+
+        function gerarNumero() {
+            const maxNum = animais.reduce((max, a) => {
+                const num = parseInt(a.numero) || 0;
+                return num > max ? num : max;
+            }, 0);
+            document.getElementById('numero').value = (maxNum + 1).toString();
+        }
+
+        function pesquisarAnimais(termo) {
+            const filtrados = animais.filter(a => 
+                Object.values(a).some(val => 
+                    String(val).toLowerCase().includes(termo.toLowerCase())
+                )
+            );
+            renderizarTabela(filtrados);
+        }
+
+        function showTab(nome) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById(`tab-${nome}`).classList.remove('hidden');
+            event.target.classList.add('active');
+
+            if (nome === 'reports') {
+                setTimeout(atualizarEstatisticas, 100);
+            }
+        }
+
+        // Raças
+        function adicionarRaca() {
+            const nome = document.getElementById('nomeRaca').value.trim().toUpperCase();
+            if (nome && !racas.includes(nome)) {
+                racas.push(nome);
+                racas.sort();
+                salvarDados();
+                atualizarListaRacas();
+                atualizarSelects();
+                document.getElementById('nomeRaca').value = '';
+                alert('✅ Raça adicionada!');
+            } else if (racas.includes(nome)) {
+                alert('⚠️ Esta raça já existe!');
+            }
+        }
+
+        function atualizarListaRacas() {
+            const lista = document.getElementById('listaRacas');
+            lista.innerHTML = racas.map(r => `
+                <div class="item-box">
+                    <span><strong>${r}</strong></span>
+                    <button class="btn btn-danger" style="padding: 0.25rem 0.75rem;" onclick="removerRaca('${r}')">❌ Remover</button>
+                </div>
+            `).join('');
+        }
+
+        function removerRaca(nome) {
+            if (confirm(`Deseja remover a raça ${nome}?`)) {
+                racas = racas.filter(r => r !== nome);
+                salvarDados();
+                atualizarListaRacas();
+                atualizarSelects();
+                alert('✅ Raça removida!');
+            }
+        }
+
+        // Locais
+        function adicionarLocal() {
+            const nome = document.getElementById('nomeLocal').value.trim().toUpperCase();
+            if (nome && !locais.includes(nome)) {
+                locais.push(nome);
+                locais.sort();
+                salvarDados();
+                atualizarListaLocais();
+                atualizarSelects();
+                document.getElementById('nomeLocal').value = '';
+                alert('✅ Local adicionado!');
+            } else if (locais.includes(nome)) {
+                alert('⚠️ Este local já existe!');
+            }
+        }
+
+        function atualizarListaLocais() {
+            const lista = document.getElementById('listaLocais');
+            lista.innerHTML = locais.map(l => `
+                <div class="item-box">
+                    <span><strong>${l}</strong></span>
+                    <button class="btn btn-danger" style="padding: 0.25rem 0.75rem;" onclick="removerLocal('${l}')">❌ Remover</button>
+                </div>
+            `).join('');
+        }
+
+        function removerLocal(nome) {
+            if (confirm(`Deseja remover o local ${nome}?`)) {
+                locais = locais.filter(l => l !== nome);
+                salvarDados();
+                atualizarListaLocais();
+                atualizarSelects();
+                alert('✅ Local removido!');
+            }
+        }
+
+        // Proprietários
+        function adicionarProprietario() {
+            const nome = document.getElementById('nomeProprietario').value.trim().toUpperCase();
+            if (nome && !proprietarios.includes(nome)) {
+                proprietarios.push(nome);
+                salvarDados();
+                atualizarListaProprietarios();
+                document.getElementById('nomeProprietario').value = '';
+                alert('✅ Proprietário adicionado!');
+            }
+        }
+
+        function atualizarListaProprietarios() {
+            const select = document.getElementById('proprietario');
+            select.innerHTML = '<option value="">Selecione...</option>';
+            proprietarios.forEach(p => {
+                select.innerHTML += `<option value="${p}">${p}</option>`;
+            });
+
+            const lista = document.getElementById('listaProprietarios');
+            lista.innerHTML = proprietarios.map(p => `
+                <div class="item-box">
+                    <span>${p}</span>
+                    <button class="btn btn-danger" style="padding: 0.25rem 0.75rem;" onclick="removerProprietario('${p}')">❌</button>
+                </div>
+            `).join('');
+        }
+
+        function removerProprietario(nome) {
+            if (confirm(`Deseja remover ${nome}?`)) {
+                proprietarios = proprietarios.filter(p => p !== nome);
+                salvarDados();
+                atualizarListaProprietarios();
+            }
+        }
+
+        // Estatísticas e Gráficos
+        function atualizarEstatisticas() {
+            // Estatísticas básicas
+            document.getElementById('totalAnimais').textContent = animais.length;
+            document.getElementById('totalFemeas').textContent = animais.filter(a => a.sexo === 'F').length;
+            document.getElementById('totalMachos').textContent = animais.filter(a => a.sexo === 'M').length;
+            document.getElementById('totalAmamentando').textContent = animais.filter(a => a.amamentando).length;
+            document.getElementById('totalSemFerro').textContent = animais.filter(a => a.semFerro).length;
+            
+            const racasUnicas = [...new Set(animais.map(a => a.raca))];
+            document.getElementById('totalRacas').textContent = racasUnicas.length;
+
+            // Gráficos
+            criarGraficoRacas();
+            criarGraficoSexo();
+            criarGraficoLocais();
+            criarGraficoProprietarios();
+            criarGraficoIdade();
+        }
+
+        function criarGraficoRacas() {
+            const dados = {};
+            animais.forEach(a => {
+                dados[a.raca] = (dados[a.raca] || 0) + 1;
+            });
+
+            if (charts.raca) charts.raca.destroy();
+            const ctx = document.getElementById('racaChart');
+            charts.raca = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(dados),
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: Object.values(dados),
+                        backgroundColor: '#667eea',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function criarGraficoSexo() {
+            const machos = animais.filter(a => a.sexo === 'M').length;
+            const femeas = animais.filter(a => a.sexo === 'F').length;
+
+            if (charts.sexo) charts.sexo.destroy();
+            const ctx = document.getElementById('sexoChart');
+            charts.sexo = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Machos', 'Fêmeas'],
+                    datasets: [{
+                        data: [machos, femeas],
+                        backgroundColor: ['#a855f7', '#ec4899']
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
+
+        function criarGraficoLocais() {
+            const dados = {};
+            animais.forEach(a => {
+                if (a.local) {
+                    dados[a.local] = (dados[a.local] || 0) + 1;
+                }
+            });
+
+            if (charts.local) charts.local.destroy();
+            const ctx = document.getElementById('localChart');
+            charts.local = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(dados),
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: Object.values(dados),
+                        backgroundColor: '#22c55e',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function criarGraficoProprietarios() {
+            const dados = {};
+            animais.forEach(a => {
+                if (a.proprietario) {
+                    dados[a.proprietario] = (dados[a.proprietario] || 0) + 1;
+                }
+            });
+
+            if (charts.proprietario) charts.proprietario.destroy();
+            const ctx = document.getElementById('proprietarioChart');
+            charts.proprietario = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(dados),
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: Object.values(dados),
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function criarGraficoIdade() {
+            const faixas = {
+                '0-6 meses': 0,
+                '6-12 meses': 0,
+                '1-2 anos': 0,
+                '2-4 anos': 0,
+                '4+ anos': 0
+            };
+
+            const hoje = new Date();
+            animais.forEach(a => {
+                if (a.dataNascimento) {
+                    const nasc = new Date(a.dataNascimento);
+                    const meses = (hoje - nasc) / (1000 * 60 * 60 * 24 * 30);
+                    
+                    if (meses < 6) faixas['0-6 meses']++;
+                    else if (meses < 12) faixas['6-12 meses']++;
+                    else if (meses < 24) faixas['1-2 anos']++;
+                    else if (meses < 48) faixas['2-4 anos']++;
+                    else faixas['4+ anos']++;
+                }
+            });
+
+            if (charts.idade) charts.idade.destroy();
+            const ctx = document.getElementById('idadeChart');
+            charts.idade = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Object.keys(faixas),
+                    datasets: [{
+                        label: 'Quantidade de Animais',
+                        data: Object.values(faixas),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
+
+        // Calculadoras
+        function calcularArrobas() {
+            const pesoVivo = parseFloat(document.getElementById('pesoVivo').value);
+            const pesoMorto = parseFloat(document.getElementById('pesoMorto').value);
+            
+            if (pesoVivo) {
+                const arrobas = (pesoVivo * 0.5) / 15;
+                document.getElementById('resultadoArrobas').textContent = `Resultado: ${arrobas.toFixed(2)} @ (arrobas)`;
+            } else if (pesoMorto) {
+                const arrobas = pesoMorto / 15;
+                document.getElementById('resultadoArrobas').textContent = `Resultado: ${arrobas.toFixed(2)} @ (arrobas)`;
+            } else {
+                document.getElementById('resultadoArrobas').textContent = 'Digite o peso vivo ou morto';
+            }
+        }
+
+        function calcularParto() {
+            const data = document.getElementById('dataInseminacao').value;
+            if (!data) {
+                alert('Selecione a data de inseminação');
+                return;
+            }
+
+            const d = new Date(data);
+            d.setDate(d.getDate() + 280);
+            const partoMin = new Date(d);
+            d.setDate(d.getDate() + 10);
+            const partoMax = new Date(d);
+
+            document.getElementById('resultadoParto').textContent = 
+                `Previsão: ${partoMin.toLocaleDateString('pt-BR')} a ${partoMax.toLocaleDateString('pt-BR')}`;
+        }
+
+        function calcularIdade() {
+            const data = document.getElementById('dataNascIdade').value;
+            if (!data) {
+                alert('Selecione a data de nascimento');
+                return;
+            }
+
+            const hoje = new Date();
+            const nasc = new Date(data);
+            const diffDias = Math.ceil((hoje - nasc) / (1000 * 60 * 60 * 24));
+            const anos = Math.floor(diffDias / 365);
+            const meses = Math.floor((diffDias % 365) / 30);
+
+            document.getElementById('resultadoIdade').textContent = 
+                `Idade: ${anos} ano(s) e ${meses} mês(es) (${diffDias} dias)`;
+        }
+
+        // Exportações
+        function exportarExcel() {
+            const ws = XLSX.utils.json_to_sheet(animais);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Animais");
+            XLSX.writeFile(wb, `animais_${new Date().toISOString().split('T')[0]}.xlsx`);
+        }
+
+        function exportarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(16);
+            doc.text('Relatório de Animais', 14, 15);
+            
+            let y = 25;
+            animais.forEach(a => {
+                if (y > 280) {
+                    doc.addPage();
+                    y = 15;
+                }
+                doc.setFontSize(10);
+                doc.text(`${a.numero} - ${a.nome} - ${a.raca} - ${a.sexo} - ${a.local || ''}`, 14, y);
+                y += 7;
+            });
+
+            doc.save(`animais_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+    </script>
+</body>
+</html>
