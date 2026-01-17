@@ -83,6 +83,7 @@
 
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="showTab('animals')">🐮 Animais</button>
+            <button class="nav-tab" onclick="showTab('reprodutores')">🐂 Reprodutores</button>
             <button class="nav-tab" onclick="showTab('reports')">📊 Relatórios</button>
             <button class="nav-tab" onclick="showTab('genealogy')">🌳 Genealogia</button>
             <button class="nav-tab" onclick="showTab('racas')">🏷️ Raças</button>
@@ -207,6 +208,47 @@
                 </div>
             </div>
 
+            <div id="tab-reprodutores" class="tab-content hidden">
+                <div class="card" style="max-width: 1200px; margin: 0 auto;">
+                    <h2>🐂 Cadastro de Reprodutores</h2>
+                    <form id="reprodutorForm" onsubmit="salvarReprodutor(event)">
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>NÚMERO *</label>
+                                <input type="text" id="numeroReprodutor" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nome *</label>
+                                <input type="text" id="nomeReprodutor" required>
+                            </div>
+                        </div>
+                        <div class="grid-2">
+                            <div class="form-group">
+                                <label>Raça</label>
+                                <select id="racaReprodutor"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tipo</label>
+                                <select id="tipoReprodutor">
+                                    <option value="Touro">Touro</option>
+                                    <option value="Sêmen">Sêmen</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Observações</label>
+                            <textarea id="observacoesReprodutor" rows="3"></textarea>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-secondary" onclick="limparFormReprodutor()">🆕 Novo</button>
+                            <button type="submit" class="btn btn-primary">💾 Salvar</button>
+                            <button type="button" class="btn btn-danger" onclick="excluirReprodutor()">🗑️ Excluir</button>
+                        </div>
+                    </form>
+                    <div id="listaReprodutores" class="item-list"></div>
+                </div>
+            </div>
+
             <div id="tab-reports" class="tab-content hidden">
                 <h2 style="margin-bottom: 2rem;">📊 Dashboard</h2>
                 <div class="stats-grid">
@@ -294,15 +336,19 @@
 
     <script>
         let animais = [];
+        let reprodutores = [];
         let proprietarios = [];
         let racas = ['NELORE','ANGUS','BRAHMAN','TABAPUÃ','SENEPOL','GIROLANDO','HOLANDESA','GIR','JERSEY'];
         let locais = ['PASTO 1','PASTO 2','CURRAL'];
         let animalAtualId = null;
+        let reprodutorAtualId = null;
         let charts = {};
 
         function gerarNumero() {
-            const numero = Math.floor(Math.random() * 900000) + 100000;
-            document.getElementById('numero').value = numero;
+            const proximoNumero = animais.length > 0 
+                ? Math.max(...animais.map(a => parseInt(a.numero) || 0)) + 1 
+                : 1;
+            document.getElementById('numero').value = proximoNumero;
         }
 
         function toggleBrinco() {
@@ -334,11 +380,13 @@
         async function carregarDados() {
             try {
                 const storageAnimais = await window.storage.get('animais').catch(() => null);
+                const storageReprodutores = await window.storage.get('reprodutores').catch(() => null);
                 const storageProp = await window.storage.get('proprietarios').catch(() => null);
                 const storageRacas = await window.storage.get('racas').catch(() => null);
                 const storageLocais = await window.storage.get('locais').catch(() => null);
 
                 if (storageAnimais) animais = JSON.parse(storageAnimais.value);
+                if (storageReprodutores) reprodutores = JSON.parse(storageReprodutores.value);
                 if (storageProp) proprietarios = JSON.parse(storageProp.value);
                 if (storageRacas) racas = JSON.parse(storageRacas.value);
                 if (storageLocais) locais = JSON.parse(storageLocais.value);
@@ -351,25 +399,28 @@
             atualizarListaProprietarios();
             atualizarListaRacas();
             atualizarListaLocais();
+            atualizarListaReprodutores();
             atualizarSelectGenealogia();
         }
 
         async function salvarDados() {
-            console.log('Salvando dados...', {animais: animais.length, proprietarios: proprietarios.length});
+            console.log('Salvando dados...', {animais: animais.length, reprodutores: reprodutores.length});
             
             try {
                 await window.storage.set('animais', JSON.stringify(animais));
+                await window.storage.set('reprodutores', JSON.stringify(reprodutores));
                 await window.storage.set('proprietarios', JSON.stringify(proprietarios));
                 await window.storage.set('racas', JSON.stringify(racas));
                 await window.storage.set('locais', JSON.stringify(locais));
                 console.log('✅ Salvo localmente');
             } catch (error) {
-                console.log('Erro ao salvar localmente', error);
+                console.error('Erro ao salvar localmente', error);
             }
 
             if (window.firebaseDB && window.firebaseSet && window.firebaseRef) {
                 try {
                     await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'animais'), animais);
+                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'reprodutores'), reprodutores);
                     await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'proprietarios'), proprietarios);
                     await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'racas'), racas);
                     await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'locais'), locais);
@@ -526,13 +577,17 @@
 
         function atualizarSelects() {
             const selectRaca = document.getElementById('raca');
+            const selectRacaReprodutor = document.getElementById('racaReprodutor');
             const selectLocal = document.getElementById('local');
             const selectProprietario = document.getElementById('proprietario');
             const selectPai = document.getElementById('pai');
             const selectMae = document.getElementById('mae');
 
-            selectRaca.innerHTML = '<option value="">Selecione...</option>' + 
+            const racasHTML = '<option value="">Selecione...</option>' + 
                 racas.map(r => `<option value="${r}">${r}</option>`).join('');
+            
+            selectRaca.innerHTML = racasHTML;
+            if (selectRacaReprodutor) selectRacaReprodutor.innerHTML = racasHTML;
             
             selectLocal.innerHTML = '<option value="">Selecione...</option>' + 
                 locais.map(l => `<option value="${l}">${l}</option>`).join('');
@@ -542,11 +597,15 @@
 
             const machos = animais.filter(a => a.sexo === 'M');
             const femeas = animais.filter(a => a.sexo === 'F');
+            const todosReprodutores = reprodutores || [];
 
-            selectPai.innerHTML = '<option value="">Selecione...</option>' + 
-                machos.map(m => `<option value="${m.id}">${m.numero} - ${m.nome || 'Sem nome'}</option>`).join('');
+            selectPai.innerHTML = '<option value="">Indefinido</option>' + 
+                machos.map(m => `<option value="${m.id}">${m.numero} - ${m.nome || 'Sem nome'}</option>`).join('') +
+                (todosReprodutores.length > 0 ? '<optgroup label="Reprodutores Cadastrados">' + 
+                todosReprodutores.map(r => `<option value="rep_${r.id}">${r.numero} - ${r.nome}</option>`).join('') + 
+                '</optgroup>' : '');
             
-            selectMae.innerHTML = '<option value="">Selecione...</option>' + 
+            selectMae.innerHTML = '<option value="">Indefinida</option>' + 
                 femeas.map(f => `<option value="${f.id}">${f.numero} - ${f.nome || 'Sem nome'}</option>`).join('');
         }
 
@@ -674,23 +733,30 @@
             const animal = animais.find(a => a.id === id);
             if (!animal) return;
 
-            const pai = animais.find(a => a.id === animal.pai);
+            let pai = null;
+            let paiNome = 'Indefinido';
+            
+            if (animal.pai) {
+                if (animal.pai.startsWith('rep_')) {
+                    pai = reprodutores.find(r => r.id === animal.pai.replace('rep_', ''));
+                    if (pai) paiNome = `${pai.numero} - ${pai.nome} (${pai.tipo})`;
+                } else {
+                    pai = animais.find(a => a.id === animal.pai);
+                    if (pai) paiNome = `${pai.numero} - ${pai.nome || 'Sem nome'}`;
+                }
+            }
+
             const mae = animais.find(a => a.id === animal.mae);
+            const maeNome = mae ? `${mae.numero} - ${mae.nome || 'Sem nome'}` : 'Indefinida';
 
             let html = `<div class="genealogy-tree">
                 <div class="tree-node"><strong>🐮 ${animal.numero} - ${animal.nome || 'Sem nome'}</strong><br>
                 ${animal.sexo === 'M' ? 'Macho' : 'Fêmea'} | ${animal.raca || 'Sem raça'}</div>`;
 
-            if (pai || mae) {
-                html += '<div class="tree-branch">';
-                if (pai) {
-                    html += `<div class="tree-node">👨 Pai: ${pai.numero} - ${pai.nome || 'Sem nome'}<br>${pai.raca || 'Sem raça'}</div>`;
-                }
-                if (mae) {
-                    html += `<div class="tree-node">👩 Mãe: ${mae.numero} - ${mae.nome || 'Sem nome'}<br>${mae.raca || 'Sem raça'}</div>`;
-                }
-                html += '</div>';
-            }
+            html += '<div class="tree-branch">';
+            html += `<div class="tree-node">👨 Pai: ${paiNome}<br>${pai ? (pai.raca || 'Sem raça') : ''}</div>`;
+            html += `<div class="tree-node">👩 Mãe: ${maeNome}<br>${mae ? (mae.raca || 'Sem raça') : ''}</div>`;
+            html += '</div>';
 
             html += '</div>';
             document.getElementById('arvoreGenealogia').innerHTML = html;
@@ -948,140 +1014,10 @@
         }
     </script>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyC7SscZZ2uhic2JXaQYfmnvh5mRgwpk0y8",
-            authDomain: "gado-5821a.firebaseapp.com",
-            databaseURL: "https://gado-5821a-default-rtdb.firebaseio.com",
-            projectId: "gado-5821a",
-            storageBucket: "gado-5821a.firebasestorage.app",
-            messagingSenderId: "1065455551718",
-            appId: "1:1065455551718:web:09fb220ded000eddae6727",
-            measurementId: "G-Q9F83YLGJW"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-
-        window.firebaseDB = database;
-        window.firebaseRef = ref;
-        window.firebaseSet = set;
-        window.firebaseGet = get;
-        window.firebaseOnValue = onValue;
-
-        console.log('✅ Firebase inicializado com sucesso!');
-
-        onValue(ref(database, '.info/connected'), (snapshot) => {
-            if (snapshot.val() === true) {
-                console.log('✅ Conectado ao Firebase Realtime Database');
-                document.getElementById('syncStatus').textContent = 'Firebase conectado ✓';
-            }
-        });
-
-        window.addEventListener('DOMContentLoaded', async function() {
-            await carregarDados();
-            
-            try {
-                const snapshot = await get(ref(database, '/'));
-                const dados = snapshot.val();
-                
-                if (dados) {
-                    if (dados.animais && Array.isArray(dados.animais)) {
-                        animais = dados.animais;
-                        renderizarTabela();
-                        atualizarSelectGenealogia();
-                    }
-                    if (dados.proprietarios && Array.isArray(dados.proprietarios)) {
-                        proprietarios = dados.proprietarios;
-                        atualizarListaProprietarios();
-                    }
-                    if (dados.racas && Array.isArray(dados.racas)) {
-                        racas = dados.racas;
-                        atualizarListaRacas();
-                    }
-                    if (dados.locais && Array.isArray(dados.locais)) {
-                        locais = dados.locais;
-                        atualizarListaLocais();
-                    }
-                    atualizarSelects();
-                    console.log('✅ Dados carregados do Firebase');
-                }
-            } catch (error) {
-                console.log('Usando dados locais...', error);
-            }
-        });
-    </script>
+                 
 </body>
 </html>
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyC7SscZZ2uhic2JXaQYfmnvh5mRgwpk0y8",
-            authDomain: "gado-5821a.firebaseapp.com",
-            databaseURL: "https://gado-5821a-default-rtdb.firebaseio.com",
-            projectId: "gado-5821a",
-            storageBucket: "gado-5821a.firebasestorage.app",
-            messagingSenderId: "1065455551718",
-            appId: "1:1065455551718:web:09fb220ded000eddae6727",
-            measurementId: "G-Q9F83YLGJW"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-
-        window.firebaseDB = database;
-        window.firebaseRef = ref;
-        window.firebaseSet = set;
-        window.firebaseGet = get;
-        window.firebaseOnValue = onValue;
-
-        console.log('✅ Firebase inicializado com sucesso!');
-
-        onValue(ref(database, '.info/connected'), (snapshot) => {
-            if (snapshot.val() === true) {
-                console.log('✅ Conectado ao Firebase Realtime Database');
-                document.getElementById('syncStatus').textContent = 'Firebase conectado ✓';
-            }
-        });
-
-        window.addEventListener('DOMContentLoaded', async function() {
-            await carregarDados();
-            
-            try {
-                const snapshot = await get(ref(database, '/'));
-                const dados = snapshot.val();
-                
-                if (dados) {
-                    if (dados.animais && Array.isArray(dados.animais)) {
-                        animais = dados.animais;
-                        renderizarTabela();
-                        atualizarSelectGenealogia();
-                    }
-                    if (dados.proprietarios && Array.isArray(dados.proprietarios)) {
-                        proprietarios = dados.proprietarios;
-                        atualizarListaProprietarios();
-                    }
-                    if (dados.racas && Array.isArray(dados.racas)) {
-                        racas = dados.racas;
-                        atualizarListaRacas();
-                    }
-                    if (dados.locais && Array.isArray(dados.locais)) {
-                        locais = dados.locais;
-                        atualizarListaLocais();
-                    }
-                    atualizarSelects();
-                    console.log('✅ Dados carregados do Firebase');
-                }
-            } catch (error) {
-                console.log('Usando dados locais...', error);
-            }
-        });
-    </script>
-
+        
     <script>
         let animais = [];
         let proprietarios = [];
