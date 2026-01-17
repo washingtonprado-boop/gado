@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -11,61 +12,52 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <style>
         * {margin: 0; padding: 0; box-sizing: border-box;}
-        body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #1e293b;}
+        body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;}
         .app-container {background: #f8fafc; min-height: 100vh;}
-        .header {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative; overflow: hidden;}
-        .header::before {content: ''; position: absolute; top: -50%; right: -10%; width: 400px; height: 400px; background: rgba(255,255,255,0.1); border-radius: 50%;}
-        .header h1 {font-size: 2rem; position: relative; z-index: 1; display: flex; align-items: center; gap: 1rem;}
-        .header p {font-size: 1rem; opacity: 0.9; margin-top: 0.5rem; position: relative; z-index: 1;}
-        .sync-status {position: absolute; top: 2rem; right: 2rem; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; backdrop-filter: blur(10px); cursor: pointer;}
-        .sync-status:hover {background: rgba(255,255,255,0.3);}
+        .header {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative;}
+        .header h1 {font-size: 2rem; margin-bottom: 0.5rem;}
+        .header p {opacity: 0.9;}
+        .sync-status {position: absolute; top: 2rem; right: 2rem; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;}
         .sync-indicator {width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite;}
         @keyframes pulse {0%, 100% {opacity: 1;} 50% {opacity: 0.5;}}
-        .nav-tabs {background: white; border-bottom: 2px solid #e2e8f0; padding: 0 2rem; display: flex; gap: 1rem; overflow-x: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.05);}
-        .nav-tab {padding: 1rem 1.5rem; border: none; background: none; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #64748b; border-bottom: 3px solid transparent; transition: all 0.3s; white-space: nowrap;}
+        .nav-tabs {background: white; border-bottom: 2px solid #e2e8f0; padding: 0 2rem; display: flex; gap: 1rem; overflow-x: auto;}
+        .nav-tab {padding: 1rem 1.5rem; border: none; background: none; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #64748b; border-bottom: 3px solid transparent; transition: all 0.3s;}
         .nav-tab:hover {color: #667eea; background: #f8fafc;}
         .nav-tab.active {color: #667eea; border-bottom-color: #667eea;}
         .container {max-width: 1600px; margin: 0 auto; padding: 2rem;}
         .main-grid {display: grid; grid-template-columns: 420px 1fr; gap: 2rem;}
-        .card {background: white; border-radius: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 2rem; transition: transform 0.3s, box-shadow 0.3s;}
-        .card:hover {transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.12);}
-        .card h2 {font-size: 1.25rem; margin-bottom: 1.5rem; color: #1e293b; display: flex; align-items: center; gap: 0.75rem; padding-bottom: 1rem; border-bottom: 2px solid #f1f5f9;}
+        .card {background: white; border-radius: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 2rem;}
+        .card h2 {font-size: 1.25rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #f1f5f9;}
         .form-group {margin-bottom: 1.25rem;}
         .form-group label {display: block; font-size: 0.875rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;}
-        .form-group input, .form-group select, .form-group textarea {width: 100%; padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.875rem; transition: all 0.2s; background: #f8fafc;}
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {outline: none; border-color: #667eea; box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); background: white;}
+        .form-group input, .form-group select, .form-group textarea {width: 100%; padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.875rem; background: #f8fafc;}
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {outline: none; border-color: #667eea; background: white;}
         .input-group {display: flex; gap: 0.5rem;}
         .input-group input {flex: 1;}
-        .btn {padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.5rem; justify-content: center;}
+        .btn {padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.3s;}
         .btn-primary {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;}
         .btn-primary:hover {transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);}
         .btn-secondary {background: #e2e8f0; color: #334155;}
-        .btn-secondary:hover {background: #cbd5e1;}
         .btn-danger {background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white;}
         .btn-success {background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white;}
         .btn-warning {background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;}
         .btn-group {display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-top: 2rem;}
         .grid-2 {display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;}
         .checkbox-group {display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 1rem 0; padding: 1rem; background: #f8fafc; border-radius: 0.5rem;}
-        .checkbox-label {display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; user-select: none;}
-        .checkbox-label input[type="checkbox"] {width: 18px; height: 18px; cursor: pointer;}
+        .checkbox-label {display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; cursor: pointer;}
         .search-box {padding: 1.5rem; border-bottom: 2px solid #f1f5f9;}
         .search-input {width: 100%; padding: 0.875rem 1.25rem; border: 2px solid #e2e8f0; border-radius: 0.75rem; font-size: 0.875rem; background: #f8fafc;}
-        .search-input:focus {outline: none; border-color: #667eea; background: white;}
         .table-actions {padding: 1.5rem; display: flex; gap: 0.75rem; border-bottom: 2px solid #f1f5f9; flex-wrap: wrap;}
-        .table-container {overflow-x: auto;}
         table {width: 100%; border-collapse: collapse;}
         thead {background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);}
-        th {padding: 1rem 1.25rem; text-align: left; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px;}
+        th {padding: 1rem 1.25rem; text-align: left; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase;}
         td {padding: 1rem 1.25rem; font-size: 0.875rem; border-bottom: 1px solid #f1f5f9;}
-        tbody tr {cursor: pointer; transition: all 0.2s;}
-        tbody tr:hover {background: #f8fafc; transform: scale(1.01);}
+        tbody tr {cursor: pointer; transition: background 0.2s;}
+        tbody tr:hover {background: #f8fafc;}
         tbody tr.selected {background: #ede9fe;}
         .empty-state {padding: 4rem 2rem; text-align: center; color: #94a3b8;}
-        .empty-state-icon {font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;}
         .stats-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;}
-        .stat-card {background: white; border-radius: 1rem; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; border-top: 4px solid; transition: transform 0.3s;}
-        .stat-card:hover {transform: translateY(-4px);}
+        .stat-card {background: white; border-radius: 1rem; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; border-top: 4px solid;}
         .stat-card.blue {border-top-color: #3b82f6;} .stat-card.green {border-top-color: #22c55e;} .stat-card.red {border-top-color: #ef4444;} .stat-card.purple {border-top-color: #a855f7;} .stat-card.yellow {border-top-color: #f59e0b;} .stat-card.pink {border-top-color: #ec4899;}
         .stat-value {font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;}
         .stat-label {font-size: 0.875rem; color: #64748b; font-weight: 600;}
@@ -73,28 +65,25 @@
         .chart-container {background: white; border-radius: 1rem; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 2rem;}
         .chart-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;}
         .item-list {margin-top: 1.5rem;}
-        .item-box {padding: 1rem; background: #f8fafc; margin-top: 0.75rem; border-radius: 0.75rem; display: flex; justify-content: space-between; align-items: center; border: 2px solid #e2e8f0; transition: all 0.2s;}
-        .item-box:hover {border-color: #667eea; background: white;}
+        .item-box {padding: 1rem; background: #f8fafc; margin-top: 0.75rem; border-radius: 0.75rem; display: flex; justify-content: space-between; align-items: center; border: 2px solid #e2e8f0;}
         .genealogy-tree {padding: 2rem; background: #f8fafc; border-radius: 1rem; margin-top: 1.5rem; border: 2px solid #e2e8f0;}
-        .tree-node {background: white; padding: 1rem; border-radius: 0.75rem; margin: 0.5rem 0; border: 2px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.05);}
-        .tree-node strong {color: #667eea;}
+        .tree-node {background: white; padding: 1rem; border-radius: 0.75rem; margin: 0.5rem 0; border: 2px solid #e2e8f0;}
         .tree-branch {margin-left: 2rem; border-left: 2px solid #cbd5e1; padding-left: 1rem;}
-        .modal {display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);}
+        .modal {display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6);}
         .modal.active {display: flex; align-items: center; justify-content: center;}
-        .modal-content {background: white; padding: 2rem; border-radius: 1rem; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);}
+        .modal-content {background: white; padding: 2rem; border-radius: 1rem; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;}
         .hidden {display: none;}
-        @media (max-width: 1024px) {.main-grid, .chart-grid {grid-template-columns: 1fr;} .header h1 {font-size: 1.5rem;} .sync-status {position: relative; top: auto; right: auto; margin-top: 1rem;}}
-        @media (max-width: 640px) {.container, .card {padding: 1rem;} .btn-group, .stats-grid {grid-template-columns: 1fr;}}
+        @media (max-width: 1024px) {.main-grid, .chart-grid {grid-template-columns: 1fr;} .sync-status {position: relative; top: auto; right: auto; margin-top: 1rem;}}
     </style>
 </head>
 <body>
     <div class="app-container">
         <div class="header">
             <h1>🐄 Sistema de Controle de Animais</h1>
-            <p>Gestão completa e profissional do seu rebanho</p>
+            <p>Gestão completa do seu rebanho</p>
             <div class="sync-status" onclick="abrirModalFirebase()">
                 <div class="sync-indicator"></div>
-                <span id="syncStatus">Configurar Firebase</span>
+                <span id="syncStatus">Clique para configurar Firebase</span>
             </div>
         </div>
 
@@ -109,12 +98,11 @@
         </div>
 
         <div class="container">
-            <!-- Aba Animais -->
             <div id="tab-animals" class="tab-content">
                 <div class="main-grid">
                     <div class="card">
                         <h2>📝 Dados do Animal</h2>
-                        <form id="animalForm" onsubmit="return salvarAnimal(event)">
+                        <form id="animalForm" onsubmit="salvarAnimal(event)">
                             <div class="form-group">
                                 <label>NÚMERO *</label>
                                 <div class="input-group">
@@ -148,7 +136,6 @@
                                         <option value="F">Fêmea</option>
                                     </select>
                                 </div>
-
                                 <div class="form-group">
                                     <label>Raça</label>
                                     <select id="raca"></select>
@@ -162,9 +149,7 @@
 
                             <div class="form-group">
                                 <label>Proprietário</label>
-                                <select id="proprietario">
-                                    <option value="">Selecione...</option>
-                                </select>
+                                <select id="proprietario"></select>
                             </div>
 
                             <div class="form-group">
@@ -175,16 +160,11 @@
                             <div class="grid-2">
                                 <div class="form-group">
                                     <label>Pai</label>
-                                    <select id="pai">
-                                        <option value="">Selecione...</option>
-                                    </select>
+                                    <select id="pai"></select>
                                 </div>
-
                                 <div class="form-group">
                                     <label>Mãe</label>
-                                    <select id="mae">
-                                        <option value="">Selecione...</option>
-                                    </select>
+                                    <select id="mae"></select>
                                 </div>
                             </div>
 
@@ -216,40 +196,23 @@
                         <div class="search-box">
                             <input type="text" class="search-input" placeholder="🔍 Pesquisar..." onkeyup="pesquisarAnimais(this.value)">
                         </div>
-
                         <div class="table-actions">
                             <button class="btn btn-success" onclick="exportarExcel()">📥 Excel</button>
                             <button class="btn btn-danger" onclick="exportarPDF()">📄 PDF</button>
                             <button class="btn btn-warning" onclick="sincronizar()">🔄 Sincronizar</button>
                         </div>
-
-                        <div class="table-container">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>NÚMERO</th>
-                                        <th>Brinco</th>
-                                        <th>Nome</th>
-                                        <th>Sexo</th>
-                                        <th>Raça</th>
-                                        <th>Local</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tabelaAnimais">
-                                    <tr>
-                                        <td colspan="6" class="empty-state">
-                                            <div class="empty-state-icon">🐮</div>
-                                            Nenhum animal cadastrado
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <table>
+                            <thead>
+                                <tr><th>NÚMERO</th><th>Brinco</th><th>Nome</th><th>Sexo</th><th>Raça</th><th>Local</th></tr>
+                            </thead>
+                            <tbody id="tabelaAnimais">
+                                <tr><td colspan="6" class="empty-state">Nenhum animal cadastrado</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Outras abas (código reduzido para economizar espaço) -->
             <div id="tab-reports" class="tab-content hidden">
                 <h2 style="margin-bottom: 2rem;">📊 Dashboard</h2>
                 <div class="stats-grid">
@@ -275,7 +238,7 @@
                     <div class="form-group">
                         <label>Selecione um Animal</label>
                         <select id="animalGenealogia" onchange="mostrarGenealogia()">
-                            <option value="">Escolha...</option>
+                            <option value="">Escolha um animal...</option>
                         </select>
                     </div>
                     <div id="arvoreGenealogia"></div>
@@ -335,10 +298,9 @@
         </div>
     </div>
 
-    <!-- Modal Firebase -->
     <div id="firebaseModal" class="modal">
         <div class="modal-content">
-            <h2>🔥 Firebase</h2>
+            <h2>🔥 Configurar Firebase</h2>
             <div class="form-group"><label>API Key</label><input type="text" id="firebaseApiKey"></div>
             <div class="form-group"><label>Auth Domain</label><input type="text" id="firebaseAuthDomain"></div>
             <div class="form-group"><label>Database URL</label><input type="text" id="firebaseDatabaseURL"></div>
@@ -351,214 +313,702 @@
     </div>
 
     <script>
-        let animais = [], proprietarios = [], racas = ['NELORE','ANGUS','BRAHMAN','TABAPUÃ','SENEPOL','GIROLANDO','HOLANDESA','GIR','JERSEY'], locais = ['PASTO 1','PASTO 2','CURRAL'], animalAtualId = null, charts = {}, database = null, firebaseConfig = null;
+        let animais = [];
+        let proprietarios = [];
+        let racas = ['NELORE','ANGUS','BRAHMAN','TABAPUÃ','SENEPOL','GIROLANDO','HOLANDESA','GIR','JERSEY'];
+        let locais = ['PASTO 1','PASTO 2','CURRAL'];
+        let animalAtualId = null;
+        let charts = {};
+        let database = null;
 
-        async function init() {await carregarDados(); await tentarConectarFirebase(); atualizarSelects();}
+        window.addEventListener('DOMContentLoaded', function() {
+            carregarDados();
+            tentarConectarFirebase();
+        });
 
         async function carregarDados() {
             try {
-                const [a, p, r, l] = await Promise.all([window.storage.get('animais').catch(()=>null), window.storage.get('proprietarios').catch(()=>null), window.storage.get('racas').catch(()=>null), window.storage.get('locais').catch(()=>null)]);
-                animais = a ? JSON.parse(a.value) : [];
-                proprietarios = p ? JSON.parse(p.value) : [];
-                racas = r ? JSON.parse(r.value) : racas;
-                locais = l ? JSON.parse(l.value) : locais;
-            } catch {
-                animais = JSON.parse(localStorage.getItem('animais') || '[]');
-                proprietarios = JSON.parse(localStorage.getItem('proprietarios') || '[]');
-                racas = JSON.parse(localStorage.getItem('racas') || JSON.stringify(racas));
-                locais = JSON.parse(localStorage.getItem('locais') || JSON.stringify(locais));
+                const storageAnimais = await window.storage.get('animais').catch(() => null);
+                const storageProp = await window.storage.get('proprietarios').catch(() => null);
+                const storageRacas = await window.storage.get('racas').catch(() => null);
+                const storageLocais = await window.storage.get('locais').catch(() => null);
+
+                animais = storageAnimais ? JSON.parse(storageAnimais.value) : [];
+                proprietarios = storageProp ? JSON.parse(storageProp.value) : [];
+                racas = storageRacas ? JSON.parse(storageRacas.value) : ['NELORE','ANGUS','BRAHMAN','TABAPUÃ','SENEPOL','GIROLANDO','HOLANDESA','GIR','JERSEY'];
+                locais = storageLocais ? JSON.parse(storageLocais.value) : ['PASTO 1','PASTO 2','CURRAL'];
+            } catch (error) {
+                console.log('Erro ao carregar do storage', error);
             }
-            renderizarTabela(); atualizarListaProprietarios(); atualizarListaRacas(); atualizarListaLocais(); atualizarSelectGenealogia();
+
+            renderizarTabela();
+            atualizarSelects();
+            atualizarListaProprietarios();
+            atualizarListaRacas();
+            atualizarListaLocais();
+            atualizarSelectGenealogia();
         }
 
         async function salvarDados() {
             try {
-                await Promise.all([window.storage.set('animais', JSON.stringify(animais)), window.storage.set('proprietarios', JSON.stringify(proprietarios)), window.storage.set('racas', JSON.stringify(racas)), window.storage.set('locais', JSON.stringify(locais))]);
-                localStorage.setItem('animais', JSON.stringify(animais));
-                localStorage.setItem('proprietarios', JSON.stringify(proprietarios));
-                localStorage.setItem('racas', JSON.stringify(racas));
-                localStorage.setItem('locais', JSON.stringify(locais));
-                atualizarStatusSync('Salvo ✓');
-                if (!firebase.apps.length) firebase.initializeApp(config);
-                database = firebase.database();
-                atualizarStatusSync('Firebase OK ✓');
-                database.ref('animais').on('value', s => {if (s.exists()) {animais = s.val() || []; renderizarTabela();}});
-            } catch (e) {atualizarStatusSync('Erro Firebase');}
-        }
-
-        async function sincronizarComFirebase() {
-            if (!database) return;
-            try {
-                await database.ref('animais').set(animais);
-                await database.ref('proprietarios').set(proprietarios);
-                await database.ref('racas').set(racas);
-                await database.ref('locais').set(locais);
-                atualizarStatusSync('Sincronizado ✓');
-            } catch {atualizarStatusSync('Erro sync');}
-        }
-
-        function abrirModalFirebase() {document.getElementById('firebaseModal').classList.add('active');}
-        function fecharModalFirebase() {document.getElementById('firebaseModal').classList.remove('active');}
-
-        async function salvarConfigFirebase() {
-            const config = {apiKey: document.getElementById('firebaseApiKey').value, authDomain: document.getElementById('firebaseAuthDomain').value, databaseURL: document.getElementById('firebaseDatabaseURL').value, projectId: document.getElementById('firebaseProjectId').value};
-            if (!config.apiKey || !config.databaseURL) {alert('Preencha API Key e Database URL'); return;}
-            try {
-                await window.storage.set('firebaseConfig', JSON.stringify(config));
-                await conectarFirebase(config);
-                fecharModalFirebase();
-                alert('✅ Firebase OK!');
-            } catch (e) {alert('❌ Erro: ' + e.message);}
-        }
-
-        async function sincronizar() {atualizarStatusSync('Sincronizando...'); await salvarDados(); if (database) await sincronizarComFirebase(); await carregarDados(); alert('✅ Sync OK!');}
-        function atualizarStatusSync(s) {document.getElementById('syncStatus').textContent = s;}
-        function toggleBrinco() {const u = document.getElementById('usaBrinco').checked, c = document.getElementById('campoBrinco'); u ? c.classList.remove('hidden') : (c.classList.add('hidden'), document.getElementById('brinco').value = '');}
-
-        function atualizarSelects() {
-            document.getElementById('raca').innerHTML = racas.map(r => `<option value="${r}">${r}</option>`).join('');
-            document.getElementById('local').innerHTML = '<option value="">Selecione...</option>' + locais.map(l => `<option value="${l}">${l}</option>`).join('');
-            const machos = animais.filter(a => a.sexo === 'M'), femeas = animais.filter(a => a.sexo === 'F');
-            document.getElementById('pai').innerHTML = '<option value="">Selecione...</option>' + machos.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
-            document.getElementById('mae').innerHTML = '<option value="">Selecione...</option>' + femeas.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
-        }
-
-        async function salvarAnimal(e) {
-            e.preventDefault();
-            const d = {id: animalAtualId || Date.now().toString(), numero: document.getElementById('numero').value.toUpperCase(), brinco: document.getElementById('usaBrinco').checked ? document.getElementById('brinco').value.toUpperCase() : '', nome: document.getElementById('nome').value.toUpperCase(), sexo: document.getElementById('sexo').value, raca: document.getElementById('raca').value, local: document.getElementById('local').value, proprietario: document.getElementById('proprietario').value, dataNascimento: document.getElementById('dataNascimento').value, pai: document.getElementById('pai').value, mae: document.getElementById('mae').value, semFerro: document.getElementById('semFerro').checked, amamentando: document.getElementById('amamentando').checked, observacoes: document.getElementById('observacoes').value};
-            animalAtualId ? (animais[animais.findIndex(a => a.id === animalAtualId)] = d) : animais.push(d);
-            await salvarDados();
-            renderizarTabela(); atualizarSelectGenealogia(); limparForm();
-            alert('✅ Salvo!');
-            return false;
-        }
-
-        function renderizarTabela(lista = animais) {
-            const t = document.getElementById('tabelaAnimais');
-            if (lista.length === 0) {t.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🐮</div>Nenhum animal</td></tr>'; return;}
-            t.innerHTML = lista.map(a => `<tr onclick="selecionarAnimal('${a.id}')" class="${animalAtualId === a.id ? 'selected' : ''}"><td><strong>${a.numero}</strong></td><td>${a.brinco || '-'}</td><td>${a.nome || '-'}</td><td>${a.sexo === 'M' ? '♂️' : '♀️'}</td><td>${a.raca}</td><td>${a.local || '-'}</td></tr>`).join('');
-        }
-
-        function selecionarAnimal(id) {
-            const a = animais.find(x => x.id === id);
-            if (!a) return;
-            animalAtualId = id;
-            document.getElementById('numero').value = a.numero;
-            if (a.brinco) {document.getElementById('usaBrinco').checked = true; toggleBrinco(); document.getElementById('brinco').value = a.brinco;}
-            document.getElementById('nome').value = a.nome || '';
-            document.getElementById('sexo').value = a.sexo;
-            document.getElementById('raca').value = a.raca;
-            document.getElementById('local').value = a.local || '';
-            document.getElementById('proprietario').value = a.proprietario || '';
-            document.getElementById('dataNascimento').value = a.dataNascimento || '';
-            document.getElementById('pai').value = a.pai || '';
-            document.getElementById('mae').value = a.mae || '';
-            document.getElementById('semFerro').checked = a.semFerro || false;
-            document.getElementById('amamentando').checked = a.amamentando || false;
-            document.getElementById('observacoes').value = a.observacoes || '';
-            renderizarTabela();
-        }
-
-        function limparForm() {document.getElementById('animalForm').reset(); document.getElementById('usaBrinco').checked = false; toggleBrinco(); animalAtualId = null; atualizarSelects(); renderizarTabela();}
-
-        async function excluirAnimal() {
-            if (!animalAtualId) {alert('⚠️ Selecione um animal'); return;}
-            if (confirm('🗑️ Excluir?')) {animais = animais.filter(a => a.id !== animalAtualId); await salvarDados(); renderizarTabela(); limparForm(); alert('✅ Excluído!');}
-        }
-
-        function gerarNumero() {const m = animais.reduce((max, a) => {const n = parseInt(a.numero) || 0; return n > max ? n : max;}, 0); document.getElementById('numero').value = (m + 1).toString().padStart(4, '0');}
-        function pesquisarAnimais(t) {const f = animais.filter(a => Object.values(a).some(v => String(v).toLowerCase().includes(t.toLowerCase()))); renderizarTabela(f);}
-
-        function atualizarSelectGenealogia() {document.getElementById('animalGenealogia').innerHTML = '<option value="">Escolha...</option>' + animais.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');}
-
-        function mostrarGenealogia() {
-            const id = document.getElementById('animalGenealogia').value;
-            if (!id) {document.getElementById('arvoreGenealogia').innerHTML = ''; return;}
-            const a = animais.find(x => x.id === id);
-            if (!a) return;
-            document.getElementById('arvoreGenealogia').innerHTML = '<div class="genealogy-tree">' + gerarArvoreHTML(a, 0) + '</div>';
-        }
-
-        function gerarArvoreHTML(a, n) {
-            if (!a) return '';
-            let h = `<div class="tree-node" style="margin-left:${n*20}px"><strong>🐮 ${a.numero}</strong> - ${a.nome || 'Sem nome'}<br><small>Raça: ${a.raca} | Sexo: ${a.sexo === 'M' ? 'Macho' : 'Fêmea'}</small></div>`;
-            if (a.pai || a.mae) {
-                h += '<div class="tree-branch">';
-                if (a.pai) {const p = animais.find(x => x.id === a.pai); if (p) h += '<div><strong>Pai:</strong></div>' + gerarArvoreHTML(p, n + 1);}
-                if (a.mae) {const m = animais.find(x => x.id === a.mae); if (m) h += '<div><strong>Mãe:</strong></div>' + gerarArvoreHTML(m, n + 1);}
-                h += '</div>';
+                await window.storage.set('animais', JSON.stringify(animais));
+                await window.storage.set('proprietarios', JSON.stringify(proprietarios));
+                await window.storage.set('racas', JSON.stringify(racas));
+                await window.storage.set('locais', JSON.stringify(locais));
+            } catch (error) {
+                console.log('Erro ao salvar', error);
             }
-            return h;
-        }
 
-        function showTab(n) {document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden')); document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active')); document.getElementById(`tab-${n}`).classList.remove('hidden'); event.target.classList.add('active'); if (n === 'reports') setTimeout(atualizarEstatisticas, 100);}
-
-        async function adicionarRaca() {const n = document.getElementById('nomeRaca').value.trim().toUpperCase(); if (n && !racas.includes(n)) {racas.push(n); racas.sort(); await salvarDados(); atualizarListaRacas(); atualizarSelects(); document.getElementById('nomeRaca').value = ''; alert('✅ Adicionado!');} else if (racas.includes(n)) alert('⚠️ Já existe!'); else alert('⚠️ Digite um nome!');}
-        function atualizarListaRacas() {document.getElementById('listaRacas').innerHTML = racas.map(r => `<div class="item-box"><span><strong>🏷️ ${r}</strong></span><button class="btn btn-danger" style="padding:0.5rem 1rem" onclick="removerRaca('${r}')">🗑️</button></div>`).join('');}
-        async function removerRaca(n) {if (confirm(`🗑️ Remover ${n}?`)) {racas = racas.filter(r => r !== n); await salvarDados(); atualizarListaRacas(); atualizarSelects(); alert('✅ Removido!');}}
-
-        async function adicionarLocal() {const n = document.getElementById('nomeLocal').value.trim().toUpperCase(); if (n && !locais.includes(n)) {locais.push(n); locais.sort(); await salvarDados(); atualizarListaLocais(); atualizarSelects(); document.getElementById('nomeLocal').value = ''; alert('✅ Adicionado!');} else if (locais.includes(n)) alert('⚠️ Já existe!'); else alert('⚠️ Digite um nome!');}
-        function atualizarListaLocais() {document.getElementById('listaLocais').innerHTML = locais.map(l => `<div class="item-box"><span><strong>📍 ${l}</strong></span><button class="btn btn-danger" style="padding:0.5rem 1rem" onclick="removerLocal('${l}')">🗑️</button></div>`).join('');}
-        async function removerLocal(n) {if (confirm(`🗑️ Remover ${n}?`)) {locais = locais.filter(l => l !== n); await salvarDados(); atualizarListaLocais(); atualizarSelects(); alert('✅ Removido!');}}
-
-        async function adicionarProprietario() {const n = document.getElementById('nomeProprietario').value.trim().toUpperCase(); if (n && !proprietarios.includes(n)) {proprietarios.push(n); proprietarios.sort(); await salvarDados(); atualizarListaProprietarios(); document.getElementById('nomeProprietario').value = ''; alert('✅ Adicionado!');} else if (proprietarios.includes(n)) alert('⚠️ Já existe!'); else alert('⚠️ Digite um nome!');}
-        function atualizarListaProprietarios() {const s = document.getElementById('proprietario'); s.innerHTML = '<option value="">Selecione...</option>'; proprietarios.forEach(p => s.innerHTML += `<option value="${p}">${p}</option>`); document.getElementById('listaProprietarios').innerHTML = proprietarios.map(p => `<div class="item-box"><span><strong>👤 ${p}</strong></span><button class="btn btn-danger" style="padding:0.5rem 1rem" onclick="removerProprietario('${p}')">🗑️</button></div>`).join('');}
-        async function removerProprietario(n) {if (confirm(`🗑️ Remover ${n}?`)) {proprietarios = proprietarios.filter(p => p !== n); await salvarDados(); atualizarListaProprietarios(); alert('✅ Removido!');}}
-
-        function atualizarEstatisticas() {
-            document.getElementById('totalAnimais').textContent = animais.length;
-            document.getElementById('totalFemeas').textContent = animais.filter(a => a.sexo === 'F').length;
-            document.getElementById('totalMachos').textContent = animais.filter(a => a.sexo === 'M').length;
-            document.getElementById('totalAmamentando').textContent = animais.filter(a => a.amamentando).length;
-            document.getElementById('totalSemFerro').textContent = animais.filter(a => a.semFerro).length;
-            document.getElementById('totalRacas').textContent = [...new Set(animais.map(a => a.raca))].length;
-            criarGraficos();
-        }
-
-        function criarGraficos() {
-            const d1 = {}; animais.forEach(a => d1[a.raca] = (d1[a.raca] || 0) + 1);
-            if (charts.raca) charts.raca.destroy();
-            charts.raca = new Chart(document.getElementById('racaChart'), {type: 'bar', data: {labels: Object.keys(d1), datasets: [{label: 'Qtd', data: Object.values(d1), backgroundColor: 'rgba(102,126,234,0.8)', borderRadius: 8}]}, options: {responsive: true, plugins: {legend: {display: false}}}});
-
-            const m = animais.filter(a => a.sexo === 'M').length, f = animais.filter(a => a.sexo === 'F').length;
-            if (charts.sexo) charts.sexo.destroy();
-            charts.sexo = new Chart(document.getElementById('sexoChart'), {type: 'doughnut', data: {labels: ['♂️ Machos', '♀️ Fêmeas'], datasets: [{data: [m, f], backgroundColor: ['rgba(168,85,247,0.8)', 'rgba(236,72,153,0.8)']}]}, options: {responsive: true}});
-
-            const d2 = {}; animais.forEach(a => {if (a.local) d2[a.local] = (d2[a.local] || 0) + 1;});
-            if (charts.local) charts.local.destroy();
-            charts.local = new Chart(document.getElementById('localChart'), {type: 'bar', data: {labels: Object.keys(d2), datasets: [{label: 'Qtd', data: Object.values(d2), backgroundColor: 'rgba(34,197,94,0.8)', borderRadius: 8}]}, options: {responsive: true, indexAxis: 'y', plugins: {legend: {display: false}}}});
-
-            const d3 = {}; animais.forEach(a => {if (a.proprietario) d3[a.proprietario] = (d3[a.proprietario] || 0) + 1;});
-            if (charts.prop) charts.prop.destroy();
-            charts.prop = new Chart(document.getElementById('proprietarioChart'), {type: 'bar', data: {labels: Object.keys(d3), datasets: [{label: 'Qtd', data: Object.values(d3), backgroundColor: 'rgba(245,158,11,0.8)', borderRadius: 8}]}, options: {responsive: true, indexAxis: 'y', plugins: {legend: {display: false}}}});
-
-            const fx = {'0-6m': 0, '6-12m': 0, '1-2a': 0, '2-4a': 0, '4+a': 0}, hj = new Date();
-            animais.forEach(a => {if (a.dataNascimento) {const ns = new Date(a.dataNascimento), ms = (hj - ns) / (1000*60*60*24*30); if (ms < 6) fx['0-6m']++; else if (ms < 12) fx['6-12m']++; else if (ms < 24) fx['1-2a']++; else if (ms < 48) fx['2-4a']++; else fx['4+a']++;}});
-            if (charts.idade) charts.idade.destroy();
-            charts.idade = new Chart(document.getElementById('idadeChart'), {type: 'line', data: {labels: Object.keys(fx), datasets: [{label: 'Qtd', data: Object.values(fx), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4}]}, options: {responsive: true}});
-        }
-
-        function calcularArrobas() {const pv = parseFloat(document.getElementById('pesoVivo').value), pm = parseFloat(document.getElementById('pesoMorto').value); if (pv) document.getElementById('resultadoArrobas').textContent = `${((pv * 0.5) / 15).toFixed(2)} @`; else if (pm) document.getElementById('resultadoArrobas').textContent = `${(pm / 15).toFixed(2)} @`; else document.getElementById('resultadoArrobas').textContent = 'Digite um peso';}
-        function calcularParto() {const d = document.getElementById('dataInseminacao').value; if (!d) {alert('Selecione data'); return;} const dt = new Date(d); dt.setDate(dt.getDate() + 280); const d1 = new Date(dt); dt.setDate(dt.getDate() + 10); document.getElementById('resultadoParto').textContent = `${d1.toLocaleDateString('pt-BR')} a ${dt.toLocaleDateString('pt-BR')}`;}
-        function calcularIdade() {const d = document.getElementById('dataNascIdade').value; if (!d) {alert('Selecione data'); return;} const hj = new Date(), ns = new Date(d), di = Math.ceil((hj - ns) / (1000*60*60*24)), an = Math.floor(di / 365), ms = Math.floor((di % 365) / 30); document.getElementById('resultadoIdade').textContent = `${an} ano(s) e ${ms} mês(es) (${di} dias)`;}
-
-        function exportarExcel() {const ws = XLSX.utils.json_to_sheet(animais), wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Animais"); XLSX.writeFile(wb, `animais_${new Date().toISOString().split('T')[0]}.xlsx`);}
-        function exportarPDF() {const {jsPDF} = window.jspdf, doc = new jsPDF(); doc.setFontSize(16); doc.text('Relatório de Animais', 14, 15); let y = 25; animais.forEach(a => {if (y > 280) {doc.addPage(); y = 15;} doc.setFontSize(10); doc.text(`${a.numero} - ${a.nome} - ${a.raca} - ${a.sexo} - ${a.local || ''}`, 14, y); y += 7;}); doc.save(`animais_${new Date().toISOString().split('T')[0]}.pdf`);}
-
-        init();
-    </script>
-</body>
-</html> (database) await sincronizarComFirebase();
-            } catch (e) {atualizarStatusSync('Erro');}
+            if (database) {
+                try {
+                    await database.ref('animais').set(animais);
+                    await database.ref('proprietarios').set(proprietarios);
+                    await database.ref('racas').set(racas);
+                    await database.ref('locais').set(locais);
+                    document.getElementById('syncStatus').textContent = 'Sincronizado ✓';
+                } catch (error) {
+                    console.log('Erro Firebase sync', error);
+                }
+            }
         }
 
         async function tentarConectarFirebase() {
             try {
-                const cfg = await window.storage.get('firebaseConfig').catch(()=>null);
-                if (cfg) {firebaseConfig = JSON.parse(cfg.value); await conectarFirebase(firebaseConfig);}
-            } catch {}
+                const configData = await window.storage.get('firebaseConfig').catch(() => null);
+                if (configData) {
+                    const config = JSON.parse(configData.value);
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(config);
+                        database = firebase.database();
+                        document.getElementById('syncStatus').textContent = 'Firebase conectado ✓';
+                    }
+                }
+            } catch (error) {
+                console.log('Firebase não configurado', error);
+            }
         }
 
-        async function conectarFirebase(config) {
+        function toggleBrinco() {
+            const usaBrinco = document.getElementById('usaBrinco').checked;
+            const campoBrinco = document.getElementById('campoBrinco');
+            if (usaBrinco) {
+                campoBrinco.classList.remove('hidden');
+            } else {
+                campoBrinco.classList.add('hidden');
+                document.getElementById('brinco').value = '';
+            }
+        }
+
+        function gerarNumero() {
+            const numero = Math.floor(Math.random() * 900000) + 100000;
+            document.getElementById('numero').value = numero;
+        }
+
+        function showTab(tabName) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.add('hidden'));
+            
+            const navTabs = document.querySelectorAll('.nav-tab');
+            navTabs.forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            event.target.classList.add('active');
+            
+            if (tabName === 'reports') {
+                atualizarRelatorios();
+            }
+        }
+
+        function salvarAnimal(event) {
+            event.preventDefault();
+            
+            const animal = {
+                id: animalAtualId || Date.now().toString(),
+                numero: document.getElementById('numero').value,
+                brinco: document.getElementById('brinco').value,
+                nome: document.getElementById('nome').value,
+                sexo: document.getElementById('sexo').value,
+                raca: document.getElementById('raca').value,
+                local: document.getElementById('local').value,
+                proprietario: document.getElementById('proprietario').value,
+                dataNascimento: document.getElementById('dataNascimento').value,
+                pai: document.getElementById('pai').value,
+                mae: document.getElementById('mae').value,
+                semFerro: document.getElementById('semFerro').checked,
+                amamentando: document.getElementById('amamentando').checked,
+                observacoes: document.getElementById('observacoes').value
+            };
+
+            if (animalAtualId) {
+                const index = animais.findIndex(a => a.id === animalAtualId);
+                if (index !== -1) animais[index] = animal;
+            } else {
+                animais.push(animal);
+            }
+
+            salvarDados();
+            renderizarTabela();
+            limparForm();
+            alert('✅ Animal salvo com sucesso!');
+        }
+
+        function limparForm() {
+            document.getElementById('animalForm').reset();
+            animalAtualId = null;
+            document.getElementById('campoBrinco').classList.add('hidden');
+            document.querySelectorAll('tbody tr').forEach(tr => tr.classList.remove('selected'));
+        }
+
+        function excluirAnimal() {
+            if (!animalAtualId) {
+                alert('⚠️ Selecione um animal primeiro!');
+                return;
+            }
+            
+            if (confirm('Tem certeza que deseja excluir este animal?')) {
+                animais = animais.filter(a => a.id !== animalAtualId);
+                salvarDados();
+                renderizarTabela();
+                limparForm();
+                alert('✅ Animal excluído!');
+            }
+        }
+
+        function selecionarAnimal(id) {
+            const animal = animais.find(a => a.id === id);
+            if (!animal) return;
+
+            animalAtualId = id;
+            document.getElementById('numero').value = animal.numero || '';
+            document.getElementById('brinco').value = animal.brinco || '';
+            document.getElementById('nome').value = animal.nome || '';
+            document.getElementById('sexo').value = animal.sexo || 'M';
+            document.getElementById('raca').value = animal.raca || '';
+            document.getElementById('local').value = animal.local || '';
+            document.getElementById('proprietario').value = animal.proprietario || '';
+            document.getElementById('dataNascimento').value = animal.dataNascimento || '';
+            document.getElementById('pai').value = animal.pai || '';
+            document.getElementById('mae').value = animal.mae || '';
+            document.getElementById('semFerro').checked = animal.semFerro || false;
+            document.getElementById('amamentando').checked = animal.amamentando || false;
+            document.getElementById('observacoes').value = animal.observacoes || '';
+            
+            if (animal.brinco) {
+                document.getElementById('usaBrinco').checked = true;
+                document.getElementById('campoBrinco').classList.remove('hidden');
+            }
+
+            document.querySelectorAll('tbody tr').forEach(tr => tr.classList.remove('selected'));
+            document.querySelector(`tr[data-id="${id}"]`)?.classList.add('selected');
+        }
+
+        function renderizarTabela() {
+            const tbody = document.getElementById('tabelaAnimais');
+            
+            if (animais.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum animal cadastrado</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = animais.map(animal => `
+                <tr data-id="${animal.id}" onclick="selecionarAnimal('${animal.id}')">
+                    <td>${animal.numero || '-'}</td>
+                    <td>${animal.brinco || '-'}</td>
+                    <td>${animal.nome || '-'}</td>
+                    <td>${animal.sexo === 'M' ? 'Macho' : 'Fêmea'}</td>
+                    <td>${animal.raca || '-'}</td>
+                    <td>${animal.local || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function pesquisarAnimais(termo) {
+            const tbody = document.getElementById('tabelaAnimais');
+            const termoLower = termo.toLowerCase();
+            
+            const filtrados = animais.filter(animal => 
+                (animal.numero || '').toLowerCase().includes(termoLower) ||
+                (animal.brinco || '').toLowerCase().includes(termoLower) ||
+                (animal.nome || '').toLowerCase().includes(termoLower) ||
+                (animal.raca || '').toLowerCase().includes(termoLower) ||
+                (animal.local || '').toLowerCase().includes(termoLower)
+            );
+
+            if (filtrados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum resultado encontrado</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtrados.map(animal => `
+                <tr data-id="${animal.id}" onclick="selecionarAnimal('${animal.id}')">
+                    <td>${animal.numero || '-'}</td>
+                    <td>${animal.brinco || '-'}</td>
+                    <td>${animal.nome || '-'}</td>
+                    <td>${animal.sexo === 'M' ? 'Macho' : 'Fêmea'}</td>
+                    <td>${animal.raca || '-'}</td>
+                    <td>${animal.local || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        function atualizarSelects() {
+            const selectRaca = document.getElementById('raca');
+            const selectLocal = document.getElementById('local');
+            const selectProprietario = document.getElementById('proprietario');
+            const selectPai = document.getElementById('pai');
+            const selectMae = document.getElementById('mae');
+
+            selectRaca.innerHTML = '<option value="">Selecione...</option>' + 
+                racas.map(r => `<option value="${r}">${r}</option>`).join('');
+            
+            selectLocal.innerHTML = '<option value="">Selecione...</option>' + 
+                locais.map(l => `<option value="${l}">${l}</option>`).join('');
+            
+            selectProprietario.innerHTML = '<option value="">Selecione...</option>' + 
+                proprietarios.map(p => `<option value="${p}">${p}</option>`).join('');
+
+            const machos = animais.filter(a => a.sexo === 'M');
+            const femeas = animais.filter(a => a.sexo === 'F');
+
+            selectPai.innerHTML = '<option value="">Selecione...</option>' + 
+                machos.map(m => `<option value="${m.id}">${m.numero} - ${m.nome || 'Sem nome'}</option>`).join('');
+            
+            selectMae.innerHTML = '<option value="">Selecione...</option>' + 
+                femeas.map(f => `<option value="${f.id}">${f.numero} - ${f.nome || 'Sem nome'}</option>`).join('');
+        }
+
+        function adicionarProprietario() {
+            const nome = document.getElementById('nomeProprietario').value.trim();
+            if (!nome) {
+                alert('⚠️ Digite um nome!');
+                return;
+            }
+            if (proprietarios.includes(nome)) {
+                alert('⚠️ Proprietário já existe!');
+                return;
+            }
+            proprietarios.push(nome);
+            salvarDados();
+            atualizarListaProprietarios();
+            atualizarSelects();
+            document.getElementById('nomeProprietario').value = '';
+        }
+
+        function atualizarListaProprietarios() {
+            const lista = document.getElementById('listaProprietarios');
+            lista.innerHTML = proprietarios.map(p => `
+                <div class="item-box">
+                    <span>${p}</span>
+                    <button class="btn btn-danger" onclick="removerProprietario('${p}')">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function removerProprietario(nome) {
+            if (confirm('Tem certeza?')) {
+                proprietarios = proprietarios.filter(p => p !== nome);
+                salvarDados();
+                atualizarListaProprietarios();
+                atualizarSelects();
+            }
+        }
+
+        function adicionarRaca() {
+            const nome = document.getElementById('nomeRaca').value.trim().toUpperCase();
+            if (!nome) {
+                alert('⚠️ Digite um nome!');
+                return;
+            }
+            if (racas.includes(nome)) {
+                alert('⚠️ Raça já existe!');
+                return;
+            }
+            racas.push(nome);
+            salvarDados();
+            atualizarListaRacas();
+            atualizarSelects();
+            document.getElementById('nomeRaca').value = '';
+        }
+
+        function atualizarListaRacas() {
+            const lista = document.getElementById('listaRacas');
+            lista.innerHTML = racas.map(r => `
+                <div class="item-box">
+                    <span>${r}</span>
+                    <button class="btn btn-danger" onclick="removerRaca('${r}')">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function removerRaca(nome) {
+            if (confirm('Tem certeza?')) {
+                racas = racas.filter(r => r !== nome);
+                salvarDados();
+                atualizarListaRacas();
+                atualizarSelects();
+            }
+        }
+
+        function adicionarLocal() {
+            const nome = document.getElementById('nomeLocal').value.trim().toUpperCase();
+            if (!nome) {
+                alert('⚠️ Digite um nome!');
+                return;
+            }
+            if (locais.includes(nome)) {
+                alert('⚠️ Local já existe!');
+                return;
+            }
+            locais.push(nome);
+            salvarDados();
+            atualizarListaLocais();
+            atualizarSelects();
+            document.getElementById('nomeLocal').value = '';
+        }
+
+        function atualizarListaLocais() {
+            const lista = document.getElementById('listaLocais');
+            lista.innerHTML = locais.map(l => `
+                <div class="item-box">
+                    <span>${l}</span>
+                    <button class="btn btn-danger" onclick="removerLocal('${l}')">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function removerLocal(nome) {
+            if (confirm('Tem certeza?')) {
+                locais = locais.filter(l => l !== nome);
+                salvarDados();
+                atualizarListaLocais();
+                atualizarSelects();
+            }
+        }
+
+        function atualizarSelectGenealogia() {
+            const select = document.getElementById('animalGenealogia');
+            select.innerHTML = '<option value="">Escolha um animal...</option>' +
+                animais.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
+        }
+
+        function mostrarGenealogia() {
+            const id = document.getElementById('animalGenealogia').value;
+            if (!id) {
+                document.getElementById('arvoreGenealogia').innerHTML = '';
+                return;
+            }
+
+            const animal = animais.find(a => a.id === id);
+            if (!animal) return;
+
+            const pai = animais.find(a => a.id === animal.pai);
+            const mae = animais.find(a => a.id === animal.mae);
+
+            let html = `<div class="genealogy-tree">
+                <div class="tree-node"><strong>🐮 ${animal.numero} - ${animal.nome || 'Sem nome'}</strong><br>
+                ${animal.sexo === 'M' ? 'Macho' : 'Fêmea'} | ${animal.raca || 'Sem raça'}</div>`;
+
+            if (pai || mae) {
+                html += '<div class="tree-branch">';
+                if (pai) {
+                    html += `<div class="tree-node">👨 Pai: ${pai.numero} - ${pai.nome || 'Sem nome'}<br>${pai.raca || 'Sem raça'}</div>`;
+                }
+                if (mae) {
+                    html += `<div class="tree-node">👩 Mãe: ${mae.numero} - ${mae.nome || 'Sem nome'}<br>${mae.raca || 'Sem raça'}</div>`;
+                }
+                html += '</div>';
+            }
+
+            html += '</div>';
+            document.getElementById('arvoreGenealogia').innerHTML = html;
+        }
+
+        function calcularArrobas() {
+            const pesoVivo = parseFloat(document.getElementById('pesoVivo').value);
+            const pesoMorto = parseFloat(document.getElementById('pesoMorto').value);
+            
+            if (pesoVivo > 0) {
+                const arrobas = pesoVivo / 15;
+                document.getElementById('resultadoArrobas').textContent = 
+                    `Peso Vivo: ${arrobas.toFixed(2)} arrobas`;
+            } else if (pesoMorto > 0) {
+                const arrobas = pesoMorto / 15;
+                document.getElementById('resultadoArrobas').textContent = 
+                    `Peso Morto: ${arrobas.toFixed(2)} arrobas`;
+            } else {
+                alert('⚠️ Preencha pelo menos um peso!');
+            }
+        }
+
+        function calcularParto() {
+            const data = document.getElementById('dataInseminacao').value;
+            if (!data) {
+                alert('⚠️ Selecione uma data!');
+                return;
+            }
+            
+            const dataInsemin = new Date(data);
+            dataInsemin.setDate(dataInsemin.getDate() + 283);
+            
+            const dia = String(dataInsemin.getDate()).padStart(2, '0');
+            const mes = String(dataInsemin.getMonth() + 1).padStart(2, '0');
+            const ano = dataInsemin.getFullYear();
+            
+            document.getElementById('resultadoParto').textContent = 
+                `Data prevista do parto: ${dia}/${mes}/${ano}`;
+        }
+
+        function calcularIdade() {
+            const data = document.getElementById('dataNascIdade').value;
+            if (!data) {
+                alert('⚠️ Selecione uma data!');
+                return;
+            }
+            
+            const nascimento = new Date(data);
+            const hoje = new Date();
+            
+            let anos = hoje.getFullYear() - nascimento.getFullYear();
+            let meses = hoje.getMonth() - nascimento.getMonth();
+            
+            if (meses < 0) {
+                anos--;
+                meses += 12;
+            }
+            
+            document.getElementById('resultadoIdade').textContent = 
+                `Idade: ${anos} anos e ${meses} meses`;
+        }
+
+        function atualizarRelatorios() {
+            const total = animais.length;
+            const femeas = animais.filter(a => a.sexo === 'F').length;
+            const machos = animais.filter(a => a.sexo === 'M').length;
+            const amamentando = animais.filter(a => a.amamentando).length;
+            const semFerro = animais.filter(a => a.semFerro).length;
+            const totalRacas = [...new Set(animais.map(a => a.raca).filter(r => r))].length;
+
+            document.getElementById('totalAnimais').textContent = total;
+            document.getElementById('totalFemeas').textContent = femeas;
+            document.getElementById('totalMachos').textContent = machos;
+            document.getElementById('totalAmamentando').textContent = amamentando;
+            document.getElementById('totalSemFerro').textContent = semFerro;
+            document.getElementById('totalRacas').textContent = totalRacas;
+
+            criarGraficos();
+        }
+
+        function criarGraficos() {
+            const racasCount = {};
+            const locaisCount = {};
+            const proprietariosCount = {};
+
+            animais.forEach(a => {
+                if (a.raca) racasCount[a.raca] = (racasCount[a.raca] || 0) + 1;
+                if (a.local) locaisCount[a.local] = (locaisCount[a.local] || 0) + 1;
+                if (a.proprietario) proprietariosCount[a.proprietario] = (proprietariosCount[a.proprietario] || 0) + 1;
+            });
+
+            if (charts.raca) charts.raca.destroy();
+            charts.raca = new Chart(document.getElementById('racaChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(racasCount),
+                    datasets: [{
+                        data: Object.values(racasCount),
+                        backgroundColor: ['#3b82f6', '#22c55e', '#ef4444', '#a855f7', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6']
+                    }]
+                }
+            });
+
+            if (charts.sexo) charts.sexo.destroy();
+            charts.sexo = new Chart(document.getElementById('sexoChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Machos', 'Fêmeas'],
+                    datasets: [{
+                        data: [animais.filter(a => a.sexo === 'M').length, animais.filter(a => a.sexo === 'F').length],
+                        backgroundColor: ['#3b82f6', '#ec4899']
+                    }]
+                }
+            });
+
+            if (charts.local) charts.local.destroy();
+            charts.local = new Chart(document.getElementById('localChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(locaisCount),
+                    datasets: [{
+                        label: 'Animais por Local',
+                        data: Object.values(locaisCount),
+                        backgroundColor: '#22c55e'
+                    }]
+                }
+            });
+
+            if (charts.proprietario) charts.proprietario.destroy();
+            charts.proprietario = new Chart(document.getElementById('proprietarioChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(proprietariosCount),
+                    datasets: [{
+                        label: 'Animais por Proprietário',
+                        data: Object.values(proprietariosCount),
+                        backgroundColor: '#a855f7'
+                    }]
+                }
+            });
+
+            const idades = {};
+            animais.forEach(a => {
+                if (a.dataNascimento) {
+                    const nasc = new Date(a.dataNascimento);
+                    const anos = new Date().getFullYear() - nasc.getFullYear();
+                    idades[anos] = (idades[anos] || 0) + 1;
+                }
+            });
+
+            if (charts.idade) charts.idade.destroy();
+            charts.idade = new Chart(document.getElementById('idadeChart'), {
+                type: 'line',
+                data: {
+                    labels: Object.keys(idades).sort((a, b) => a - b),
+                    datasets: [{
+                        label: 'Distribuição por Idade',
+                        data: Object.keys(idades).sort((a, b) => a - b).map(k => idades[k]),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        fill: true
+                    }]
+                }
+            });
+        }
+
+        function exportarExcel() {
+            const dados = animais.map(a => ({
+                'NÚMERO': a.numero,
+                'Brinco': a.brinco,
+                'Nome': a.nome,
+                'Sexo': a.sexo === 'M' ? 'Macho' : 'Fêmea',
+                'Raça': a.raca,
+                'Local': a.local,
+                'Proprietário': a.proprietario,
+                'Nascimento': a.dataNascimento,
+                'Pai': animais.find(p => p.id === a.pai)?.numero || '',
+                'Mãe': animais.find(m => m.id === a.mae)?.numero || '',
+                'Sem Ferro': a.semFerro ? 'Sim' : 'Não',
+                'Amamentando': a.amamentando ? 'Sim' : 'Não',
+                'Observações': a.observacoes
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(dados);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Animais');
+            XLSX.writeFile(wb, 'animais.xlsx');
+        }
+
+        function exportarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(16);
+            doc.text('Lista de Animais', 20, 20);
+            
+            let y = 40;
+            animais.forEach((a, i) => {
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.setFontSize(10);
+                doc.text(`${i + 1}. ${a.numero} - ${a.nome || 'Sem nome'} | ${a.sexo === 'M' ? 'Macho' : 'Fêmea'} | ${a.raca || '-'}`, 20, y);
+                y += 10;
+            });
+            
+            doc.save('animais.pdf');
+        }
+
+        async function sincronizar() {
+            await salvarDados();
+            await carregarDados();
+            alert('✅ Sincronizado!');
+        }
+
+        function abrirModalFirebase() {
+            document.getElementById('firebaseModal').classList.add('active');
+        }
+
+        function fecharModalFirebase() {
+            document.getElementById('firebaseModal').classList.remove('active');
+        }
+
+        async function salvarConfigFirebase() {
+            const config = {
+                apiKey: document.getElementById('firebaseApiKey').value,
+                authDomain: document.getElementById('firebaseAuthDomain').value,
+                databaseURL: document.getElementById('firebaseDatabaseURL').value,
+                projectId: document.getElementById('firebaseProjectId').value
+            };
+
+            if (!config.apiKey || !config.databaseURL) {
+                alert('Preencha pelo menos API Key e Database URL');
+                return;
+            }
+
             try {
-                if
+                await window.storage.set('firebaseConfig', JSON.stringify(config));
+                firebase.initializeApp(config);
+                database = firebase.database();
+                fecharModalFirebase();
+                alert('✅ Firebase configurado!');
+                document.getElementById('syncStatus').textContent = 'Firebase OK ✓';
+            } catch (error) {
+                alert('❌ Erro: ' + error.message);
+            }
+        }
+    </script>
+<script type="module">
+
+  // Import the functions you need from the SDKs you need
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-analytics.js";
+
+  // TODO: Add SDKs for Firebase products that you want to use
+
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+
+  // Your web app's Firebase configuration
+
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+
+  const firebaseConfig = {
+
+    apiKey: "AIzaSyC7SscZZ2uhic2JXaQYfmnvh5mRgwpk0y8",
+
+    authDomain: "gado-5821a.firebaseapp.com",
+
+    projectId: "gado-5821a",
+
+    storageBucket: "gado-5821a.firebasestorage.app",
+
+    messagingSenderId: "1065455551718",
+
+    appId: "1:1065455551718:web:9e20cc6e84dc76e0ae6727",
+
+    measurementId: "G-Q98K1CMBK3"
+
+  };
+
+
+  // Initialize Firebase
+
+  const app = initializeApp(firebaseConfig);
+
+  const analytics = getAnalytics(app);
+
+</script>
+</body>
+</html>
