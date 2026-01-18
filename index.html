@@ -125,8 +125,8 @@
                                 <div class="form-group">
                                     <label>Sexo</label>
                                     <select id="sexo">
-                                        <option value="M">Macho</option>
                                         <option value="F">Fêmea</option>
+                                        <option value="M">Macho</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -170,7 +170,7 @@
 
                     <div class="card">
                         <div style="display:flex; justify-content: space-between; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap;">
-                            <input type="text" placeholder="🔍 Pesquisar..." style="flex: 1; min-width: 200px; padding: 0.8rem; border: 2px solid #e2e8f0; border-radius: 0.7rem;" onkeyup="pesquisarAnimais(this.value)">
+                            <input type="text" id="campoPesquisa" placeholder="🔍 Pesquisar..." style="flex: 1; min-width: 200px; padding: 0.8rem; border: 2px solid #e2e8f0; border-radius: 0.7rem;" onkeyup="pesquisarAnimais(this.value)">
                             <button class="btn btn-success" onclick="exportarExcel()">📊 Excel</button>
                         </div>
                         <div style="overflow-x: auto;">
@@ -218,7 +218,7 @@
             <div id="tab-relatorios" class="tab-content hidden">
                 <div class="card">
                     <h2>📄 Relatórios Gerenciais</h2>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
                         <div class="item-box" onclick="gerarRelatorioCompleto()" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe);">
                             <div>
                                 <div style="font-size: 1.2rem; font-weight: 700;">📋 Completo</div>
@@ -239,6 +239,27 @@
                                 <div style="color: #64748b; font-size: 0.9rem;">Matrizes</div>
                             </div>
                             <div style="font-size: 2rem;">🐮</div>
+                        </div>
+                        <div class="item-box" onclick="gerarRelatorioPorProprietario()" style="background: linear-gradient(135deg, #e0e7ff, #c7d2fe);">
+                            <div>
+                                <div style="font-size: 1.2rem; font-weight: 700;">👥 Proprietários</div>
+                                <div style="color: #64748b; font-size: 0.9rem;">Por dono</div>
+                            </div>
+                            <div style="font-size: 2rem;">👤</div>
+                        </div>
+                        <div class="item-box" onclick="gerarRelatorioAmamentando()" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8);">
+                            <div>
+                                <div style="font-size: 1.2rem; font-weight: 700;">🍼 Amamentando</div>
+                                <div style="color: #64748b; font-size: 0.9rem;">Fêmeas lactantes</div>
+                            </div>
+                            <div style="font-size: 2rem;">👶</div>
+                        </div>
+                        <div class="item-box" onclick="gerarRelatorioSemFerro()" style="background: linear-gradient(135deg, #fed7aa, #fdba74);">
+                            <div>
+                                <div style="font-size: 1.2rem; font-weight: 700;">🔓 Sem Ferro</div>
+                                <div style="color: #64748b; font-size: 0.9rem;">Não marcados</div>
+                            </div>
+                            <div style="font-size: 2rem;">🚫</div>
                         </div>
                     </div>
                     <div id="previewRelatorio" style="margin-top: 2rem; display: none;">
@@ -403,9 +424,21 @@
 
         async function salvarAnimal(e) {
             e.preventDefault();
+            
+            const numero = document.getElementById('numero').value.trim();
+            
+            const numeroJaExiste = animais.some(a => 
+                a.numero === numero && a.id !== animalAtualId
+            );
+            
+            if (numeroJaExiste) {
+                alert('⚠️ Este número já está cadastrado!');
+                return;
+            }
+            
             const animal = {
                 id: animalAtualId || Date.now().toString(),
-                numero: document.getElementById('numero').value,
+                numero: numero,
                 brinco: document.getElementById('temBrinco').checked ? document.getElementById('brinco').value : '',
                 nome: document.getElementById('nome').value,
                 sexo: document.getElementById('sexo').value,
@@ -421,7 +454,9 @@
 
             if (animalAtualId) {
                 const idx = animais.findIndex(a => a.id === animalAtualId);
-                animais[idx] = animal;
+                if (idx !== -1) {
+                    animais[idx] = animal;
+                }
             } else {
                 animais.push(animal);
             }
@@ -430,7 +465,7 @@
             renderizarTabela();
             atualizarSelects();
             limparForm();
-            alert("✅ Animal salvo!");
+            alert("✅ Animal salvo com sucesso!");
         }
 
         async function excluirAnimal() {
@@ -448,8 +483,11 @@
 
         function selecionarAnimal(id) {
             const a = animais.find(x => x.id === id);
+            if (!a) return;
+            
             animalAtualId = id;
             document.getElementById('numero').value = a.numero;
+            
             if (a.brinco) {
                 document.getElementById('temBrinco').checked = true;
                 document.getElementById('brinco').style.display = 'block';
@@ -457,7 +495,9 @@
             } else {
                 document.getElementById('temBrinco').checked = false;
                 document.getElementById('brinco').style.display = 'none';
+                document.getElementById('brinco').value = '';
             }
+            
             document.getElementById('nome').value = a.nome || '';
             document.getElementById('sexo').value = a.sexo;
             document.getElementById('raca').value = a.raca;
@@ -489,11 +529,19 @@
 
         function renderizarTabela(data = animais) {
             const tbody = document.getElementById('tabelaAnimais');
-            if (data.length === 0) {
+            
+            const ordenados = [...data].sort((a, b) => {
+                const numA = parseInt(a.numero) || 0;
+                const numB = parseInt(b.numero) || 0;
+                return numA - numB;
+            });
+            
+            if (ordenados.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum animal cadastrado</td></tr>';
                 return;
             }
-            tbody.innerHTML = data.map(a => {
+            
+            tbody.innerHTML = ordenados.map(a => {
                 const idade = calcularIdade(a.dataNascimento);
                 const sexoBadge = a.sexo === 'F' ? '<span class="badge badge-pink">♀</span>' : '<span class="badge badge-blue">♂</span>';
                 return `
@@ -567,6 +615,7 @@
             await salvarDadosOnline();
             document.getElementById('novoProprietario').value = '';
             renderListas();
+            atualizarSelects();
         }
 
         function renderListas() {
@@ -644,8 +693,15 @@
             if (animais.length === 0) return alert('⚠️ Sem dados!');
             document.getElementById('tituloRelatorio').innerText = '📋 Relatório Completo';
             document.getElementById('previewRelatorio').style.display = 'block';
+            
+            const ordenados = [...animais].sort((a, b) => {
+                const numA = parseInt(a.numero) || 0;
+                const numB = parseInt(b.numero) || 0;
+                return numA - numB;
+            });
+            
             let html = '<table style="width:100%; background:white; border-radius:0.7rem;"><thead><tr style="background:#f1f5f9;"><th style="padding:1rem;">Nº</th><th style="padding:1rem;">Nome</th><th style="padding:1rem;">Sexo</th><th style="padding:1rem;">Raça</th><th style="padding:1rem;">Local</th></tr></thead><tbody>';
-            animais.forEach(a => {
+            ordenados.forEach(a => {
                 html += `<tr><td style="padding:1rem;"><strong>${a.numero}</strong></td><td style="padding:1rem;">${a.nome || '-'}</td><td style="padding:1rem;">${a.sexo === 'F' ? '♀' : '♂'}</td><td style="padding:1rem;">${a.raca}</td><td style="padding:1rem;">${a.local}</td></tr>`;
             });
             html += '</tbody></table>';
@@ -663,8 +719,13 @@
             });
             let html = '';
             Object.keys(porRaca).forEach(raca => {
-                html += `<div style="background:white; padding:1.5rem; border-radius:0.7rem; margin-bottom:1rem;"><h3>${raca} (${porRaca[raca].length})</h3>`;
-                porRaca[raca].forEach(a => {
+                const ordenados = porRaca[raca].sort((a, b) => {
+                    const numA = parseInt(a.numero) || 0;
+                    const numB = parseInt(b.numero) || 0;
+                    return numA - numB;
+                });
+                html += `<div style="background:white; padding:1.5rem; border-radius:0.7rem; margin-bottom:1rem;"><h3>${raca} (${ordenados.length})</h3>`;
+                ordenados.forEach(a => {
                     html += `<div style="padding:0.5rem; background:#f8fafc; margin:0.3rem 0; border-radius:0.5rem;"><strong>${a.numero}</strong> - ${a.nome || '-'} (${a.sexo === 'F' ? '♀' : '♂'})</div>`;
                 });
                 html += '</div>';
@@ -673,13 +734,123 @@
         }
 
         function gerarRelatorioFemeas() {
-            const femeas = animais.filter(a => a.sexo === 'F');
+            const femeas = animais.filter(a => a.sexo === 'F').sort((a, b) => {
+                const numA = parseInt(a.numero) || 0;
+                const numB = parseInt(b.numero) || 0;
+                return numA - numB;
+            });
             if (femeas.length === 0) return alert('⚠️ Sem fêmeas!');
             document.getElementById('tituloRelatorio').innerText = '♀ Fêmeas';
             document.getElementById('previewRelatorio').style.display = 'block';
             let html = '<div style="background:white; padding:1.5rem; border-radius:0.7rem;">';
             femeas.forEach(a => {
                 html += `<div style="padding:1rem; background:#fef3f2; margin:0.5rem 0; border-radius:0.5rem; border-left:4px solid #ec4899;"><strong>${a.numero} - ${a.nome || '-'}</strong><br><span style="color:#64748b;">${a.raca} | ${a.local}</span></div>`;
+            });
+            html += '</div>';
+            document.getElementById('conteudoRelatorio').innerHTML = html;
+        }
+
+        function gerarRelatorioPorProprietario() {
+            if (animais.length === 0) return alert('⚠️ Sem dados!');
+            document.getElementById('tituloRelatorio').innerText = '👥 Por Proprietário';
+            document.getElementById('previewRelatorio').style.display = 'block';
+            const porProprietario = {};
+            animais.forEach(a => {
+                if (!porProprietario[a.proprietario]) porProprietario[a.proprietario] = [];
+                porProprietario[a.proprietario].push(a);
+            });
+            let html = '';
+            Object.keys(porProprietario).forEach(prop => {
+                const lista = porProprietario[prop].sort((a, b) => {
+                    const numA = parseInt(a.numero) || 0;
+                    const numB = parseInt(b.numero) || 0;
+                    return numA - numB;
+                });
+                const femeas = lista.filter(a => a.sexo === 'F').length;
+                const machos = lista.filter(a => a.sexo === 'M').length;
+                html += `<div style="background:white; padding:1.5rem; border-radius:0.7rem; margin-bottom:1rem; border-left:4px solid #3b82f6;">
+                    <h3 style="margin-bottom:1rem;">${prop} <span style="color:#64748b; font-size:0.9rem;">(${lista.length} animais - ${femeas}♀ ${machos}♂)</span></h3>`;
+                lista.forEach(a => {
+                    html += `<div style="padding:0.7rem; background:#f8fafc; margin:0.3rem 0; border-radius:0.5rem; display:flex; justify-content:space-between;">
+                        <span><strong>${a.numero}</strong> - ${a.nome || '-'} ${a.sexo === 'F' ? '♀' : '♂'}</span>
+                        <span style="color:#64748b;">${a.raca} | ${a.local}</span>
+                    </div>`;
+                });
+                html += '</div>';
+            });
+            document.getElementById('conteudoRelatorio').innerHTML = html;
+        }
+
+        function gerarRelatorioAmamentando() {
+            const amamentando = animais.filter(a => a.amamentando === true).sort((a, b) => {
+                const numA = parseInt(a.numero) || 0;
+                const numB = parseInt(b.numero) || 0;
+                return numA - numB;
+            });
+            if (amamentando.length === 0) return alert('⚠️ Nenhuma fêmea amamentando!');
+            document.getElementById('tituloRelatorio').innerText = '🍼 Fêmeas Amamentando';
+            document.getElementById('previewRelatorio').style.display = 'block';
+            let html = `<div style="background:white; padding:1.5rem; border-radius:0.7rem;">
+                <div style="background:#fce7f3; padding:1rem; border-radius:0.5rem; margin-bottom:1rem; text-align:center;">
+                    <strong style="font-size:1.5rem; color:#be185d;">${amamentando.length}</strong>
+                    <div style="color:#64748b;">fêmeas em lactação</div>
+                </div>`;
+            amamentando.forEach(a => {
+                const idade = calcularIdade(a.dataNascimento);
+                html += `<div style="padding:1rem; background:#fef3f2; margin:0.5rem 0; border-radius:0.5rem; border-left:4px solid #ec4899;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong style="font-size:1.1rem;">${a.numero} - ${a.nome || '-'}</strong>
+                            <div style="color:#64748b; font-size:0.9rem; margin-top:0.3rem;">
+                                ${a.raca} | ${a.local} | ${a.proprietario}
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="background:#ec4899; color:white; padding:0.3rem 0.8rem; border-radius:1rem; font-size:0.8rem; font-weight:700;">
+                                🍼 Lactante
+                            </div>
+                            <div style="color:#64748b; font-size:0.85rem; margin-top:0.3rem;">Idade: ${idade}</div>
+                        </div>
+                    </div>
+                </div>`;
+            });
+            html += '</div>';
+            document.getElementById('conteudoRelatorio').innerHTML = html;
+        }
+
+        function gerarRelatorioSemFerro() {
+            const semFerro = animais.filter(a => a.semFerro === true).sort((a, b) => {
+                const numA = parseInt(a.numero) || 0;
+                const numB = parseInt(b.numero) || 0;
+                return numA - numB;
+            });
+            if (semFerro.length === 0) return alert('⚠️ Todos os animais estão marcados!');
+            document.getElementById('tituloRelatorio').innerText = '🔓 Animais Sem Ferro';
+            document.getElementById('previewRelatorio').style.display = 'block';
+            let html = `<div style="background:white; padding:1.5rem; border-radius:0.7rem;">
+                <div style="background:#fed7aa; padding:1rem; border-radius:0.5rem; margin-bottom:1rem; text-align:center;">
+                    <strong style="font-size:1.5rem; color:#c2410c;">${semFerro.length}</strong>
+                    <div style="color:#64748b;">animais sem marcação</div>
+                </div>`;
+            semFerro.forEach(a => {
+                const idade = calcularIdade(a.dataNascimento);
+                const sexoBadge = a.sexo === 'F' ? '<span style="background:#fce7f3; color:#be185d; padding:0.3rem 0.6rem; border-radius:0.5rem; font-size:0.8rem; font-weight:700;">♀</span>' : '<span style="background:#dbeafe; color:#1e40af; padding:0.3rem 0.6rem; border-radius:0.5rem; font-size:0.8rem; font-weight:700;">♂</span>';
+                html += `<div style="padding:1rem; background:#fef3f2; margin:0.5rem 0; border-radius:0.5rem; border-left:4px solid #f97316;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong style="font-size:1.1rem;">${a.numero} - ${a.nome || '-'}</strong> ${sexoBadge}
+                            <div style="color:#64748b; font-size:0.9rem; margin-top:0.3rem;">
+                                ${a.raca} | ${a.local} | ${a.proprietario}
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="background:#f97316; color:white; padding:0.3rem 0.8rem; border-radius:1rem; font-size:0.8rem; font-weight:700;">
+                                🔓 Sem Ferro
+                            </div>
+                            <div style="color:#64748b; font-size:0.85rem; margin-top:0.3rem;">Idade: ${idade}</div>
+                        </div>
+                    </div>
+                </div>`;
             });
             html += '</div>';
             document.getElementById('conteudoRelatorio').innerHTML = html;
@@ -719,7 +890,12 @@
 
         function exportarExcel() {
             if (animais.length === 0) return alert('⚠️ Sem dados!');
-            const ws = XLSX.utils.json_to_sheet(animais);
+            const ordenados = [...animais].sort((a, b) => {
+                const numA = parseInt(a.numero) || 0;
+                const numB = parseInt(b.numero) || 0;
+                return numA - numB;
+            });
+            const ws = XLSX.utils.json_to_sheet(ordenados);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Rebanho");
             XLSX.writeFile(wb, "Rebanho_" + Date.now() + ".xlsx");
