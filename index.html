@@ -75,8 +75,16 @@
         .item-box {display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.2rem; background: linear-gradient(135deg, #f8fafc 0%, white 100%); border-radius: 0.7rem; margin-bottom: 0.7rem; border: 2px solid #e2e8f0; transition: all 0.3s;}
         .item-box:hover {border-color: #3b82f6; transform: translateX(5px);}
         .btn-group {display: flex; gap: 0.5rem;}
+        .foto-preview {width: 120px; height: 120px; border-radius: 0.7rem; object-fit: cover; border: 3px solid #e2e8f0; margin-top: 0.5rem;}
+        .foto-container {text-align: center; margin: 1rem 0;}
         @media print {.nav-tabs, .sync-status, .btn {display: none !important;}}
         @media (max-width: 768px) {.main-grid, .grid-2 {grid-template-columns: 1fr;}}
+        
+        /* Modal para visualizar foto */
+        .modal {display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9);}
+        .modal-content {margin: auto; display: block; max-width: 90%; max-height: 90%; margin-top: 2%;}
+        .close-modal {position: absolute; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer;}
+        .close-modal:hover {color: #bbb;}
     </style>
 </head>
 <body>
@@ -124,6 +132,17 @@
                                 <label>Nome</label>
                                 <input type="text" id="nome">
                             </div>
+                            
+                            <!-- SEÇÃO DE FOTO -->
+                            <div class="form-group">
+                                <label>📸 Foto do Animal</label>
+                                <input type="file" id="fotoAnimal" accept="image/*" onchange="previewFoto(event)" style="padding: 0.5rem;">
+                                <div class="foto-container" id="fotoContainer" style="display: none;">
+                                    <img id="fotoPreview" class="foto-preview" onclick="ampliarFoto()">
+                                    <button type="button" class="btn btn-danger btn-small" onclick="removerFoto()" style="margin-top: 0.5rem; width: 100%;">🗑️ Remover Foto</button>
+                                </div>
+                            </div>
+                            
                             <div class="grid-2">
                                 <div class="form-group">
                                     <label>Sexo</label>
@@ -184,6 +203,7 @@
                             <table>
                                 <thead>
                                     <tr>
+                                        <th>📸</th>
                                         <th>🔢 ID</th>
                                         <th>📝 Nome</th>
                                         <th>⚥ Sexo</th>
@@ -213,6 +233,17 @@
                                 <label>Nome do Reprodutor</label>
                                 <input type="text" id="nomeReprodutor" required>
                             </div>
+                            
+                            <!-- FOTO REPRODUTOR -->
+                            <div class="form-group">
+                                <label>📸 Foto do Reprodutor</label>
+                                <input type="file" id="fotoReprodutor" accept="image/*" onchange="previewFotoReprodutor(event)" style="padding: 0.5rem;">
+                                <div class="foto-container" id="fotoContainerReprodutor" style="display: none;">
+                                    <img id="fotoPreviewReprodutor" class="foto-preview" onclick="ampliarFoto()">
+                                    <button type="button" class="btn btn-danger btn-small" onclick="removerFotoReprodutor()" style="margin-top: 0.5rem; width: 100%;">🗑️ Remover Foto</button>
+                                </div>
+                            </div>
+                            
                             <div class="grid-2">
                                 <div class="form-group">
                                     <label>Raça</label>
@@ -273,6 +304,7 @@
                             <table>
                                 <thead>
                                     <tr>
+                                        <th>📸</th>
                                         <th>🔢 Registro</th>
                                         <th>📝 Nome</th>
                                         <th>🐄 Raça</th>
@@ -339,7 +371,7 @@
                         <div class="item-box" onclick="gerarRelatorioCompleto()" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); cursor: pointer;">
                             <div>
                                 <div style="font-size: 1.2rem; font-weight: 700;">📋 Completo</div>
-                                <div style="color: #64748b; font-size: 0.9rem;">Todos os animais</div>
+                                <div style="color: #64748b; font-size: 0.9rem;">Todos os animais + reprodutores</div>
                             </div>
                             <div style="font-size: 2rem;">📊</div>
                         </div>
@@ -389,12 +421,12 @@
                 </div>
             </div>
 
-            <!-- TAB GENEALOGIA -->
+            <!-- TAB GENEALOGIA EXPANDIDA -->
             <div id="tab-genealogy" class="tab-content hidden">
                 <div class="card">
-                    <h2>🌳 Árvore Genealógica</h2>
+                    <h2>🌳 Árvore Genealógica Completa</h2>
                     <select id="animalGenealogia" onchange="mostrarGenealogia()" style="padding:1rem; width:100%; margin-bottom: 1.5rem; border: 2px solid #e2e8f0; border-radius: 0.7rem;"></select>
-                    <div id="arvoreGenealogia" style="padding: 2rem; background: #f8fafc; border-radius: 1rem; min-height: 300px;"></div>
+                    <div id="arvoreGenealogia" style="padding: 2rem; background: #f8fafc; border-radius: 1rem; min-height: 600px;"></div>
                 </div>
             </div>
 
@@ -434,6 +466,12 @@
         </div>
     </div>
 
+    <!-- Modal para ampliar foto -->
+    <div id="modalFoto" class="modal" onclick="fecharModal()">
+        <span class="close-modal">&times;</span>
+        <img class="modal-content" id="imgAmpliada">
+    </div>
+
     <script>
         let animais = [];
         let racas = ['NELORE', 'ANGUS', 'BRAHMAN', 'GIROLAND'];
@@ -443,6 +481,8 @@
         let animalAtualId = null;
         let reprodutorAtualId = null;
         let charts = {};
+        let fotoAtual = null;
+        let fotoAtualReprodutor = null;
 
         window.onload = async () => {
             setTimeout(async () => {
@@ -554,12 +594,68 @@
             }
         }
 
+        // FORMATAÇÃO DE NÚMERO COM MÍNIMO 2 DÍGITOS
+        function formatarNumero(num) {
+            return num.toString().padStart(2, '0');
+        }
+
         function ordenarAnimaisPorNumero(lista) {
             return [...lista].sort((a, b) => {
                 const numA = parseInt(a.numero) || 0;
                 const numB = parseInt(b.numero) || 0;
                 return numA - numB;
             });
+        }
+
+        // FUNÇÕES DE FOTO
+        function previewFoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotoAtual = e.target.result;
+                    document.getElementById('fotoPreview').src = fotoAtual;
+                    document.getElementById('fotoContainer').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removerFoto() {
+            fotoAtual = null;
+            document.getElementById('fotoAnimal').value = '';
+            document.getElementById('fotoContainer').style.display = 'none';
+        }
+
+        function previewFotoReprodutor(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    fotoAtualReprodutor = e.target.result;
+                    document.getElementById('fotoPreviewReprodutor').src = fotoAtualReprodutor;
+                    document.getElementById('fotoContainerReprodutor').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function removerFotoReprodutor() {
+            fotoAtualReprodutor = null;
+            document.getElementById('fotoReprodutor').value = '';
+            document.getElementById('fotoContainerReprodutor').style.display = 'none';
+        }
+
+        function ampliarFoto() {
+            const modal = document.getElementById('modalFoto');
+            const img = document.getElementById('imgAmpliada');
+            const fotoSrc = event.target.src;
+            img.src = fotoSrc;
+            modal.style.display = 'block';
+        }
+
+        function fecharModal() {
+            document.getElementById('modalFoto').style.display = 'none';
         }
 
         async function salvarAnimal(e) {
@@ -578,7 +674,7 @@
             
             const animal = {
                 id: animalAtualId || Date.now().toString(),
-                numero: numero,
+                numero: formatarNumero(numero),
                 brinco: document.getElementById('temBrinco').checked ? document.getElementById('brinco').value : '',
                 nome: document.getElementById('nome').value,
                 sexo: document.getElementById('sexo').value,
@@ -589,7 +685,8 @@
                 pai: document.getElementById('pai').value,
                 mae: document.getElementById('mae').value,
                 semFerro: document.getElementById('semFerro').checked,
-                amamentando: document.getElementById('amamentando').checked
+                amamentando: document.getElementById('amamentando').checked,
+                foto: fotoAtual || ''
             };
 
             if (animalAtualId) {
@@ -649,6 +746,15 @@
             document.getElementById('mae').value = a.mae || '';
             document.getElementById('semFerro').checked = a.semFerro || false;
             document.getElementById('amamentando').checked = a.amamentando || false;
+            
+            // Carregar foto
+            if (a.foto) {
+                fotoAtual = a.foto;
+                document.getElementById('fotoPreview').src = a.foto;
+                document.getElementById('fotoContainer').style.display = 'block';
+            } else {
+                removerFoto();
+            }
         }
 
         function limparForm() {
@@ -656,6 +762,7 @@
             document.getElementById('animalForm').reset();
             document.getElementById('temBrinco').checked = false;
             document.getElementById('brinco').style.display = 'none';
+            removerFoto();
         }
 
         function toggleBrinco() {
@@ -665,43 +772,39 @@
 
         function gerarNumero() {
             const max = animais.length > 0 ? Math.max(...animais.map(a => parseInt(a.numero) || 0)) : 0;
-            document.getElementById('numero').value = (max + 1).toString().padStart(2, '0');
+            document.getElementById('numero').value = formatarNumero(max + 1);
         }
 
         function renderizarTabela(data = animais) {
             const tbody = document.getElementById('tabelaAnimais');
             
-            // Ordenar animais por número
             const animaisOrdenados = ordenarAnimaisPorNumero(data);
-            
-            // Pegar reprodutores ativos
             const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
             
-            // Calcular próximo número fictício
             let proximoNumero = 1;
             if (animais.length > 0) {
                 const maiorNumero = Math.max(...animais.map(a => parseInt(a.numero) || 0));
                 proximoNumero = maiorNumero + 1;
             }
             
-            // Combinar animais + reprodutores com números fictícios
             const todosRegistros = [
                 ...animaisOrdenados,
                 ...reprodutoresAtivos.map((r, index) => ({
                     id: `reprodutor_${r.id}`,
-                    numero: (proximoNumero + index).toString(),
+                    numero: formatarNumero(proximoNumero + index),
                     nome: `${r.nome} (Reprodutor)`,
                     sexo: 'M',
                     raca: r.raca,
                     local: r.local,
                     dataNascimento: r.dataNascimento,
+                    foto: r.foto || '',
                     isReprodutor: true,
                     reprodutorOriginal: r
                 }))
             ];
             
             if (todosRegistros.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum animal cadastrado</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum animal cadastrado</td></tr>';
                 return;
             }
             
@@ -709,7 +812,6 @@
                 const idade = calcularIdade(a.dataNascimento);
                 const sexoBadge = a.sexo === 'F' ? '<span class="badge badge-pink">♀</span>' : '<span class="badge badge-blue">♂</span>';
                 
-                // Determinar cor da linha
                 let corLinha = '';
                 if (a.isReprodutor) {
                     corLinha = 'background: linear-gradient(90deg, #dbeafe 0%, #bfdbfe 100%);';
@@ -727,8 +829,13 @@
                     ? `selecionarReprodutor('${a.reprodutorOriginal.id}')`
                     : `selecionarAnimal('${a.id}')`;
                 
+                const fotoHTML = a.foto 
+                    ? `<img src="${a.foto}" style="width: 40px; height: 40px; border-radius: 0.5rem; object-fit: cover; cursor: pointer;" onclick="event.stopPropagation(); ampliarFotoTabela('${a.foto}')">`
+                    : '<div style="width: 40px; height: 40px; background: #f1f5f9; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">📷</div>';
+                
                 return `
                     <tr onclick="${onclickAction}" style="${corLinha}">
+                        <td>${fotoHTML}</td>
                         <td><strong>${a.numero}</strong></td>
                         <td>${nomeExibir}</td>
                         <td>${sexoBadge}</td>
@@ -738,6 +845,13 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        function ampliarFotoTabela(fotoSrc) {
+            const modal = document.getElementById('modalFoto');
+            const img = document.getElementById('imgAmpliada');
+            img.src = fotoSrc;
+            modal.style.display = 'block';
         }
 
         function calcularIdade(dataNasc) {
@@ -762,20 +876,13 @@
         }
 
         function atualizarSelects() {
-            // Atualizar select de raças
             document.getElementById('raca').innerHTML = racas.map(r => `<option value="${r}">${r}</option>`).join('');
-            
-            // Atualizar select de locais
             document.getElementById('local').innerHTML = locais.map(l => `<option value="${l}">${l}</option>`).join('');
-            
-            // Atualizar select de proprietários
             document.getElementById('proprietario').innerHTML = proprietarios.map(p => `<option value="${p}">${p}</option>`).join('');
             
-            // Atualizar selects de genealogia (pai e mãe)
             const machos = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'M'));
             const femeas = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'F'));
             
-            // Adicionar reprodutores machos ativos à lista de pais
             const reprodutoresMachos = reprodutores
                 .filter(r => r.status === 'Ativo')
                 .sort((a, b) => a.registro.localeCompare(b.registro));
@@ -803,7 +910,6 @@
             document.getElementById('mae').innerHTML = '<option value="">Não informada</option>' + 
                 femeas.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
             
-            // Atualizar select de genealogia (árvore)
             const todosOrdenados = ordenarAnimaisPorNumero(animais);
             document.getElementById('animalGenealogia').innerHTML = '<option value="">Selecione...</option>' + 
                 todosOrdenados.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
@@ -832,12 +938,10 @@
                 return;
             }
             
-            // Atualizar nos animais
             animais.forEach(a => {
                 if (a.raca === racaAntiga) a.raca = racaEditada;
             });
             
-            // Atualizar na lista
             const idx = racas.indexOf(racaAntiga);
             if (idx !== -1) racas[idx] = racaEditada;
             
@@ -848,7 +952,6 @@
         }
 
         async function excluirRaca(raca) {
-            // Verificar se há animais usando esta raça
             const animaisComRaca = animais.filter(a => a.raca === raca);
             if (animaisComRaca.length > 0) {
                 alert(`⚠️ Não é possível excluir! Existem ${animaisComRaca.length} animais com esta raça.`);
@@ -886,12 +989,10 @@
                 return;
             }
             
-            // Atualizar nos animais
             animais.forEach(a => {
                 if (a.local === localAntigo) a.local = localEditado;
             });
             
-            // Atualizar na lista
             const idx = locais.indexOf(localAntigo);
             if (idx !== -1) locais[idx] = localEditado;
             
@@ -902,7 +1003,6 @@
         }
 
         async function excluirLocal(local) {
-            // Verificar se há animais usando este local
             const animaisNoLocal = animais.filter(a => a.local === local);
             const reprodutoresNoLocal = reprodutores.filter(r => r.local === local);
             const totalNoLocal = animaisNoLocal.length + reprodutoresNoLocal.length;
@@ -943,12 +1043,10 @@
                 return;
             }
             
-            // Atualizar nos animais
             animais.forEach(a => {
                 if (a.proprietario === propAntigo) a.proprietario = propEditado;
             });
             
-            // Atualizar na lista
             const idx = proprietarios.indexOf(propAntigo);
             if (idx !== -1) proprietarios[idx] = propEditado;
             
@@ -959,7 +1057,6 @@
         }
 
         async function excluirProprietario(prop) {
-            // Verificar se há animais deste proprietário
             const animaisDoProp = animais.filter(a => a.proprietario === prop);
             if (animaisDoProp.length > 0) {
                 alert(`⚠️ Não é possível excluir! Existem ${animaisDoProp.length} animais deste proprietário.`);
@@ -1071,37 +1168,71 @@
             });
         }
 
+        // RELATÓRIOS COM REPRODUTORES ATIVOS
         function gerarRelatorioCompleto() {
-            if (animais.length === 0) return alert('⚠️ Sem dados!');
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const total = animais.length + reprodutoresAtivos.length;
+            
+            if (total === 0) return alert('⚠️ Sem dados!');
+            
             document.getElementById('tituloRelatorio').innerText = '📋 Relatório Completo';
             document.getElementById('previewRelatorio').style.display = 'block';
             
             const ordenados = ordenarAnimaisPorNumero(animais);
             
-            let html = '<table style="width:100%; background:white; border-radius:0.7rem;"><thead><tr style="background:#f1f5f9;"><th style="padding:1rem;">Nº</th><th style="padding:1rem;">Nome</th><th style="padding:1rem;">Sexo</th><th style="padding:1rem;">Raça</th><th style="padding:1rem;">Local</th></tr></thead><tbody>';
+            let html = '<table style="width:100%; background:white; border-radius:0.7rem;"><thead><tr style="background:#f1f5f9;"><th style="padding:1rem;">Nº</th><th style="padding:1rem;">Nome</th><th style="padding:1rem;">Sexo</th><th style="padding:1rem;">Raça</th><th style="padding:1rem;">Local</th><th style="padding:1rem;">Tipo</th></tr></thead><tbody>';
+            
             ordenados.forEach(a => {
-                html += `<tr><td style="padding:1rem;"><strong>${a.numero}</strong></td><td style="padding:1rem;">${a.nome || '-'}</td><td style="padding:1rem;">${a.sexo === 'F' ? '♀' : '♂'}</td><td style="padding:1rem;">${a.raca}</td><td style="padding:1rem;">${a.local}</td></tr>`;
+                html += `<tr><td style="padding:1rem;"><strong>${a.numero}</strong></td><td style="padding:1rem;">${a.nome || '-'}</td><td style="padding:1rem;">${a.sexo === 'F' ? '♀' : '♂'}</td><td style="padding:1rem;">${a.raca}</td><td style="padding:1rem;">${a.local}</td><td style="padding:1rem;">🐮 Rebanho</td></tr>`;
             });
+            
+            reprodutoresAtivos.forEach(r => {
+                html += `<tr style="background:#e0f2fe;"><td style="padding:1rem;"><strong>${r.registro}</strong></td><td style="padding:1rem;">${r.nome}</td><td style="padding:1rem;">♂</td><td style="padding:1rem;">${r.raca}</td><td style="padding:1rem;">${r.local}</td><td style="padding:1rem;">🐂 Reprodutor (${r.tipo})</td></tr>`;
+            });
+            
             html += '</tbody></table>';
+            html += `<div style="margin-top:1rem; padding:1rem; background:#f1f5f9; border-radius:0.5rem;"><strong>Total:</strong> ${total} (${animais.length} animais + ${reprodutoresAtivos.length} reprodutores ativos)</div>`;
+            
             document.getElementById('conteudoRelatorio').innerHTML = html;
         }
 
         function gerarRelatorioPorRaca() {
-            if (animais.length === 0) return alert('⚠️ Sem dados!');
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const total = animais.length + reprodutoresAtivos.length;
+            
+            if (total === 0) return alert('⚠️ Sem dados!');
+            
             document.getElementById('tituloRelatorio').innerText = '🐄 Por Raça';
             document.getElementById('previewRelatorio').style.display = 'block';
+            
             const porRaca = {};
+            
             animais.forEach(a => {
-                if (!porRaca[a.raca]) porRaca[a.raca] = [];
-                porRaca[a.raca].push(a);
+                if (!porRaca[a.raca]) porRaca[a.raca] = { animais: [], reprodutores: [] };
+                porRaca[a.raca].animais.push(a);
             });
+            
+            reprodutoresAtivos.forEach(r => {
+                if (!porRaca[r.raca]) porRaca[r.raca] = { animais: [], reprodutores: [] };
+                porRaca[r.raca].reprodutores.push(r);
+            });
+            
             let html = '';
-            Object.keys(porRaca).forEach(raca => {
-                const ordenados = ordenarAnimaisPorNumero(porRaca[raca]);
-                html += `<div style="background:white; padding:1.5rem; border-radius:0.7rem; margin-bottom:1rem;"><h3>${raca} (${ordenados.length})</h3>`;
+            Object.keys(porRaca).sort().forEach(raca => {
+                const dados = porRaca[raca];
+                const ordenados = ordenarAnimaisPorNumero(dados.animais);
+                const totalRaca = dados.animais.length + dados.reprodutores.length;
+                
+                html += `<div style="background:white; padding:1.5rem; border-radius:0.7rem; margin-bottom:1rem;"><h3>${raca} (${totalRaca} - ${dados.animais.length} animais + ${dados.reprodutores.length} reprodutores)</h3>`;
+                
                 ordenados.forEach(a => {
                     html += `<div style="padding:0.5rem; background:#f8fafc; margin:0.3rem 0; border-radius:0.5rem;"><strong>${a.numero}</strong> - ${a.nome || '-'} (${a.sexo === 'F' ? '♀' : '♂'})</div>`;
                 });
+                
+                dados.reprodutores.forEach(r => {
+                    html += `<div style="padding:0.5rem; background:#e0f2fe; margin:0.3rem 0; border-radius:0.5rem; border-left:3px solid #3b82f6;"><strong>${r.registro}</strong> - ${r.nome} (🐂 Reprodutor ${r.tipo})</div>`;
+                });
+                
                 html += '</div>';
             });
             document.getElementById('conteudoRelatorio').innerHTML = html;
@@ -1121,27 +1252,50 @@
         }
 
         function gerarRelatorioPorProprietario() {
-            if (animais.length === 0) return alert('⚠️ Sem dados!');
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const total = animais.length + reprodutoresAtivos.length;
+            
+            if (total === 0) return alert('⚠️ Sem dados!');
+            
             document.getElementById('tituloRelatorio').innerText = '👥 Por Proprietário';
             document.getElementById('previewRelatorio').style.display = 'block';
+            
             const porProprietario = {};
             animais.forEach(a => {
-                if (!porProprietario[a.proprietario]) porProprietario[a.proprietario] = [];
-                porProprietario[a.proprietario].push(a);
+                if (!porProprietario[a.proprietario]) porProprietario[a.proprietario] = { animais: [], reprodutores: [] };
+                porProprietario[a.proprietario].animais.push(a);
             });
+            
+            reprodutoresAtivos.forEach(r => {
+                if (!porProprietario[r.proprietario]) porProprietario[r.proprietario] = { animais: [], reprodutores: [] };
+                porProprietario[r.proprietario].reprodutores.push(r);
+            });
+            
             let html = '';
             Object.keys(porProprietario).forEach(prop => {
-                const lista = ordenarAnimaisPorNumero(porProprietario[prop]);
+                const dados = porProprietario[prop];
+                const lista = ordenarAnimaisPorNumero(dados.animais);
                 const femeas = lista.filter(a => a.sexo === 'F').length;
                 const machos = lista.filter(a => a.sexo === 'M').length;
+                const totalProp = dados.animais.length + dados.reprodutores.length;
+                
                 html += `<div style="background:white; padding:1.5rem; border-radius:0.7rem; margin-bottom:1rem; border-left:4px solid #3b82f6;">
-                    <h3 style="margin-bottom:1rem;">${prop} <span style="color:#64748b; font-size:0.9rem;">(${lista.length} animais - ${femeas}♀ ${machos}♂)</span></h3>`;
+                    <h3 style="margin-bottom:1rem;">${prop} <span style="color:#64748b; font-size:0.9rem;">(${totalProp} - ${dados.animais.length} animais [${femeas}♀ ${machos}♂] + ${dados.reprodutores.length} reprodutores)</span></h3>`;
+                
                 lista.forEach(a => {
                     html += `<div style="padding:0.7rem; background:#f8fafc; margin:0.3rem 0; border-radius:0.5rem; display:flex; justify-content:space-between;">
                         <span><strong>${a.numero}</strong> - ${a.nome || '-'} ${a.sexo === 'F' ? '♀' : '♂'}</span>
                         <span style="color:#64748b;">${a.raca} | ${a.local}</span>
                     </div>`;
                 });
+                
+                dados.reprodutores.forEach(r => {
+                    html += `<div style="padding:0.7rem; background:#e0f2fe; margin:0.3rem 0; border-radius:0.5rem; display:flex; justify-content:space-between; border-left:3px solid #3b82f6;">
+                        <span><strong>${r.registro}</strong> - ${r.nome} 🐂</span>
+                        <span style="color:#64748b;">${r.raca} | ${r.local} | ${r.tipo}</span>
+                    </div>`;
+                });
+                
                 html += '</div>';
             });
             document.getElementById('conteudoRelatorio').innerHTML = html;
@@ -1218,6 +1372,7 @@
             document.getElementById('previewRelatorio').style.display = 'none';
         }
 
+        // GENEALOGIA EXPANDIDA COM AVÓS E BISAVÓS
         function mostrarGenealogia() {
             const id = document.getElementById('animalGenealogia').value;
             const a = animais.find(x => x.id === id);
@@ -1226,87 +1381,124 @@
                 return;
             }
             
-            // Buscar informações do pai e da mãe
+            // Buscar pai
             let pai = null;
-            let paiTexto = 'Não registrado';
+            let paiInfo = { texto: 'Não registrado', dados: null };
             
             if (a.pai) {
                 if (a.pai.startsWith('reprodutor_')) {
                     const reprodutorId = a.pai.replace('reprodutor_', '');
                     pai = reprodutores.find(x => x.id === reprodutorId);
                     if (pai) {
-                        paiTexto = `
-                            <div style="font-size:1.3rem; font-weight:800; margin-bottom:0.5rem;">🐂 ${pai.registro} - ${pai.nome}</div>
-                            <div style="font-size:0.9rem; opacity:0.9; margin-top:0.3rem;">
-                                <div>📋 <strong>Raça:</strong> ${pai.raca}</div>
-                                <div>🏷️ <strong>Tipo:</strong> ${pai.tipo}</div>
-                                <div>📍 <strong>Local:</strong> ${pai.local}</div>
-                                ${pai.origem ? `<div>🏢 <strong>Origem:</strong> ${pai.origem}</div>` : ''}
-                                ${pai.dataNascimento ? `<div>🎂 <strong>Nascimento:</strong> ${new Date(pai.dataNascimento).toLocaleDateString('pt-BR')}</div>` : ''}
-                                <div style="margin-top:0.5rem; padding:0.4rem 0.8rem; background:rgba(255,255,255,0.3); border-radius:0.5rem; display:inline-block;">
-                                    <strong>👤 ${pai.proprietario}</strong>
-                                </div>
-                            </div>
-                        `;
+                        paiInfo.texto = `🐂 ${pai.registro} - ${pai.nome}<br><span style="font-size:0.85rem;">${pai.raca} | ${pai.tipo}</span>`;
+                        paiInfo.dados = pai;
                     }
                 } else {
                     pai = animais.find(x => x.id === a.pai);
                     if (pai) {
-                        paiTexto = `
-                            <div style="font-size:1.3rem; font-weight:800;">${pai.numero} - ${pai.nome || 'Sem nome'}</div>
-                            <div style="font-size:0.9rem; opacity:0.9; margin-top:0.3rem;">
-                                <div>📋 <strong>Raça:</strong> ${pai.raca}</div>
-                                <div>📍 <strong>Local:</strong> ${pai.local}</div>
-                                ${pai.dataNascimento ? `<div>🎂 <strong>Nascimento:</strong> ${new Date(pai.dataNascimento).toLocaleDateString('pt-BR')}</div>` : ''}
-                            </div>
-                        `;
+                        paiInfo.texto = `${pai.numero} - ${pai.nome || 'Sem nome'}<br><span style="font-size:0.85rem;">${pai.raca}</span>`;
+                        paiInfo.dados = pai;
                     }
                 }
-            } else {
-                paiTexto = '<div style="font-size:1.3rem; font-weight:800; opacity:0.6;">Não registrado</div>';
             }
             
+            // Buscar mãe
             const mae = a.mae ? animais.find(x => x.id === a.mae) : null;
-            let maeTexto = '';
+            let maeInfo = { texto: 'Não registrada', dados: null };
             if (mae) {
-                maeTexto = `
-                    <div style="font-size:1.3rem; font-weight:800;">${mae.numero} - ${mae.nome || 'Sem nome'}</div>
-                    <div style="font-size:0.9rem; opacity:0.9; margin-top:0.3rem;">
-                        <div>📋 <strong>Raça:</strong> ${mae.raca}</div>
-                        <div>📍 <strong>Local:</strong> ${mae.local}</div>
-                        ${mae.dataNascimento ? `<div>🎂 <strong>Nascimento:</strong> ${new Date(mae.dataNascimento).toLocaleDateString('pt-BR')}</div>` : ''}
-                    </div>
-                `;
-            } else {
-                maeTexto = '<div style="font-size:1.3rem; font-weight:800; opacity:0.6;">Não registrada</div>';
+                maeInfo.texto = `${mae.numero} - ${mae.nome || 'Sem nome'}<br><span style="font-size:0.85rem;">${mae.raca}</span>`;
+                maeInfo.dados = mae;
+            }
+            
+            // Buscar avós paternos
+            let avoPaterno = { texto: 'Não registrado' };
+            let avoaPaterna = { texto: 'Não registrada' };
+            
+            if (paiInfo.dados && !paiInfo.dados.registro) { // Se pai é animal, não reprodutor
+                if (paiInfo.dados.pai) {
+                    if (paiInfo.dados.pai.startsWith('reprodutor_')) {
+                        const repId = paiInfo.dados.pai.replace('reprodutor_', '');
+                        const rep = reprodutores.find(x => x.id === repId);
+                        if (rep) avoPaterno.texto = `🐂 ${rep.registro} - ${rep.nome}`;
+                    } else {
+                        const av = animais.find(x => x.id === paiInfo.dados.pai);
+                        if (av) avoPaterno.texto = `${av.numero} - ${av.nome || 'Sem nome'}`;
+                    }
+                }
+                if (paiInfo.dados.mae) {
+                    const av = animais.find(x => x.id === paiInfo.dados.mae);
+                    if (av) avoaPaterna.texto = `${av.numero} - ${av.nome || 'Sem nome'}`;
+                }
+            }
+            
+            // Buscar avós maternos
+            let avoMaterno = { texto: 'Não registrado' };
+            let avoaMaterna = { texto: 'Não registrada' };
+            
+            if (maeInfo.dados) {
+                if (maeInfo.dados.pai) {
+                    if (maeInfo.dados.pai.startsWith('reprodutor_')) {
+                        const repId = maeInfo.dados.pai.replace('reprodutor_', '');
+                        const rep = reprodutores.find(x => x.id === repId);
+                        if (rep) avoMaterno.texto = `🐂 ${rep.registro} - ${rep.nome}`;
+                    } else {
+                        const av = animais.find(x => x.id === maeInfo.dados.pai);
+                        if (av) avoMaterno.texto = `${av.numero} - ${av.nome || 'Sem nome'}`;
+                    }
+                }
+                if (maeInfo.dados.mae) {
+                    const av = animais.find(x => x.id === maeInfo.dados.mae);
+                    if (av) avoaMaterna.texto = `${av.numero} - ${av.nome || 'Sem nome'}`;
+                }
             }
             
             document.getElementById('arvoreGenealogia').innerHTML = `
                 <div style="text-align:center;">
-                    <div style="background:linear-gradient(135deg, #3b82f6, #2563eb); color:white; padding:2.5rem; border-radius:1.2rem; display:inline-block; min-width:300px; margin-bottom:3rem; box-shadow:0 10px 30px rgba(59,130,246,0.3);">
-                        <div style="font-size:2.5rem; font-weight:800; margin-bottom:0.5rem;">${a.numero}</div>
-                        <div style="font-size:1.4rem; margin-bottom:0.8rem;">${a.nome || 'Sem nome'}</div>
-                        <div style="font-size:1rem; opacity:0.9; margin-top:0.5rem;">
-                            <div>${a.sexo === 'F' ? '♀' : '♂'} ${a.raca}</div>
-                            <div style="margin-top:0.3rem;">📍 ${a.local}</div>
-                            ${a.dataNascimento ? `<div style="margin-top:0.3rem;">🎂 ${new Date(a.dataNascimento).toLocaleDateString('pt-BR')}</div>` : ''}
-                            <div style="margin-top:0.5rem; padding:0.3rem 0.8rem; background:rgba(255,255,255,0.2); border-radius:0.5rem; display:inline-block;">
-                                👤 ${a.proprietario}
+                    <!-- ANIMAL PRINCIPAL -->
+                    <div style="background:linear-gradient(135deg, #3b82f6, #2563eb); color:white; padding:2rem; border-radius:1.2rem; display:inline-block; min-width:300px; margin-bottom:2rem; box-shadow:0 10px 30px rgba(59,130,246,0.3);">
+                        <div style="font-size:2rem; font-weight:800;">${a.numero}</div>
+                        <div style="font-size:1.2rem; margin:0.5rem 0;">${a.nome || 'Sem nome'}</div>
+                        <div style="font-size:0.9rem; opacity:0.9;">${a.sexo === 'F' ? '♀' : '♂'} ${a.raca} | ${a.local}</div>
+                    </div>
+                    
+                    <!-- PAIS -->
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; max-width:1000px; margin:0 auto 2rem;">
+                        <div style="padding:1.5rem; background:#dbeafe; border-radius:1rem; border:3px solid #3b82f6;">
+                            <div style="font-weight:700; margin-bottom:0.8rem; color:#1e40af;">🐂 PAI</div>
+                            <div style="color:#1e293b;">${paiInfo.texto}</div>
+                        </div>
+                        <div style="padding:1.5rem; background:#fce7f3; border-radius:1rem; border:3px solid #ec4899;">
+                            <div style="font-weight:700; margin-bottom:0.8rem; color:#be185d;">🐄 MÃE</div>
+                            <div style="color:#1e293b;">${maeInfo.texto}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- AVÓS -->
+                    <div style="margin-bottom:1.5rem;">
+                        <h3 style="margin-bottom:1rem; color:#475569;">👴👵 AVÓS</h3>
+                        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem; max-width:1200px; margin:0 auto;">
+                            <div style="padding:1rem; background:#e0f2fe; border-radius:0.8rem; border:2px solid #7dd3fc;">
+                                <div style="font-size:0.8rem; font-weight:700; color:#0369a1; margin-bottom:0.5rem;">Avô Paterno</div>
+                                <div style="font-size:0.85rem; color:#1e293b;">${avoPaterno.texto}</div>
+                            </div>
+                            <div style="padding:1rem; background:#fce7f3; border-radius:0.8rem; border:2px solid #f9a8d4;">
+                                <div style="font-size:0.8rem; font-weight:700; color:#be185d; margin-bottom:0.5rem;">Avó Paterna</div>
+                                <div style="font-size:0.85rem; color:#1e293b;">${avoaPaterna.texto}</div>
+                            </div>
+                            <div style="padding:1rem; background:#e0f2fe; border-radius:0.8rem; border:2px solid #7dd3fc;">
+                                <div style="font-size:0.8rem; font-weight:700; color:#0369a1; margin-bottom:0.5rem;">Avô Materno</div>
+                                <div style="font-size:0.85rem; color:#1e293b;">${avoMaterno.texto}</div>
+                            </div>
+                            <div style="padding:1rem; background:#fce7f3; border-radius:0.8rem; border:2px solid #f9a8d4;">
+                                <div style="font-size:0.8rem; font-weight:700; color:#be185d; margin-bottom:0.5rem;">Avó Materna</div>
+                                <div style="font-size:0.85rem; color:#1e293b;">${avoaMaterna.texto}</div>
                             </div>
                         </div>
                     </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; max-width:900px; margin:0 auto;">
-                        <div style="padding:2rem; background:#dbeafe; border-radius:1.2rem; border:3px solid #3b82f6; min-height:200px; box-shadow:0 4px 12px rgba(59,130,246,0.2);">
-                            <div style="font-size:1.1rem; color:#1e40af; font-weight:700; margin-bottom:1rem; text-align:left;">🐂 PAI</div>
-                            <div style="text-align:left; color:#1e293b;">
-                                ${paiTexto}
-                            </div>
-                        </div>
-                        <div style="padding:2rem; background:#fce7f3; border-radius:1.2rem; border:3px solid #ec4899; min-height:200px; box-shadow:0 4px 12px rgba(236,72,153,0.2);">
-                            <div style="font-size:1.1rem; color:#be185d; font-weight:700; margin-bottom:1rem; text-align:left;">🐄 MÃE</div>
-                            <div style="text-align:left; color:#1e293b;">
-                                ${maeTexto}
-                            </div>
+                    
+                    <div style="margin-top:2rem; padding:1rem; background:#fef3c7; border-radius:0.8rem; max-width:1200px; margin:2rem auto 0;">
+                        <div style="font-size:0.85rem; color:#92400e;">
+                            💡 <strong>Observação:</strong> Para visualizar bisavós, cadastre os pais dos avós na ficha de cada animal correspondente.
                         </div>
                     </div>
                 </div>
@@ -1317,7 +1509,6 @@
             if (animais.length === 0) return alert('⚠️ Sem dados!');
             const ordenados = ordenarAnimaisPorNumero(animais);
             
-            // Preparar dados para Excel
             const dadosExcel = ordenados.map(a => {
                 let paiTexto = '-';
                 if (a.pai) {
@@ -1393,7 +1584,8 @@
                 origem: document.getElementById('origemReprodutor').value.trim(),
                 dataNascimento: document.getElementById('nascReprodutor').value,
                 status: document.getElementById('statusReprodutor').value,
-                observacoes: document.getElementById('obsReprodutor').value.trim()
+                observacoes: document.getElementById('obsReprodutor').value.trim(),
+                foto: fotoAtualReprodutor || ''
             };
 
             if (reprodutorAtualId) {
@@ -1407,6 +1599,7 @@
 
             await salvarDadosOnline();
             renderizarTabelaReprodutores();
+            atualizarSelects();
             limparFormReprodutor();
             alert("✅ Reprodutor salvo com sucesso!");
         }
@@ -1414,6 +1607,7 @@
         function limparFormReprodutor() {
             reprodutorAtualId = null;
             document.getElementById('reprodutorForm').reset();
+            removerFotoReprodutor();
         }
 
         function renderizarTabelaReprodutores(data = reprodutores) {
@@ -1422,7 +1616,7 @@
             const ordenados = [...data].sort((a, b) => a.registro.localeCompare(b.registro));
             
             if (ordenados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum reprodutor cadastrado</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum reprodutor cadastrado</td></tr>';
             } else {
                 tbody.innerHTML = ordenados.map(r => {
                     const statusBadge = r.status === 'Ativo' 
@@ -1435,8 +1629,13 @@
                         ? '<span class="badge badge-blue">🐂 Touro</span>'
                         : '<span class="badge badge-pink">💉 Sêmen</span>';
                     
+                    const fotoHTML = r.foto 
+                        ? `<img src="${r.foto}" style="width: 40px; height: 40px; border-radius: 0.5rem; object-fit: cover; cursor: pointer;" onclick="event.stopPropagation(); ampliarFotoTabela('${r.foto}')">`
+                        : '<div style="width: 40px; height: 40px; background: #f1f5f9; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">📷</div>';
+                    
                     return `
                         <tr onclick="selecionarReprodutor('${r.id}')">
+                            <td>${fotoHTML}</td>
                             <td><strong>${r.registro}</strong></td>
                             <td>${r.nome}</td>
                             <td>${r.raca}</td>
@@ -1459,6 +1658,15 @@
             const r = reprodutores.find(x => x.id === id);
             if (!r) return;
             
+            // Trocar para aba de reprodutores se não estiver nela
+            const tabReprodutor = document.getElementById('tab-reprodutores');
+            if (tabReprodutor.classList.contains('hidden')) {
+                document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                tabReprodutor.classList.remove('hidden');
+                document.querySelector('[onclick="showTab(\'reprodutores\')"]').classList.add('active');
+            }
+            
             reprodutorAtualId = id;
             document.getElementById('regReprodutor').value = r.registro;
             document.getElementById('nomeReprodutor').value = r.nome;
@@ -1470,6 +1678,15 @@
             document.getElementById('nascReprodutor').value = r.dataNascimento || '';
             document.getElementById('statusReprodutor').value = r.status;
             document.getElementById('obsReprodutor').value = r.observacoes || '';
+            
+            // Carregar foto
+            if (r.foto) {
+                fotoAtualReprodutor = r.foto;
+                document.getElementById('fotoPreviewReprodutor').src = r.foto;
+                document.getElementById('fotoContainerReprodutor').style.display = 'block';
+            } else {
+                removerFotoReprodutor();
+            }
         }
 
         async function excluirReprodutor() {
@@ -1481,6 +1698,7 @@
                 reprodutores = reprodutores.filter(r => r.id !== reprodutorAtualId);
                 await salvarDadosOnline();
                 renderizarTabelaReprodutores();
+                atualizarSelects();
                 limparFormReprodutor();
             }
         }
