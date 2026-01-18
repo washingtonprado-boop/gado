@@ -3,45 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Controle de Animais Pro</title>
+    <title>SisGado Pro - Sistema Premium</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* CSS Unificado */
-        * {margin: 0; padding: 0; box-sizing: border-box;}
-        body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; min-height: 100vh;}
-        .app-container {background: #f8fafc; min-height: 100vh;}
-        .header {background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative;}
-        .header h1 {font-size: 2rem; margin-bottom: 0.5rem;}
-        .sync-status {position: absolute; top: 2rem; right: 2rem; background: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.875rem;}
-        .nav-tabs {background: white; border-bottom: 2px solid #e2e8f0; padding: 0 2rem; display: flex; gap: 0.5rem; overflow-x: auto; sticky; top: 0; z-index: 100;}
-        .nav-tab {padding: 1.2rem 1.5rem; border: none; background: none; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #64748b; border-bottom: 3px solid transparent; transition: 0.3s; white-space: nowrap;}
-        .nav-tab:hover {color: #3b82f6;}
-        .nav-tab.active {color: #3b82f6; border-bottom-color: #3b82f6;}
-        .container {max-width: 1600px; margin: 0 auto; padding: 2rem;}
-        .main-grid {display: grid; grid-template-columns: 400px 1fr; gap: 2rem;}
-        .card {background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 2rem;}
-        .form-group {margin-bottom: 1rem;}
-        .form-group label {display: block; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.4rem;}
-        .form-group input, .form-group select, .form-group textarea {width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.9rem;}
-        .btn {padding: 0.7rem 1.2rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;}
-        .btn-primary {background: #3b82f6; color: white;}
-        .btn-success {background: #22c55e; color: white;}
-        .btn-danger {background: #ef4444; color: white;}
-        .btn-warning {background: #f59e0b; color: white;}
-        .btn-secondary {background: #64748b; color: white;}
-        .grid-2 {display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;}
-        .checkbox-group {display: flex; gap: 1rem; margin: 1rem 0; padding: 1rem; background: #f8fafc; border-radius: 0.5rem;}
-        table {width: 100%; border-collapse: collapse;}
-        th {background: #f8fafc; padding: 1rem; text-align: left; font-size: 0.75rem; color: #64748b; border-bottom: 2px solid #e2e8f0;}
-        td {padding: 1rem; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;}
-        tr:hover {background: #f1f5f9; cursor: pointer;}
-        .hidden {display: none;}
-        .stats-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;}
-        .stat-card {background: white; padding: 1.5rem; border-radius: 1rem; text-align: center; border-bottom: 4px solid #3b82f6;}
-        .chart-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;}
-        .item-box {display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: #f8fafc; border-radius: 0.5rem; margin-bottom: 0.5rem; border: 1px solid #e2e8f0;}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            background: #f8fafc;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 2.5rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            position: relative;
+            border-bottom: 3px solid #3b82f6;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+        
+        .sync-status {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(59, 130, 246, 0.2);
+            padding: 0.7rem 1.5rem;
+            border-radius: 2rem;
+            font-size: 0.875rem;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        .nav-tabs {
+            background: white;
+            border-bottom: 2px solid #e2e8f0;
+            padding: 0 2rem;
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .nav-tab {
+            padding: 1.2rem 1.5rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .nav-tab:hover {
+            color: #3b82f6;
+            transform: translateY(-2px);
+        }
+        
+        .nav-tab.active {
+            color: #3b82f6;
+            border-bottom-color: #3b82f6;
+            background: linear-gradient(180deg, transparent 0%, rgba(59, 130, 246, 0.05) 100%);
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 2rem;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 1.2rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s;
+        }
+        
+        .card:hover {
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+        
+        .card h2, .card h3 {
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+            font-weight: 700;
+        }
+        
+        .form-group {
+            margin-bottom: 1.2rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.7rem;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            background: #f8fafc;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+            color: white;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            gap: 1.5rem;
+            margin: 1rem 0;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+            border-radius: 0.7rem;
+            border: 2px dashed #cbd5e1;
+        }
+        
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+            padding: 1.2rem;
+            text-align: left;
+            font-size: 0.75rem;
+            color: #475569;
+            border-bottom: 2px solid #cbd5e1;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        td {
+            padding: 1.2rem;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+        }
+        
+        tr:hover {
+            background: linear-gradient(90deg, #f1f5f9 0%, #e0f2fe 100%);
+            cursor: pointer;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, white 0%, #f8fafc 100%);
+            padding: 2rem;
+            border-radius: 1.2rem;
+            text-align: center;
+            border-bottom: 4px solid #3b82f6;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            transition: all 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+        }
+        
+        .stat-card h3 {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
+        }
+        
+        .badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .badge-blue {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .badge-pink {
+            background: #fce7f3;
+            color: #be185d;
+        }
+        
+        .item-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.2rem;
+            background: linear-gradient(135deg, #f8fafc 0%, white 100%);
+            border-radius: 0.7rem;
+            margin-bottom: 0.7rem;
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s;
+        }
+        
+        .item-box:hover {
+            border-color: #3b82f6;
+            transform: translateX(5px);
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -50,7 +334,7 @@
             <h1>🐄 SisGado Pro</h1>
             <p>Gestão Pecuária Inteligente 2026</p>
             <div class="sync-status">
-                <span id="syncStatus">Dados Locais (Offline)</span>
+                <span>💾 Dados Locais</span>
             </div>
         </div>
 
@@ -66,16 +350,17 @@
         </div>
 
         <div class="container">
+            <!-- TAB ANIMAIS -->
             <div id="tab-animals" class="tab-content">
                 <div class="main-grid">
                     <div class="card">
-                        <h2>Ficha do Animal</h2>
+                        <h2>📋 Ficha do Animal</h2>
                         <form id="animalForm" onsubmit="salvarAnimal(event)">
                             <div class="form-group">
                                 <label>Número/ID</label>
                                 <div style="display:flex; gap:5px">
                                     <input type="text" id="numero" required>
-                                    <button type="button" class="btn btn-secondary" onclick="gerarNumero()">Aut</button>
+                                    <button type="button" class="btn btn-secondary" onclick="gerarNumero()">Auto</button>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -125,26 +410,34 @@
                                 <label><input type="checkbox" id="semFerro"> Sem Ferro</label>
                                 <label><input type="checkbox" id="amamentando"> Amamentando</label>
                             </div>
-                            <div class="btn-group" style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                <button type="submit" class="btn btn-primary">Salvar</button>
-                                <button type="button" class="btn btn-warning" onclick="limparForm()">Limpar</button>
-                                <button type="button" class="btn btn-danger" onclick="excluirAnimal()" style="grid-column: span 2;">Excluir</button>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button type="submit" class="btn btn-primary">💾 Salvar</button>
+                                <button type="button" class="btn btn-warning" onclick="limparForm()">🔄 Limpar</button>
+                                <button type="button" class="btn btn-danger" onclick="excluirAnimal()" style="grid-column: span 2;">🗑️ Excluir</button>
                             </div>
                         </form>
                     </div>
 
                     <div class="card">
-                        <div style="display:flex; justify-content: space-between; margin-bottom: 1rem;">
-                            <input type="text" placeholder="Pesquisar..." style="padding:0.5rem; width: 60%;" onkeyup="pesquisarAnimais(this.value)">
-                            <div style="display:flex; gap:5px;">
-                                <button class="btn btn-success" onclick="exportarExcel()">Excel</button>
-                                <button class="btn btn-danger" onclick="exportarPDF()">PDF</button>
+                        <div style="display:flex; justify-content: space-between; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap;">
+                            <input type="text" placeholder="🔍 Pesquisar..." style="flex: 1; min-width: 200px; padding: 0.8rem; border: 2px solid #e2e8f0; border-radius: 0.7rem;" onkeyup="pesquisarAnimais(this.value)">
+                            <div style="display:flex; gap:8px;">
+                                <button class="btn btn-success" onclick="exportarExcel()">📊 Excel</button>
+                                <button class="btn btn-danger" onclick="exportarPDF()">📄 PDF</button>
                             </div>
                         </div>
                         <div style="overflow-x: auto;">
                             <table>
                                 <thead>
-                                    <tr><th>ID</th><th>Brinco</th><th>Nome</th><th>Sexo</th><th>Raça</th><th>Local</th></tr>
+                                    <tr>
+                                        <th>🔢 ID</th>
+                                        <th>🏷️ Brinco</th>
+                                        <th>📝 Nome</th>
+                                        <th>⚥ Sexo</th>
+                                        <th>🐄 Raça</th>
+                                        <th>📍 Local</th>
+                                        <th>🎂 Idade</th>
+                                    </tr>
                                 </thead>
                                 <tbody id="tabelaAnimais"></tbody>
                             </table>
@@ -153,11 +446,15 @@
                 </div>
             </div>
 
+            <!-- TAB REPRODUTORES -->
             <div id="tab-reprodutores" class="tab-content hidden">
                 <div class="card">
-                    <h2>Cadastrar Touro/Sêmen Externo</h2>
+                    <h2>🐂 Cadastrar Touro/Sêmen Externo</h2>
                     <div class="grid-2">
-                        <div class="form-group"><label>Nome</label><input type="text" id="nomeReprodutor"></div>
+                        <div class="form-group">
+                            <label>Nome</label>
+                            <input type="text" id="nomeReprodutor">
+                        </div>
                         <div class="form-group">
                             <label>Tipo</label>
                             <select id="tipoReprodutor">
@@ -166,73 +463,109 @@
                             </select>
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="salvarReprodutor()">Adicionar Reprodutor</button>
-                    <div id="listaReprodutores" style="margin-top: 1rem;"></div>
+                    <button class="btn btn-primary" onclick="salvarReprodutor()">➕ Adicionar Reprodutor</button>
+                    <div id="listaReprodutores" style="margin-top: 1.5rem;"></div>
                 </div>
             </div>
 
+            <!-- TAB DASHBOARD -->
             <div id="tab-reports" class="tab-content hidden">
                 <div class="stats-grid">
-                    <div class="stat-card"><h3>Total</h3><div id="totalAnimais" style="font-size: 2rem; font-weight: bold;">0</div></div>
-                    <div class="stat-card"><h3>Fêmeas</h3><div id="totalFemeas" style="font-size: 2rem; font-weight: bold; color: #ec4899;">0</div></div>
-                    <div class="stat-card"><h3>Machos</h3><div id="totalMachos" style="font-size: 2rem; font-weight: bold; color: #3b82f6;">0</div></div>
+                    <div class="stat-card" style="border-bottom-color: #3b82f6;">
+                        <h3>🐮 Total</h3>
+                        <div id="totalAnimais" style="font-size: 3rem; font-weight: 800; color: #1e293b;">0</div>
+                        <p style="color: #64748b; margin-top: 0.5rem;">Rebanho completo</p>
+                    </div>
+                    <div class="stat-card" style="border-bottom-color: #ec4899;">
+                        <h3>♀ Fêmeas</h3>
+                        <div id="totalFemeas" style="font-size: 3rem; font-weight: 800; color: #ec4899;">0</div>
+                        <p style="color: #64748b; margin-top: 0.5rem;">Matrizes</p>
+                    </div>
+                    <div class="stat-card" style="border-bottom-color: #3b82f6;">
+                        <h3>♂ Machos</h3>
+                        <div id="totalMachos" style="font-size: 3rem; font-weight: 800; color: #3b82f6;">0</div>
+                        <p style="color: #64748b; margin-top: 0.5rem;">Touros</p>
+                    </div>
+                    <div class="stat-card" style="border-bottom-color: #22c55e;">
+                        <h3>📊 Proporção</h3>
+                        <div id="proporcao" style="font-size: 2rem; font-weight: 800; color: #22c55e;">-</div>
+                        <p style="color: #64748b; margin-top: 0.5rem;">Fêmeas:Macho</p>
+                    </div>
                 </div>
-                <div class="chart-grid">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;">
                     <div class="card"><canvas id="racaChart"></canvas></div>
                     <div class="card"><canvas id="localChart"></canvas></div>
                 </div>
             </div>
 
+            <!-- TAB GENEALOGIA -->
             <div id="tab-genealogy" class="tab-content hidden">
                 <div class="card">
-                    <h2>Árvore Genealógica</h2>
-                    <select id="animalGenealogia" onchange="mostrarGenealogia()" style="padding:1rem; width:100%; margin-bottom: 1rem;"></select>
-                    <div id="arvoreGenealogia" style="padding: 2rem; background: #f8fafc; border-radius: 1rem; border: 2px dashed #cbd5e1;"></div>
+                    <h2>🌳 Árvore Genealógica</h2>
+                    <select id="animalGenealogia" onchange="mostrarGenealogia()" style="padding:1rem; width:100%; margin-bottom: 1.5rem; border: 2px solid #e2e8f0; border-radius: 0.7rem;"></select>
+                    <div id="arvoreGenealogia" style="padding: 2rem; background: #f8fafc; border-radius: 1rem; border: 2px dashed #cbd5e1; min-height: 300px;"></div>
                 </div>
             </div>
 
+            <!-- TAB RAÇAS -->
             <div id="tab-racas" class="tab-content hidden">
                 <div class="card">
-                    <h2>Gerenciar Raças</h2>
-                    <div class="form-group"><input type="text" id="novaRaca" placeholder="Nome da Raça"></div>
-                    <button class="btn btn-primary" onclick="adicionarConfig('racas', 'novaRaca')">Adicionar</button>
-                    <div id="listaRacas" style="margin-top: 1rem;"></div>
+                    <h2>🏷️ Gerenciar Raças</h2>
+                    <div class="form-group">
+                        <input type="text" id="novaRaca" placeholder="Nome da Raça (Ex: NELORE)">
+                    </div>
+                    <button class="btn btn-primary" onclick="adicionarConfig('racas', 'novaRaca')">➕ Adicionar Raça</button>
+                    <div id="listaRacas" style="margin-top: 1.5rem;"></div>
                 </div>
             </div>
 
+            <!-- TAB LOCAIS -->
             <div id="tab-locais" class="tab-content hidden">
                 <div class="card">
-                    <h2>Gerenciar Pastos/Locais</h2>
-                    <div class="form-group"><input type="text" id="novoLocal" placeholder="Nome do Pasto"></div>
-                    <button class="btn btn-primary" onclick="adicionarConfig('locais', 'novoLocal')">Adicionar</button>
-                    <div id="listaLocais" style="margin-top: 1rem;"></div>
+                    <h2>📍 Gerenciar Pastos/Locais</h2>
+                    <div class="form-group">
+                        <input type="text" id="novoLocal" placeholder="Nome do Pasto (Ex: PASTO 01)">
+                    </div>
+                    <button class="btn btn-primary" onclick="adicionarConfig('locais', 'novoLocal')">➕ Adicionar Local</button>
+                    <div id="listaLocais" style="margin-top: 1.5rem;"></div>
                 </div>
             </div>
 
+            <!-- TAB PROPRIETÁRIOS -->
             <div id="tab-owners" class="tab-content hidden">
                 <div class="card">
-                    <h2>Gerenciar Proprietários</h2>
-                    <div class="form-group"><input type="text" id="novoProp" placeholder="Nome do Proprietário"></div>
-                    <button class="btn btn-primary" onclick="adicionarConfig('proprietarios', 'novoProp')">Adicionar</button>
-                    <div id="listaProprietarios" style="margin-top: 1rem;"></div>
+                    <h2>👥 Gerenciar Proprietários</h2>
+                    <div class="form-group">
+                        <input type="text" id="novoProp" placeholder="Nome do Proprietário">
+                    </div>
+                    <button class="btn btn-primary" onclick="adicionarConfig('proprietarios', 'novoProp')">➕ Adicionar Proprietário</button>
+                    <div id="listaProprietarios" style="margin-top: 1.5rem;"></div>
                 </div>
             </div>
 
+            <!-- TAB CALCULADORAS -->
             <div id="tab-tools" class="tab-content hidden">
                 <div class="grid-2">
                     <div class="card">
-                        <h3>Cálculo de Arrobas</h3>
-                        <div class="form-group"><label>Peso Vivo (kg)</label><input type="number" id="pesoV" oninput="calcArr()"></div>
-                        <p id="resArr" style="font-weight: bold; color: #3b82f6;"></p>
+                        <h3>⚖️ Cálculo de Arrobas</h3>
+                        <p style="color: #64748b; margin-bottom: 1.5rem;">Calcule o rendimento estimado</p>
+                        <div class="form-group">
+                            <label>Peso Vivo (kg)</label>
+                            <input type="number" id="pesoV" placeholder="Ex: 450" oninput="calcArr()">
+                        </div>
+                        <div id="resArr"></div>
                     </div>
                     <div class="card">
-                        <h3>Previsão de Parto</h3>
-                        <div class="form-group"><label>Data Inseminação</label><input type="date" id="dataIns" onchange="calcParto()"></div>
-                        <p id="resParto" style="font-weight: bold; color: #ec4899;"></p>
+                        <h3>🤰 Previsão de Parto</h3>
+                        <p style="color: #64748b; margin-bottom: 1.5rem;">Gestação de 284 dias</p>
+                        <div class="form-group">
+                            <label>Data Inseminação</label>
+                            <input type="date" id="dataIns" onchange="calcParto()">
+                        </div>
+                        <div id="resParto"></div>
                     </div>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -292,16 +625,20 @@
             renderizarTabela();
             atualizarSelects();
             limparForm();
-            alert("Sucesso!");
+            alert("✅ Animal salvo com sucesso!");
         }
 
         function excluirAnimal() {
-            if(!animalAtualId) return;
-            if(confirm("Deseja excluir?")) {
+            if(!animalAtualId) {
+                alert("⚠️ Selecione um animal primeiro!");
+                return;
+            }
+            if(confirm("🗑️ Deseja realmente excluir este animal?")) {
                 animais = animais.filter(a => a.id !== animalAtualId);
                 localStorage.setItem('gado_animais', JSON.stringify(animais));
                 renderizarTabela();
                 limparForm();
+                alert("✅ Animal excluído!");
             }
         }
 
@@ -309,17 +646,17 @@
             const a = animais.find(x => x.id === id);
             animalAtualId = id;
             document.getElementById('numero').value = a.numero;
-            document.getElementById('brinco').value = a.brinco;
-            document.getElementById('nome').value = a.nome;
+            document.getElementById('brinco').value = a.brinco || '';
+            document.getElementById('nome').value = a.nome || '';
             document.getElementById('sexo').value = a.sexo;
             document.getElementById('raca').value = a.raca;
             document.getElementById('local').value = a.local;
             document.getElementById('proprietario').value = a.proprietario;
-            document.getElementById('dataNascimento').value = a.dataNascimento;
-            document.getElementById('pai').value = a.pai;
-            document.getElementById('mae').value = a.mae;
-            document.getElementById('semFerro').checked = a.semFerro;
-            document.getElementById('amamentando').checked = a.amamentando;
+            document.getElementById('dataNascimento').value = a.dataNascimento || '';
+            document.getElementById('pai').value = a.pai || '';
+            document.getElementById('mae').value = a.mae || '';
+            document.getElementById('semFerro').checked = a.semFerro || false;
+            document.getElementById('amamentando').checked = a.amamentando || false;
         }
 
         function limparForm() {
@@ -327,25 +664,48 @@
             document.getElementById('animalForm').reset();
         }
 
-        // TABELA E RENDERIZAÇÃO
+        // TABELA
         function renderizarTabela(data = animais) {
             const tbody = document.getElementById('tabelaAnimais');
-            tbody.innerHTML = data.map(a => `
-                <tr onclick="selecionarAnimal('${a.id}')">
-                    <td>${a.numero}</td>
-                    <td>${a.brinco || '-'}</td>
-                    <td>${a.nome || '-'}</td>
-                    <td>${a.sexo}</td>
-                    <td>${a.raca}</td>
-                    <td>${a.local}</td>
-                </tr>
-            `).join('');
+            if(data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum animal cadastrado</td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.map(a => {
+                const idade = calcularIdade(a.dataNascimento);
+                const sexoBadge = a.sexo === 'F' ? '<span class="badge badge-pink">♀ Fêmea</span>' : '<span class="badge badge-blue">♂ Macho</span>';
+                return `
+                    <tr onclick="selecionarAnimal('${a.id}')">
+                        <td><strong>${a.numero}</strong></td>
+                        <td>${idade}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function calcularIdade(dataNasc) {
+            if (!dataNasc) return '-';
+            const hoje = new Date();
+            const nasc = new Date(dataNasc);
+            const diffTime = Math.abs(hoje - nasc);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays < 30) return `${diffDays}d`;
+            if (diffDays < 365) {
+                const meses = Math.floor(diffDays / 30);
+                return `${meses}m`;
+            }
+            const anos = Math.floor(diffDays / 365);
+            const meses = Math.floor((diffDays % 365) / 30);
+            return meses > 0 ? `${anos}a ${meses}m` : `${anos}a`;
         }
 
         function pesquisarAnimais(val) {
             const filtrados = animais.filter(a => 
-                a.numero.includes(val) || 
-                (a.nome && a.nome.toLowerCase().includes(val.toLowerCase()))
+                a.numero.toLowerCase().includes(val.toLowerCase()) || 
+                (a.brinco && a.brinco.toLowerCase().includes(val.toLowerCase())) ||
+                (a.nome && a.nome.toLowerCase().includes(val.toLowerCase())) ||
+                (a.raca && a.raca.toLowerCase().includes(val.toLowerCase()))
             );
             renderizarTabela(filtrados);
         }
@@ -362,81 +722,187 @@
             fill('local', locais);
             fill('proprietario', proprietarios);
             
-            // Pais e Mães
             const paisExternos = reprodutores.map(r => r.nome);
             const paisInternos = animais.filter(a => a.sexo === 'M').map(a => a.numero);
             const maes = animais.filter(a => a.sexo === 'F').map(a => a.numero);
 
-            document.getElementById('pai').innerHTML = '<option value="">Corte/Desconhecido</option>' + [...paisExternos, ...paisInternos].map(p => `<option value="${p}">${p}</option>`).join('');
+            document.getElementById('pai').innerHTML = '<option value="">Desconhecido</option>' + [...paisExternos, ...paisInternos].map(p => `<option value="${p}">${p}</option>`).join('');
             document.getElementById('mae').innerHTML = '<option value="">Desconhecida</option>' + maes.map(m => `<option value="${m}">${m}</option>`).join('');
             
-            // Select Genealogia
-            document.getElementById('animalGenealogia').innerHTML = '<option value="">Selecione um animal...</option>' + animais.map(a => `<option value="${a.id}">${a.numero} ${a.nome || ''}</option>`).join('');
+            document.getElementById('animalGenealogia').innerHTML = '<option value="">Selecione...</option>' + animais.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
         }
 
-        // CONFIGURAÇÕES SIMPLES
+        // CONFIGURAÇÕES
         function adicionarConfig(tipo, inputId) {
-            const val = document.getElementById(inputId).value.toUpperCase();
-            if(!val) return;
-            if(tipo === 'racas') { racas.push(val); localStorage.setItem('gado_racas', JSON.stringify(racas)); }
-            if(tipo === 'locais') { locais.push(val); localStorage.setItem('gado_locais', JSON.stringify(locais)); }
-            if(tipo === 'proprietarios') { proprietarios.push(val); localStorage.setItem('gado_props', JSON.stringify(proprietarios)); }
+            const val = document.getElementById(inputId).value.toUpperCase().trim();
+            if(!val) {
+                alert("⚠️ Digite um valor!");
+                return;
+            }
+            if(tipo === 'racas') { 
+                if(racas.includes(val)) {
+                    alert("⚠️ Raça já existe!");
+                    return;
+                }
+                racas.push(val); 
+                localStorage.setItem('gado_racas', JSON.stringify(racas)); 
+            }
+            if(tipo === 'locais') { 
+                if(locais.includes(val)) {
+                    alert("⚠️ Local já existe!");
+                    return;
+                }
+                locais.push(val); 
+                localStorage.setItem('gado_locais', JSON.stringify(locais)); 
+            }
+            if(tipo === 'proprietarios') { 
+                if(proprietarios.includes(val)) {
+                    alert("⚠️ Proprietário já existe!");
+                    return;
+                }
+                proprietarios.push(val); 
+                localStorage.setItem('gado_props', JSON.stringify(proprietarios)); 
+            }
             document.getElementById(inputId).value = '';
             atualizarSelects();
             renderListasSimples();
         }
 
         function renderListasSimples() {
-            const render = (id, list) => {
-                document.getElementById(id).innerHTML = list.map(item => `<div class="item-box">${item}</div>`).join('');
+            const render = (id, list, tipo) => {
+                document.getElementById(id).innerHTML = list.map((item, idx) => `
+                    <div class="item-box">
+                        <span style="font-weight: 600;">${item}</span>
+                        ${list.length > 1 ? `<button class="btn btn-danger" style="padding: 0.4rem 0.8rem;" onclick="removerItem('${tipo}', ${idx})">🗑️</button>` : ''}
+                    </div>
+                `).join('');
             };
-            render('listaRacas', racas);
-            render('listaLocais', locais);
-            render('listaProprietarios', proprietarios);
+            render('listaRacas', racas, 'racas');
+            render('listaLocais', locais, 'locais');
+            render('listaProprietarios', proprietarios, 'proprietarios');
             
             document.getElementById('listaReprodutores').innerHTML = reprodutores.map(r => `
                 <div class="item-box">
-                    <span>${r.nome} (${r.tipo})</span>
-                    <button class="btn btn-danger" onclick="removerReprod('${r.id}')">X</button>
+                    <div>
+                        <span style="font-weight: 600;">${r.nome}</span>
+                        <span class="badge badge-blue" style="margin-left: 0.5rem;">${r.tipo}</span>
+                    </div>
+                    <button class="btn btn-danger" style="padding: 0.4rem 0.8rem;" onclick="removerReprod('${r.id}')">🗑️</button>
                 </div>
             `).join('');
         }
 
+        function removerItem(tipo, idx) {
+            if(tipo === 'racas') {
+                if(racas.length <= 1) {
+                    alert("⚠️ Deve ter pelo menos 1 raça!");
+                    return;
+                }
+                racas.splice(idx, 1);
+                localStorage.setItem('gado_racas', JSON.stringify(racas));
+            }
+            if(tipo === 'locais') {
+                if(locais.length <= 1) {
+                    alert("⚠️ Deve ter pelo menos 1 local!");
+                    return;
+                }
+                locais.splice(idx, 1);
+                localStorage.setItem('gado_locais', JSON.stringify(locais));
+            }
+            if(tipo === 'proprietarios') {
+                if(proprietarios.length <= 1) {
+                    alert("⚠️ Deve ter pelo menos 1 proprietário!");
+                    return;
+                }
+                proprietarios.splice(idx, 1);
+                localStorage.setItem('gado_props', JSON.stringify(proprietarios));
+            }
+            renderListasSimples();
+            atualizarSelects();
+        }
+
         function salvarReprodutor() {
-            const nome = document.getElementById('nomeReprodutor').value.toUpperCase();
+            const nome = document.getElementById('nomeReprodutor').value.toUpperCase().trim();
             const tipo = document.getElementById('tipoReprodutor').value;
-            if(!nome) return;
+            if(!nome) {
+                alert("⚠️ Digite o nome do reprodutor!");
+                return;
+            }
             reprodutores.push({id: Date.now().toString(), nome, tipo});
             localStorage.setItem('gado_reprod', JSON.stringify(reprodutores));
             document.getElementById('nomeReprodutor').value = '';
             renderListasSimples();
             atualizarSelects();
+            alert("✅ Reprodutor adicionado!");
+        }
+
+        function removerReprod(id) {
+            if(confirm("🗑️ Remover este reprodutor?")) {
+                reprodutores = reprodutores.filter(r => r.id !== id);
+                localStorage.setItem('gado_reprod', JSON.stringify(reprodutores));
+                renderListasSimples();
+                atualizarSelects();
+            }
         }
 
         // DASHBOARD
         function atualizarDashboard() {
-            document.getElementById('totalAnimais').innerText = animais.length;
-            document.getElementById('totalFemeas').innerText = animais.filter(a => a.sexo === 'F').length;
-            document.getElementById('totalMachos').innerText = animais.filter(a => a.sexo === 'M').length;
+            const totalAnimais = animais.length;
+            const totalFemeas = animais.filter(a => a.sexo === 'F').length;
+            const totalMachos = animais.filter(a => a.sexo === 'M').length;
+            
+            document.getElementById('totalAnimais').innerText = totalAnimais;
+            document.getElementById('totalFemeas').innerText = totalFemeas;
+            document.getElementById('totalMachos').innerText = totalMachos;
+            
+            const proporcao = totalMachos > 0 ? (totalFemeas / totalMachos).toFixed(1) + ':1' : '-';
+            document.getElementById('proporcao').innerText = proporcao;
 
-            renderChart('racaChart', 'Distribuição por Raça', animais.map(a => a.raca));
-            renderChart('localChart', 'Distribuição por Pasto', animais.map(a => a.local));
+            renderChart('racaChart', 'Distribuição por Raça', animais.map(a => a.raca), 'doughnut');
+            renderChart('localChart', 'Distribuição por Pasto', animais.map(a => a.local), 'bar');
         }
 
-        function renderChart(canvasId, label, rawData) {
+        function renderChart(canvasId, label, rawData, type) {
             if(charts[canvasId]) charts[canvasId].destroy();
-            const counts = rawData.reduce((acc, val) => { acc[val] = (acc[val] || 0) + 1; return acc; }, {});
+            if(rawData.length === 0) return;
+            
+            const counts = rawData.reduce((acc, val) => { 
+                acc[val] = (acc[val] || 0) + 1; 
+                return acc; 
+            }, {});
+            
+            const colors = ['#3b82f6', '#ec4899', '#f59e0b', '#22c55e', '#8b5cf6', '#06b6d4'];
             
             charts[canvasId] = new Chart(document.getElementById(canvasId), {
-                type: 'pie',
+                type: type,
                 data: {
                     labels: Object.keys(counts),
                     datasets: [{
                         data: Object.values(counts),
-                        backgroundColor: ['#3b82f6', '#ec4899', '#f59e0b', '#22c55e', '#64748b']
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        borderRadius: type === 'bar' ? 8 : 0
                     }]
                 },
-                options: { plugins: { title: { display: true, text: label } } }
+                options: { 
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { 
+                        title: { 
+                            display: true, 
+                            text: label,
+                            font: { size: 16, weight: 'bold' },
+                            padding: 20
+                        },
+                        legend: {
+                            position: type === 'bar' ? 'top' : 'bottom',
+                            labels: { padding: 15, font: { size: 12 } }
+                        }
+                    },
+                    scales: type === 'bar' ? {
+                        y: { beginAtZero: true, ticks: { precision: 0 } }
+                    } : {}
+                }
             });
         }
 
@@ -445,31 +911,65 @@
             const id = document.getElementById('animalGenealogia').value;
             const a = animais.find(x => x.id === id);
             const box = document.getElementById('arvoreGenealogia');
-            if(!a) { box.innerHTML = "Selecione um animal para ver a árvore"; return; }
+            if(!a) { 
+                box.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: #94a3b8;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🌳</div>
+                        <p>Selecione um animal para ver a genealogia</p>
+                    </div>
+                `; 
+                return; 
+            }
+
+            const sexoBadge = a.sexo === 'F' ? '<span class="badge badge-pink">♀</span>' : '<span class="badge badge-blue">♂</span>';
 
             box.innerHTML = `
                 <div style="text-align: center;">
-                    <div style="background: white; padding: 10px; border: 2px solid #3b82f6; display: inline-block; border-radius: 8px;">
-                        <strong>${a.numero}</strong><br><small>${a.nome || ''}</small>
+                    <div style="background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; padding: 1.5rem; border-radius: 1rem; display: inline-block; box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3); min-width: 250px;">
+                        <div style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">${a.numero}</div>
+                        <div style="font-size: 1.1rem;">${a.nome || 'Sem nome'}</div>
+                        <div style="margin-top: 0.5rem;">${sexoBadge} ${a.raca}</div>
                     </div>
-                    <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div style="padding: 10px; background: #e0f2fe; border-radius: 8px;">
-                            <strong>PAI:</strong><br>${a.pai || '---'}
+                    
+                    <div style="margin: 2rem 0; height: 40px; width: 2px; background: #cbd5e1; margin-left: auto; margin-right: auto;"></div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 600px; margin: 0 auto;">
+                        <div style="padding: 1.5rem; background: #dbeafe; border-radius: 1rem; border: 2px solid #3b82f6;">
+                            <div style="font-size: 0.85rem; color: #1e40af; font-weight: 700; margin-bottom: 0.5rem;">🐂 PAI</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: #1e293b;">${a.pai || 'Não registrado'}</div>
                         </div>
-                        <div style="padding: 10px; background: #fce7f3; border-radius: 8px;">
-                            <strong>MÃE:</strong><br>${a.mae || '---'}
+                        <div style="padding: 1.5rem; background: #fce7f3; border-radius: 1rem; border: 2px solid #ec4899;">
+                            <div style="font-size: 0.85rem; color: #be185d; font-weight: 700; margin-bottom: 0.5rem;">🐄 MÃE</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; color: #1e293b;">${a.mae || 'Não registrada'}</div>
                         </div>
                     </div>
+
+                    ${a.dataNascimento ? `
+                        <div style="margin-top: 2rem; padding: 1rem; background: #f8fafc; border-radius: 0.7rem; display: inline-block;">
+                            <span style="color: #64748b;">🎂 Nascimento:</span> 
+                            <strong>${new Date(a.dataNascimento).toLocaleDateString('pt-BR')}</strong>
+                            <span style="margin-left: 1rem; color: #64748b;">Idade:</span>
+                            <strong>${calcularIdade(a.dataNascimento)}</strong>
+                        </div>
+                    ` : ''}
                 </div>
             `;
         }
 
         // CALCULADORAS
         function calcArr() {
-            const kg = document.getElementById('pesoV').value;
-            if(kg) {
+            const kg = parseFloat(document.getElementById('pesoV').value);
+            if(kg && kg > 0) {
                 const arr = (kg * 0.50) / 15;
-                document.getElementById('resArr').innerText = `Rendimento Estimado: ${arr.toFixed(2)} @`;
+                document.getElementById('resArr').innerHTML = `
+                    <div style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); padding: 1.5rem; border-radius: 0.7rem; margin-top: 1rem; border-left: 4px solid #3b82f6;">
+                        <div style="font-size: 0.85rem; color: #1e40af; margin-bottom: 0.5rem;">RENDIMENTO ESTIMADO</div>
+                        <div style="font-size: 2rem; font-weight: 800; color: #1e293b;">${arr.toFixed(2)} @</div>
+                        <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">Baseado em 50% de rendimento</div>
+                    </div>
+                `;
+            } else {
+                document.getElementById('resArr').innerHTML = '';
             }
         }
 
@@ -478,34 +978,70 @@
             if(d) {
                 let p = new Date(d);
                 p.setDate(p.getDate() + 284);
-                document.getElementById('resParto').innerText = `Parto Previsto: ${p.toLocaleDateString('pt-BR')}`;
+                
+                const hoje = new Date();
+                const diasRestantes = Math.ceil((p - hoje) / (1000 * 60 * 60 * 24));
+                
+                document.getElementById('resParto').innerHTML = `
+                    <div style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); padding: 1.5rem; border-radius: 0.7rem; margin-top: 1rem; border-left: 4px solid #ec4899;">
+                        <div style="font-size: 0.85rem; color: #be185d; margin-bottom: 0.5rem;">PARTO PREVISTO</div>
+                        <div style="font-size: 1.8rem; font-weight: 800; color: #1e293b;">${p.toLocaleDateString('pt-BR')}</div>
+                        ${diasRestantes > 0 ? 
+                            `<div style="font-size: 0.9rem; color: #64748b; margin-top: 0.5rem;">⏱️ Faltam ${diasRestantes} dias</div>` : 
+                            `<div style="font-size: 0.9rem; color: #ef4444; margin-top: 0.5rem; font-weight: 600;">⚠️ Data passou!</div>`
+                        }
+                    </div>
+                `;
+            } else {
+                document.getElementById('resParto').innerHTML = '';
             }
         }
 
         // EXPORTAÇÃO
         function exportarExcel() {
+            if(animais.length === 0) {
+                alert("⚠️ Nenhum animal para exportar!");
+                return;
+            }
             const ws = XLSX.utils.json_to_sheet(animais);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Rebanho");
-            XLSX.writeFile(wb, "Rebanho_Completo.xlsx");
+            XLSX.writeFile(wb, "Rebanho_" + new Date().toLocaleDateString('pt-BR').replace(/\//g, '-') + ".xlsx");
+            alert("✅ Excel exportado com sucesso!");
         }
 
         function exportarPDF() {
+            if(animais.length === 0) {
+                alert("⚠️ Nenhum animal para exportar!");
+                return;
+            }
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            doc.text("Relatório de Rebanho", 10, 10);
-            let y = 20;
-            animais.forEach(a => {
-                doc.text(`${a.numero} | ${a.nome || '-'} | ${a.raca} | ${a.local}`, 10, y);
-                y += 10;
+            doc.setFontSize(16);
+            doc.text("Relatório do Rebanho", 10, 10);
+            doc.setFontSize(10);
+            let y = 25;
+            animais.forEach((a, idx) => {
+                if(y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+                doc.text(`${idx+1}. ${a.numero} | ${a.nome || '-'} | ${a.sexo} | ${a.raca} | ${a.local}`, 10, y);
+                y += 7;
             });
-            doc.save("Relatorio.pdf");
+            doc.save("Relatorio_" + new Date().toLocaleDateString('pt-BR').replace(/\//g, '-') + ".pdf");
+            alert("✅ PDF exportado com sucesso!");
         }
 
         function gerarNumero() {
             const max = animais.length > 0 ? Math.max(...animais.map(a => parseInt(a.numero) || 0)) : 0;
-            document.getElementById('numero').value = max + 1;
+            document.getElementById('numero').value = (max + 1).toString().padStart(4, '0');
         }
     </script>
 </body>
-</html>
+</html>a.brinco || '<span style="color:#94a3b8">-</span>'}</td>
+                        <td>${a.nome || '<span style="color:#94a3b8">-</span>'}</td>
+                        <td>${sexoBadge}</td>
+                        <td>${a.raca}</td>
+                        <td>${a.local}</td>
+                        <td>${
