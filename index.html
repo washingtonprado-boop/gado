@@ -57,6 +57,7 @@
         .btn-danger {background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white;}
         .btn-warning {background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;}
         .btn-secondary {background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white;}
+        .btn-small {padding: 0.4rem 0.8rem; font-size: 0.85rem;}
         .grid-2 {display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;}
         .checkbox-group {display: flex; gap: 1.5rem; margin: 1rem 0; padding: 1.2rem; background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%); border-radius: 0.7rem; border: 2px dashed #cbd5e1;}
         .checkbox-group label {display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500;}
@@ -71,8 +72,9 @@
         .badge {padding: 0.3rem 0.8rem; border-radius: 1rem; font-size: 0.75rem; font-weight: 600; display: inline-block;}
         .badge-blue {background: #dbeafe; color: #1e40af;}
         .badge-pink {background: #fce7f3; color: #be185d;}
-        .item-box {display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.2rem; background: linear-gradient(135deg, #f8fafc 0%, white 100%); border-radius: 0.7rem; margin-bottom: 0.7rem; border: 2px solid #e2e8f0; transition: all 0.3s; cursor: pointer;}
+        .item-box {display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.2rem; background: linear-gradient(135deg, #f8fafc 0%, white 100%); border-radius: 0.7rem; margin-bottom: 0.7rem; border: 2px solid #e2e8f0; transition: all 0.3s;}
         .item-box:hover {border-color: #3b82f6; transform: translateX(5px);}
+        .btn-group {display: flex; gap: 0.5rem;}
         @media print {.nav-tabs, .sync-status, .btn {display: none !important;}}
         @media (max-width: 768px) {.main-grid, .grid-2 {grid-template-columns: 1fr;}}
     </style>
@@ -89,6 +91,7 @@
 
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="showTab('animals')">🐮 Rebanho</button>
+            <button class="nav-tab" onclick="showTab('reprodutores')">🐂 Reprodutores</button>
             <button class="nav-tab" onclick="showTab('reports')">📊 Dashboard</button>
             <button class="nav-tab" onclick="showTab('relatorios')">📄 Relatórios</button>
             <button class="nav-tab" onclick="showTab('genealogy')">🌳 Genealogia</button>
@@ -149,11 +152,15 @@
                             <div class="grid-2">
                                 <div class="form-group">
                                     <label>Pai</label>
-                                    <input type="text" id="pai" placeholder="Nome/Número">
+                                    <select id="pai">
+                                        <option value="">Não informado</option>
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label>Mãe</label>
-                                    <input type="text" id="mae" placeholder="Nome/Número">
+                                    <select id="mae">
+                                        <option value="">Não informada</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="checkbox-group">
@@ -192,6 +199,116 @@
                 </div>
             </div>
 
+            <!-- TAB REPRODUTORES -->
+            <div id="tab-reprodutores" class="tab-content hidden">
+                <div class="main-grid">
+                    <div class="card">
+                        <h2>🐂 Cadastro de Reprodutor</h2>
+                        <form id="reprodutorForm" onsubmit="salvarReprodutor(event)">
+                            <div class="form-group">
+                                <label>Registro/ID</label>
+                                <input type="text" id="regReprodutor" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Nome do Reprodutor</label>
+                                <input type="text" id="nomeReprodutor" required>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label>Raça</label>
+                                    <select id="racaReprodutor"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Tipo</label>
+                                    <select id="tipoReprodutor">
+                                        <option value="Touro">Touro (Próprio)</option>
+                                        <option value="Sêmen">Sêmen</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Proprietário</label>
+                                <select id="propReprodutor"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Local/Pasto</label>
+                                <select id="localReprodutor"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Origem/Central</label>
+                                <input type="text" id="origemReprodutor" placeholder="Ex: Central de Sêmen XYZ">
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label>Nascimento</label>
+                                    <input type="date" id="nascReprodutor">
+                                </div>
+                                <div class="form-group">
+                                    <label>Status</label>
+                                    <select id="statusReprodutor">
+                                        <option value="Ativo">Ativo</option>
+                                        <option value="Inativo">Inativo</option>
+                                        <option value="Descartado">Descartado</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Observações</label>
+                                <textarea id="obsReprodutor" rows="3" placeholder="Informações adicionais sobre o reprodutor"></textarea>
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button type="submit" class="btn btn-primary">💾 Salvar</button>
+                                <button type="button" class="btn btn-warning" onclick="limparFormReprodutor()">🔄 Novo</button>
+                            </div>
+                            <button type="button" class="btn btn-danger" onclick="excluirReprodutor()" style="width: 100%; margin-top: 10px;">🗑️ Excluir</button>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <div style="display:flex; justify-content: space-between; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap;">
+                            <input type="text" id="pesquisaReprodutor" placeholder="🔍 Pesquisar reprodutor..." style="flex: 1; min-width: 200px; padding: 0.8rem; border: 2px solid #e2e8f0; border-radius: 0.7rem;" onkeyup="pesquisarReprodutores(this.value)">
+                            <button class="btn btn-success" onclick="exportarReprodutoresExcel()">📊 Excel</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>🔢 Registro</th>
+                                        <th>📝 Nome</th>
+                                        <th>🐄 Raça</th>
+                                        <th>🏷️ Tipo</th>
+                                        <th>📍 Local</th>
+                                        <th>✅ Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabelaReprodutores"></tbody>
+                            </table>
+                        </div>
+                        <div style="margin-top: 2rem; padding: 1.5rem; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-radius: 1rem;">
+                            <h3 style="margin-bottom: 1rem;">📊 Estatísticas</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 2rem; font-weight: 800; color: #3b82f6;" id="totalReprodutores">0</div>
+                                    <div style="color: #64748b; font-size: 0.9rem;">Total</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 2rem; font-weight: 800; color: #22c55e;" id="reprodutoresAtivos">0</div>
+                                    <div style="color: #64748b; font-size: 0.9rem;">Ativos</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 2rem; font-weight: 800; color: #f59e0b;" id="reprodutoresTouros">0</div>
+                                    <div style="color: #64748b; font-size: 0.9rem;">Touros</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 2rem; font-weight: 800; color: #8b5cf6;" id="reprodutoresSemen">0</div>
+                                    <div style="color: #64748b; font-size: 0.9rem;">Sêmen</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- TAB DASHBOARD -->
             <div id="tab-reports" class="tab-content hidden">
                 <div class="stats-grid">
@@ -219,42 +336,42 @@
                 <div class="card">
                     <h2>📄 Relatórios Gerenciais</h2>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
-                        <div class="item-box" onclick="gerarRelatorioCompleto()" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe);">
+                        <div class="item-box" onclick="gerarRelatorioCompleto()" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); cursor: pointer;">
                             <div>
                                 <div style="font-size: 1.2rem; font-weight: 700;">📋 Completo</div>
                                 <div style="color: #64748b; font-size: 0.9rem;">Todos os animais</div>
                             </div>
                             <div style="font-size: 2rem;">📊</div>
                         </div>
-                        <div class="item-box" onclick="gerarRelatorioPorRaca()" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8);">
+                        <div class="item-box" onclick="gerarRelatorioPorRaca()" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); cursor: pointer;">
                             <div>
                                 <div style="font-size: 1.2rem; font-weight: 700;">🐄 Por Raça</div>
                                 <div style="color: #64748b; font-size: 0.9rem;">Agrupado</div>
                             </div>
                             <div style="font-size: 2rem;">🏷️</div>
                         </div>
-                        <div class="item-box" onclick="gerarRelatorioFemeas()" style="background: linear-gradient(135deg, #fef3c7, #fde68a);">
+                        <div class="item-box" onclick="gerarRelatorioFemeas()" style="background: linear-gradient(135deg, #fef3c7, #fde68a); cursor: pointer;">
                             <div>
                                 <div style="font-size: 1.2rem; font-weight: 700;">♀ Fêmeas</div>
                                 <div style="color: #64748b; font-size: 0.9rem;">Matrizes</div>
                             </div>
                             <div style="font-size: 2rem;">🐮</div>
                         </div>
-                        <div class="item-box" onclick="gerarRelatorioPorProprietario()" style="background: linear-gradient(135deg, #e0e7ff, #c7d2fe);">
+                        <div class="item-box" onclick="gerarRelatorioPorProprietario()" style="background: linear-gradient(135deg, #e0e7ff, #c7d2fe); cursor: pointer;">
                             <div>
                                 <div style="font-size: 1.2rem; font-weight: 700;">👥 Proprietários</div>
                                 <div style="color: #64748b; font-size: 0.9rem;">Por dono</div>
                             </div>
                             <div style="font-size: 2rem;">👤</div>
                         </div>
-                        <div class="item-box" onclick="gerarRelatorioAmamentando()" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8);">
+                        <div class="item-box" onclick="gerarRelatorioAmamentando()" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); cursor: pointer;">
                             <div>
                                 <div style="font-size: 1.2rem; font-weight: 700;">🍼 Amamentando</div>
                                 <div style="color: #64748b; font-size: 0.9rem;">Fêmeas lactantes</div>
                             </div>
                             <div style="font-size: 2rem;">👶</div>
                         </div>
-                        <div class="item-box" onclick="gerarRelatorioSemFerro()" style="background: linear-gradient(135deg, #fed7aa, #fdba74);">
+                        <div class="item-box" onclick="gerarRelatorioSemFerro()" style="background: linear-gradient(135deg, #fed7aa, #fdba74); cursor: pointer;">
                             <div>
                                 <div style="font-size: 1.2rem; font-weight: 700;">🔓 Sem Ferro</div>
                                 <div style="color: #64748b; font-size: 0.9rem;">Não marcados</div>
@@ -322,7 +439,9 @@
         let racas = ['NELORE', 'ANGUS', 'BRAHMAN', 'GIROLAND'];
         let locais = ['PASTO 01', 'PASTO 02', 'CURRAL'];
         let proprietarios = ['FAZENDA PRÓPRIA'];
+        let reprodutores = [];
         let animalAtualId = null;
+        let reprodutorAtualId = null;
         let charts = {};
 
         window.onload = async () => {
@@ -362,6 +481,11 @@
                 const propsSnap = await get(ref(database, 'proprietarios'));
                 if (propsSnap.exists()) proprietarios = propsSnap.val();
             } catch (e) {}
+
+            try {
+                const reprodSnap = await get(ref(database, 'reprodutores'));
+                if (reprodSnap.exists()) reprodutores = Object.values(reprodSnap.val());
+            } catch (e) {}
         }
 
         async function salvarDadosOnline() {
@@ -376,6 +500,10 @@
                 await set(ref(database, 'racas'), racas);
                 await set(ref(database, 'locais'), locais);
                 await set(ref(database, 'proprietarios'), proprietarios);
+                
+                const reprodutoresObj = {};
+                reprodutores.forEach(r => { reprodutoresObj[r.id] = r; });
+                await set(ref(database, 'reprodutores'), reprodutoresObj);
                 
                 atualizarStatusSync(true);
                 return true;
@@ -420,6 +548,18 @@
             document.getElementById('tab-' + tabName).classList.remove('hidden');
             event.currentTarget.classList.add('active');
             if (tabName === 'reports') atualizarDashboard();
+            if (tabName === 'reprodutores') {
+                renderizarTabelaReprodutores();
+                atualizarSelectsReprodutores();
+            }
+        }
+
+        function ordenarAnimaisPorNumero(lista) {
+            return [...lista].sort((a, b) => {
+                const numA = parseInt(a.numero) || 0;
+                const numB = parseInt(b.numero) || 0;
+                return numA - numB;
+            });
         }
 
         async function salvarAnimal(e) {
@@ -477,6 +617,7 @@
                 animais = animais.filter(a => a.id !== animalAtualId);
                 await salvarDadosOnline();
                 renderizarTabela();
+                atualizarSelects();
                 limparForm();
             }
         }
@@ -529,12 +670,7 @@
 
         function renderizarTabela(data = animais) {
             const tbody = document.getElementById('tabelaAnimais');
-            
-            const ordenados = [...data].sort((a, b) => {
-                const numA = parseInt(a.numero) || 0;
-                const numB = parseInt(b.numero) || 0;
-                return numA - numB;
-            });
+            const ordenados = ordenarAnimaisPorNumero(data);
             
             if (ordenados.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum animal cadastrado</td></tr>';
@@ -579,10 +715,51 @@
         }
 
         function atualizarSelects() {
+            // Atualizar select de raças
             document.getElementById('raca').innerHTML = racas.map(r => `<option value="${r}">${r}</option>`).join('');
+            
+            // Atualizar select de locais
             document.getElementById('local').innerHTML = locais.map(l => `<option value="${l}">${l}</option>`).join('');
+            
+            // Atualizar select de proprietários
             document.getElementById('proprietario').innerHTML = proprietarios.map(p => `<option value="${p}">${p}</option>`).join('');
-            document.getElementById('animalGenealogia').innerHTML = '<option value="">Selecione...</option>' + animais.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
+            
+            // Atualizar selects de genealogia (pai e mãe)
+            const machos = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'M'));
+            const femeas = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'F'));
+            
+            // Adicionar reprodutores machos ativos à lista de pais
+            const reprodutoresMachos = reprodutores
+                .filter(r => r.status === 'Ativo')
+                .sort((a, b) => a.registro.localeCompare(b.registro));
+            
+            let optionsPai = '<option value="">Não informado</option>';
+            
+            if (reprodutoresMachos.length > 0) {
+                optionsPai += '<optgroup label="🐂 Reprodutores">';
+                reprodutoresMachos.forEach(r => {
+                    optionsPai += `<option value="reprodutor_${r.id}">🐂 ${r.registro} - ${r.nome}</option>`;
+                });
+                optionsPai += '</optgroup>';
+            }
+            
+            if (machos.length > 0) {
+                optionsPai += '<optgroup label="🐮 Animais do Rebanho">';
+                machos.forEach(a => {
+                    optionsPai += `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`;
+                });
+                optionsPai += '</optgroup>';
+            }
+            
+            document.getElementById('pai').innerHTML = optionsPai;
+            
+            document.getElementById('mae').innerHTML = '<option value="">Não informada</option>' + 
+                femeas.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
+            
+            // Atualizar select de genealogia (árvore)
+            const todosOrdenados = ordenarAnimaisPorNumero(animais);
+            document.getElementById('animalGenealogia').innerHTML = '<option value="">Selecione...</option>' + 
+                todosOrdenados.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
         }
 
         async function adicionarRaca() {
@@ -592,6 +769,49 @@
             racas.push(val);
             await salvarDadosOnline();
             document.getElementById('novaRaca').value = '';
+            renderListas();
+            atualizarSelects();
+        }
+
+        async function editarRaca(racaAntiga) {
+            const novaRaca = prompt('✏️ Editar raça:', racaAntiga);
+            if (!novaRaca || novaRaca.trim() === '') return;
+            
+            const racaEditada = novaRaca.toUpperCase().trim();
+            if (racaEditada === racaAntiga) return;
+            
+            if (racas.includes(racaEditada)) {
+                alert('⚠️ Esta raça já existe!');
+                return;
+            }
+            
+            // Atualizar nos animais
+            animais.forEach(a => {
+                if (a.raca === racaAntiga) a.raca = racaEditada;
+            });
+            
+            // Atualizar na lista
+            const idx = racas.indexOf(racaAntiga);
+            if (idx !== -1) racas[idx] = racaEditada;
+            
+            await salvarDadosOnline();
+            renderListas();
+            atualizarSelects();
+            renderizarTabela();
+        }
+
+        async function excluirRaca(raca) {
+            // Verificar se há animais usando esta raça
+            const animaisComRaca = animais.filter(a => a.raca === raca);
+            if (animaisComRaca.length > 0) {
+                alert(`⚠️ Não é possível excluir! Existem ${animaisComRaca.length} animais com esta raça.`);
+                return;
+            }
+            
+            if (!confirm(`🗑️ Excluir a raça "${raca}"?`)) return;
+            
+            racas = racas.filter(r => r !== raca);
+            await salvarDadosOnline();
             renderListas();
             atualizarSelects();
         }
@@ -607,6 +827,52 @@
             atualizarSelects();
         }
 
+        async function editarLocal(localAntigo) {
+            const novoLocal = prompt('✏️ Editar pasto:', localAntigo);
+            if (!novoLocal || novoLocal.trim() === '') return;
+            
+            const localEditado = novoLocal.toUpperCase().trim();
+            if (localEditado === localAntigo) return;
+            
+            if (locais.includes(localEditado)) {
+                alert('⚠️ Este pasto já existe!');
+                return;
+            }
+            
+            // Atualizar nos animais
+            animais.forEach(a => {
+                if (a.local === localAntigo) a.local = localEditado;
+            });
+            
+            // Atualizar na lista
+            const idx = locais.indexOf(localAntigo);
+            if (idx !== -1) locais[idx] = localEditado;
+            
+            await salvarDadosOnline();
+            renderListas();
+            atualizarSelects();
+            renderizarTabela();
+        }
+
+        async function excluirLocal(local) {
+            // Verificar se há animais usando este local
+            const animaisNoLocal = animais.filter(a => a.local === local);
+            const reprodutoresNoLocal = reprodutores.filter(r => r.local === local);
+            const totalNoLocal = animaisNoLocal.length + reprodutoresNoLocal.length;
+            
+            if (totalNoLocal > 0) {
+                alert(`⚠️ Não é possível excluir! Existem ${animaisNoLocal.length} animais e ${reprodutoresNoLocal.length} reprodutores neste pasto.`);
+                return;
+            }
+            
+            if (!confirm(`🗑️ Excluir o pasto "${local}"?`)) return;
+            
+            locais = locais.filter(l => l !== local);
+            await salvarDadosOnline();
+            renderListas();
+            atualizarSelects();
+        }
+
         async function adicionarProprietario() {
             const val = document.getElementById('novoProprietario').value.toUpperCase().trim();
             if (!val) return alert('⚠️ Digite o nome!');
@@ -618,10 +884,79 @@
             atualizarSelects();
         }
 
+        async function editarProprietario(propAntigo) {
+            const novoProp = prompt('✏️ Editar proprietário:', propAntigo);
+            if (!novoProp || novoProp.trim() === '') return;
+            
+            const propEditado = novoProp.toUpperCase().trim();
+            if (propEditado === propAntigo) return;
+            
+            if (proprietarios.includes(propEditado)) {
+                alert('⚠️ Este proprietário já existe!');
+                return;
+            }
+            
+            // Atualizar nos animais
+            animais.forEach(a => {
+                if (a.proprietario === propAntigo) a.proprietario = propEditado;
+            });
+            
+            // Atualizar na lista
+            const idx = proprietarios.indexOf(propAntigo);
+            if (idx !== -1) proprietarios[idx] = propEditado;
+            
+            await salvarDadosOnline();
+            renderListas();
+            atualizarSelects();
+            renderizarTabela();
+        }
+
+        async function excluirProprietario(prop) {
+            // Verificar se há animais deste proprietário
+            const animaisDoProp = animais.filter(a => a.proprietario === prop);
+            if (animaisDoProp.length > 0) {
+                alert(`⚠️ Não é possível excluir! Existem ${animaisDoProp.length} animais deste proprietário.`);
+                return;
+            }
+            
+            if (!confirm(`🗑️ Excluir o proprietário "${prop}"?`)) return;
+            
+            proprietarios = proprietarios.filter(p => p !== prop);
+            await salvarDadosOnline();
+            renderListas();
+            atualizarSelects();
+        }
+
         function renderListas() {
-            document.getElementById('listaRacas').innerHTML = racas.map(r => `<div class="item-box"><span>${r}</span></div>`).join('');
-            document.getElementById('listaLocais').innerHTML = locais.map(l => `<div class="item-box"><span>${l}</span></div>`).join('');
-            document.getElementById('listaProprietarios').innerHTML = proprietarios.map(p => `<div class="item-box"><span>${p}</span></div>`).join('');
+            document.getElementById('listaRacas').innerHTML = racas.map(r => `
+                <div class="item-box">
+                    <span>${r}</span>
+                    <div class="btn-group">
+                        <button class="btn btn-warning btn-small" onclick="editarRaca('${r}')">✏️</button>
+                        <button class="btn btn-danger btn-small" onclick="excluirRaca('${r}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('listaLocais').innerHTML = locais.map(l => `
+                <div class="item-box">
+                    <span>${l}</span>
+                    <div class="btn-group">
+                        <button class="btn btn-warning btn-small" onclick="editarLocal('${l}')">✏️</button>
+                        <button class="btn btn-danger btn-small" onclick="excluirLocal('${l}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('listaProprietarios').innerHTML = proprietarios.map(p => `
+                <div class="item-box">
+                    <span>${p}</span>
+                    <div class="btn-group">
+                        <button class="btn btn-warning btn-small" onclick="editarProprietario('${p}')">✏️</button>
+                        <button class="btn btn-danger btn-small" onclick="excluirProprietario('${p}')">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
         function atualizarDashboard() {
@@ -694,11 +1029,7 @@
             document.getElementById('tituloRelatorio').innerText = '📋 Relatório Completo';
             document.getElementById('previewRelatorio').style.display = 'block';
             
-            const ordenados = [...animais].sort((a, b) => {
-                const numA = parseInt(a.numero) || 0;
-                const numB = parseInt(b.numero) || 0;
-                return numA - numB;
-            });
+            const ordenados = ordenarAnimaisPorNumero(animais);
             
             let html = '<table style="width:100%; background:white; border-radius:0.7rem;"><thead><tr style="background:#f1f5f9;"><th style="padding:1rem;">Nº</th><th style="padding:1rem;">Nome</th><th style="padding:1rem;">Sexo</th><th style="padding:1rem;">Raça</th><th style="padding:1rem;">Local</th></tr></thead><tbody>';
             ordenados.forEach(a => {
@@ -719,11 +1050,7 @@
             });
             let html = '';
             Object.keys(porRaca).forEach(raca => {
-                const ordenados = porRaca[raca].sort((a, b) => {
-                    const numA = parseInt(a.numero) || 0;
-                    const numB = parseInt(b.numero) || 0;
-                    return numA - numB;
-                });
+                const ordenados = ordenarAnimaisPorNumero(porRaca[raca]);
                 html += `<div style="background:white; padding:1.5rem; border-radius:0.7rem; margin-bottom:1rem;"><h3>${raca} (${ordenados.length})</h3>`;
                 ordenados.forEach(a => {
                     html += `<div style="padding:0.5rem; background:#f8fafc; margin:0.3rem 0; border-radius:0.5rem;"><strong>${a.numero}</strong> - ${a.nome || '-'} (${a.sexo === 'F' ? '♀' : '♂'})</div>`;
@@ -734,11 +1061,7 @@
         }
 
         function gerarRelatorioFemeas() {
-            const femeas = animais.filter(a => a.sexo === 'F').sort((a, b) => {
-                const numA = parseInt(a.numero) || 0;
-                const numB = parseInt(b.numero) || 0;
-                return numA - numB;
-            });
+            const femeas = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'F'));
             if (femeas.length === 0) return alert('⚠️ Sem fêmeas!');
             document.getElementById('tituloRelatorio').innerText = '♀ Fêmeas';
             document.getElementById('previewRelatorio').style.display = 'block';
@@ -761,11 +1084,7 @@
             });
             let html = '';
             Object.keys(porProprietario).forEach(prop => {
-                const lista = porProprietario[prop].sort((a, b) => {
-                    const numA = parseInt(a.numero) || 0;
-                    const numB = parseInt(b.numero) || 0;
-                    return numA - numB;
-                });
+                const lista = ordenarAnimaisPorNumero(porProprietario[prop]);
                 const femeas = lista.filter(a => a.sexo === 'F').length;
                 const machos = lista.filter(a => a.sexo === 'M').length;
                 html += `<div style="background:white; padding:1.5rem; border-radius:0.7rem; margin-bottom:1rem; border-left:4px solid #3b82f6;">
@@ -782,11 +1101,7 @@
         }
 
         function gerarRelatorioAmamentando() {
-            const amamentando = animais.filter(a => a.amamentando === true).sort((a, b) => {
-                const numA = parseInt(a.numero) || 0;
-                const numB = parseInt(b.numero) || 0;
-                return numA - numB;
-            });
+            const amamentando = ordenarAnimaisPorNumero(animais.filter(a => a.amamentando === true));
             if (amamentando.length === 0) return alert('⚠️ Nenhuma fêmea amamentando!');
             document.getElementById('tituloRelatorio').innerText = '🍼 Fêmeas Amamentando';
             document.getElementById('previewRelatorio').style.display = 'block';
@@ -819,11 +1134,7 @@
         }
 
         function gerarRelatorioSemFerro() {
-            const semFerro = animais.filter(a => a.semFerro === true).sort((a, b) => {
-                const numA = parseInt(a.numero) || 0;
-                const numB = parseInt(b.numero) || 0;
-                return numA - numB;
-            });
+            const semFerro = ordenarAnimaisPorNumero(animais.filter(a => a.semFerro === true));
             if (semFerro.length === 0) return alert('⚠️ Todos os animais estão marcados!');
             document.getElementById('tituloRelatorio').innerText = '🔓 Animais Sem Ferro';
             document.getElementById('previewRelatorio').style.display = 'block';
@@ -867,6 +1178,29 @@
                 document.getElementById('arvoreGenealogia').innerHTML = '<div style="text-align:center; color:#94a3b8; padding:3rem;">Selecione um animal</div>';
                 return;
             }
+            
+            // Buscar informações do pai e da mãe
+            let pai = null;
+            let paiTexto = 'Não registrado';
+            
+            if (a.pai) {
+                if (a.pai.startsWith('reprodutor_')) {
+                    const reprodutorId = a.pai.replace('reprodutor_', '');
+                    pai = reprodutores.find(x => x.id === reprodutorId);
+                    if (pai) {
+                        paiTexto = `🐂 ${pai.registro} - ${pai.nome} (Reprodutor)`;
+                    }
+                } else {
+                    pai = animais.find(x => x.id === a.pai);
+                    if (pai) {
+                        paiTexto = `${pai.numero} - ${pai.nome || 'Sem nome'}`;
+                    }
+                }
+            }
+            
+            const mae = a.mae ? animais.find(x => x.id === a.mae) : null;
+            const maeTexto = mae ? `${mae.numero} - ${mae.nome || 'Sem nome'}` : (a.mae || 'Não registrada');
+            
             document.getElementById('arvoreGenealogia').innerHTML = `
                 <div style="text-align:center;">
                     <div style="background:linear-gradient(135deg, #3b82f6, #2563eb); color:white; padding:2rem; border-radius:1rem; display:inline-block; min-width:250px; margin-bottom:2rem;">
@@ -877,11 +1211,11 @@
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; max-width:600px; margin:0 auto;">
                         <div style="padding:1.5rem; background:#dbeafe; border-radius:1rem; border:3px solid #3b82f6;">
                             <div style="font-size:0.9rem; color:#1e40af; font-weight:700; margin-bottom:0.5rem;">🐂 PAI</div>
-                            <div style="font-size:1.2rem; font-weight:700;">${a.pai || 'Não registrado'}</div>
+                            <div style="font-size:1.2rem; font-weight:700;">${paiTexto}</div>
                         </div>
                         <div style="padding:1.5rem; background:#fce7f3; border-radius:1rem; border:3px solid #ec4899;">
                             <div style="font-size:0.9rem; color:#be185d; font-weight:700; margin-bottom:0.5rem;">🐄 MÃE</div>
-                            <div style="font-size:1.2rem; font-weight:700;">${a.mae || 'Não registrada'}</div>
+                            <div style="font-size:1.2rem; font-weight:700;">${maeTexto}</div>
                         </div>
                     </div>
                 </div>
@@ -890,15 +1224,208 @@
 
         function exportarExcel() {
             if (animais.length === 0) return alert('⚠️ Sem dados!');
-            const ordenados = [...animais].sort((a, b) => {
-                const numA = parseInt(a.numero) || 0;
-                const numB = parseInt(b.numero) || 0;
-                return numA - numB;
+            const ordenados = ordenarAnimaisPorNumero(animais);
+            
+            // Preparar dados para Excel
+            const dadosExcel = ordenados.map(a => {
+                let paiTexto = '-';
+                if (a.pai) {
+                    if (a.pai.startsWith('reprodutor_')) {
+                        const reprodutorId = a.pai.replace('reprodutor_', '');
+                        const reprodutor = reprodutores.find(x => x.id === reprodutorId);
+                        if (reprodutor) {
+                            paiTexto = `${reprodutor.registro} - ${reprodutor.nome} (Reprodutor)`;
+                        }
+                    } else {
+                        const pai = animais.find(x => x.id === a.pai);
+                        if (pai) {
+                            paiTexto = `${pai.numero} - ${pai.nome || 'Sem nome'}`;
+                        }
+                    }
+                }
+                
+                const mae = a.mae ? animais.find(x => x.id === a.mae) : null;
+                
+                return {
+                    'Número': a.numero,
+                    'Brinco': a.brinco || '-',
+                    'Nome': a.nome || '-',
+                    'Sexo': a.sexo === 'F' ? 'Fêmea' : 'Macho',
+                    'Raça': a.raca,
+                    'Local': a.local,
+                    'Proprietário': a.proprietario,
+                    'Nascimento': a.dataNascimento || '-',
+                    'Pai': paiTexto,
+                    'Mãe': mae ? `${mae.numero} - ${mae.nome || 'Sem nome'}` : '-',
+                    'Sem Ferro': a.semFerro ? 'Sim' : 'Não',
+                    'Amamentando': a.amamentando ? 'Sim' : 'Não'
+                };
             });
-            const ws = XLSX.utils.json_to_sheet(ordenados);
+            
+            const ws = XLSX.utils.json_to_sheet(dadosExcel);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Rebanho");
             XLSX.writeFile(wb, "Rebanho_" + Date.now() + ".xlsx");
+            alert("✅ Excel exportado!");
+        }
+
+        // ===================== FUNÇÕES REPRODUTORES =====================
+
+        function atualizarSelectsReprodutores() {
+            document.getElementById('racaReprodutor').innerHTML = racas.map(r => `<option value="${r}">${r}</option>`).join('');
+            document.getElementById('propReprodutor').innerHTML = proprietarios.map(p => `<option value="${p}">${p}</option>`).join('');
+            document.getElementById('localReprodutor').innerHTML = locais.map(l => `<option value="${l}">${l}</option>`).join('');
+        }
+
+        async function salvarReprodutor(e) {
+            e.preventDefault();
+            
+            const registro = document.getElementById('regReprodutor').value.trim();
+            
+            const registroJaExiste = reprodutores.some(r => 
+                r.registro === registro && r.id !== reprodutorAtualId
+            );
+            
+            if (registroJaExiste) {
+                alert('⚠️ Este registro já está cadastrado!');
+                return;
+            }
+            
+            const reprodutor = {
+                id: reprodutorAtualId || Date.now().toString(),
+                registro: registro,
+                nome: document.getElementById('nomeReprodutor').value.trim(),
+                raca: document.getElementById('racaReprodutor').value,
+                tipo: document.getElementById('tipoReprodutor').value,
+                proprietario: document.getElementById('propReprodutor').value,
+                local: document.getElementById('localReprodutor').value,
+                origem: document.getElementById('origemReprodutor').value.trim(),
+                dataNascimento: document.getElementById('nascReprodutor').value,
+                status: document.getElementById('statusReprodutor').value,
+                observacoes: document.getElementById('obsReprodutor').value.trim()
+            };
+
+            if (reprodutorAtualId) {
+                const idx = reprodutores.findIndex(r => r.id === reprodutorAtualId);
+                if (idx !== -1) {
+                    reprodutores[idx] = reprodutor;
+                }
+            } else {
+                reprodutores.push(reprodutor);
+            }
+
+            await salvarDadosOnline();
+            renderizarTabelaReprodutores();
+            limparFormReprodutor();
+            alert("✅ Reprodutor salvo com sucesso!");
+        }
+
+        function limparFormReprodutor() {
+            reprodutorAtualId = null;
+            document.getElementById('reprodutorForm').reset();
+        }
+
+        function renderizarTabelaReprodutores(data = reprodutores) {
+            const tbody = document.getElementById('tabelaReprodutores');
+            
+            const ordenados = [...data].sort((a, b) => a.registro.localeCompare(b.registro));
+            
+            if (ordenados.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum reprodutor cadastrado</td></tr>';
+            } else {
+                tbody.innerHTML = ordenados.map(r => {
+                    const statusBadge = r.status === 'Ativo' 
+                        ? '<span class="badge" style="background: #d1fae5; color: #065f46;">✓ Ativo</span>'
+                        : r.status === 'Inativo'
+                        ? '<span class="badge" style="background: #fed7aa; color: #c2410c;">⏸ Inativo</span>'
+                        : '<span class="badge" style="background: #fecaca; color: #991b1b;">✗ Descartado</span>';
+                    
+                    const tipoBadge = r.tipo === 'Touro'
+                        ? '<span class="badge badge-blue">🐂 Touro</span>'
+                        : '<span class="badge badge-pink">💉 Sêmen</span>';
+                    
+                    return `
+                        <tr onclick="selecionarReprodutor('${r.id}')">
+                            <td><strong>${r.registro}</strong></td>
+                            <td>${r.nome}</td>
+                            <td>${r.raca}</td>
+                            <td>${tipoBadge}</td>
+                            <td>${r.local}</td>
+                            <td>${statusBadge}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+            
+            // Atualizar estatísticas
+            document.getElementById('totalReprodutores').innerText = reprodutores.length;
+            document.getElementById('reprodutoresAtivos').innerText = reprodutores.filter(r => r.status === 'Ativo').length;
+            document.getElementById('reprodutoresTouros').innerText = reprodutores.filter(r => r.tipo === 'Touro').length;
+            document.getElementById('reprodutoresSemen').innerText = reprodutores.filter(r => r.tipo === 'Sêmen').length;
+        }
+
+        function selecionarReprodutor(id) {
+            const r = reprodutores.find(x => x.id === id);
+            if (!r) return;
+            
+            reprodutorAtualId = id;
+            document.getElementById('regReprodutor').value = r.registro;
+            document.getElementById('nomeReprodutor').value = r.nome;
+            document.getElementById('racaReprodutor').value = r.raca;
+            document.getElementById('tipoReprodutor').value = r.tipo;
+            document.getElementById('propReprodutor').value = r.proprietario;
+            document.getElementById('localReprodutor').value = r.local;
+            document.getElementById('origemReprodutor').value = r.origem || '';
+            document.getElementById('nascReprodutor').value = r.dataNascimento || '';
+            document.getElementById('statusReprodutor').value = r.status;
+            document.getElementById('obsReprodutor').value = r.observacoes || '';
+        }
+
+        async function excluirReprodutor() {
+            if (!reprodutorAtualId) {
+                alert("⚠️ Selecione um reprodutor!");
+                return;
+            }
+            if (confirm("🗑️ Excluir este reprodutor?")) {
+                reprodutores = reprodutores.filter(r => r.id !== reprodutorAtualId);
+                await salvarDadosOnline();
+                renderizarTabelaReprodutores();
+                limparFormReprodutor();
+            }
+        }
+
+        function pesquisarReprodutores(val) {
+            const filtrados = reprodutores.filter(r =>
+                r.registro.toLowerCase().includes(val.toLowerCase()) ||
+                r.nome.toLowerCase().includes(val.toLowerCase()) ||
+                r.raca.toLowerCase().includes(val.toLowerCase()) ||
+                r.tipo.toLowerCase().includes(val.toLowerCase())
+            );
+            renderizarTabelaReprodutores(filtrados);
+        }
+
+        function exportarReprodutoresExcel() {
+            if (reprodutores.length === 0) return alert('⚠️ Sem dados!');
+            
+            const ordenados = [...reprodutores].sort((a, b) => a.registro.localeCompare(b.registro));
+            
+            const dadosExcel = ordenados.map(r => ({
+                'Registro': r.registro,
+                'Nome': r.nome,
+                'Raça': r.raca,
+                'Tipo': r.tipo,
+                'Proprietário': r.proprietario,
+                'Local/Pasto': r.local,
+                'Origem/Central': r.origem || '-',
+                'Nascimento': r.dataNascimento || '-',
+                'Status': r.status,
+                'Observações': r.observacoes || '-'
+            }));
+            
+            const ws = XLSX.utils.json_to_sheet(dadosExcel);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Reprodutores");
+            XLSX.writeFile(wb, "Reprodutores_" + Date.now() + ".xlsx");
             alert("✅ Excel exportado!");
         }
     </script>
