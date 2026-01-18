@@ -3,126 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Controle de Animais</title>
+    <title>Sistema de Controle de Animais Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
+        /* CSS Unificado */
         * {margin: 0; padding: 0; box-sizing: border-box;}
-        body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;}
+        body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; min-height: 100vh;}
         .app-container {background: #f8fafc; min-height: 100vh;}
-        .header {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative;}
+        .header {background: linear-gradient(135deg, #1e293b 0%, #334155 100%); color: white; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.15); position: relative;}
         .header h1 {font-size: 2rem; margin-bottom: 0.5rem;}
-        .header p {opacity: 0.9;}
-        .sync-status {position: absolute; top: 2rem; right: 2rem; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;}
-        .sync-indicator {width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite;}
-        @keyframes pulse {0%, 100% {opacity: 1;} 50% {opacity: 0.5;}}
-        .nav-tabs {background: white; border-bottom: 2px solid #e2e8f0; padding: 0 2rem; display: flex; gap: 1rem; overflow-x: auto;}
-        .nav-tab {padding: 1rem 1.5rem; border: none; background: none; cursor: pointer; font-size: 0.95rem; font-weight: 600; color: #64748b; border-bottom: 3px solid transparent; transition: all 0.3s;}
-        .nav-tab:hover {color: #667eea; background: #f8fafc;}
-        .nav-tab.active {color: #667eea; border-bottom-color: #667eea;}
+        .sync-status {position: absolute; top: 2rem; right: 2rem; background: rgba(255,255,255,0.1); padding: 0.5rem 1rem; border-radius: 2rem; font-size: 0.875rem;}
+        .nav-tabs {background: white; border-bottom: 2px solid #e2e8f0; padding: 0 2rem; display: flex; gap: 0.5rem; overflow-x: auto; sticky; top: 0; z-index: 100;}
+        .nav-tab {padding: 1.2rem 1.5rem; border: none; background: none; cursor: pointer; font-size: 0.9rem; font-weight: 600; color: #64748b; border-bottom: 3px solid transparent; transition: 0.3s; white-space: nowrap;}
+        .nav-tab:hover {color: #3b82f6;}
+        .nav-tab.active {color: #3b82f6; border-bottom-color: #3b82f6;}
         .container {max-width: 1600px; margin: 0 auto; padding: 2rem;}
-        .main-grid {display: grid; grid-template-columns: 420px 1fr; gap: 2rem;}
-        .card {background: white; border-radius: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 2rem;}
-        .card h2 {font-size: 1.25rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #f1f5f9;}
-        .form-group {margin-bottom: 1.25rem;}
-        .form-group label {display: block; font-size: 0.875rem; font-weight: 600; color: #475569; margin-bottom: 0.5rem;}
-        .form-group input, .form-group select, .form-group textarea {width: 100%; padding: 0.75rem 1rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.875rem; background: #f8fafc;}
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {outline: none; border-color: #667eea; background: white;}
-        .input-group {display: flex; gap: 0.5rem;}
-        .input-group input {flex: 1;}
-        .btn {padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.3s;}
-        .btn-primary {background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;}
-        .btn-primary:hover {transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);}
-        .btn-secondary {background: #e2e8f0; color: #334155;}
-        .btn-danger {background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white;}
-        .btn-success {background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: white;}
-        .btn-warning {background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;}
-        .btn-group {display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-top: 2rem;}
+        .main-grid {display: grid; grid-template-columns: 400px 1fr; gap: 2rem;}
+        .card {background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 1.5rem; margin-bottom: 2rem;}
+        .form-group {margin-bottom: 1rem;}
+        .form-group label {display: block; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.4rem;}
+        .form-group input, .form-group select, .form-group textarea {width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 0.5rem; font-size: 0.9rem;}
+        .btn {padding: 0.7rem 1.2rem; border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;}
+        .btn-primary {background: #3b82f6; color: white;}
+        .btn-success {background: #22c55e; color: white;}
+        .btn-danger {background: #ef4444; color: white;}
+        .btn-warning {background: #f59e0b; color: white;}
+        .btn-secondary {background: #64748b; color: white;}
         .grid-2 {display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;}
-        .checkbox-group {display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 1rem 0; padding: 1rem; background: #f8fafc; border-radius: 0.5rem;}
-        .checkbox-label {display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 500; cursor: pointer;}
-        .search-box {padding: 1.5rem; border-bottom: 2px solid #f1f5f9;}
-        .search-input {width: 100%; padding: 0.875rem 1.25rem; border: 2px solid #e2e8f0; border-radius: 0.75rem; font-size: 0.875rem; background: #f8fafc;}
-        .table-actions {padding: 1.5rem; display: flex; gap: 0.75rem; border-bottom: 2px solid #f1f5f9; flex-wrap: wrap;}
+        .checkbox-group {display: flex; gap: 1rem; margin: 1rem 0; padding: 1rem; background: #f8fafc; border-radius: 0.5rem;}
         table {width: 100%; border-collapse: collapse;}
-        thead {background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);}
-        th {padding: 1rem 1.25rem; text-align: left; font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase;}
-        td {padding: 1rem 1.25rem; font-size: 0.875rem; border-bottom: 1px solid #f1f5f9;}
-        tbody tr {cursor: pointer; transition: background 0.2s;}
-        tbody tr:hover {background: #f8fafc;}
-        tbody tr.selected {background: #ede9fe;}
-        .empty-state {padding: 4rem 2rem; text-align: center; color: #94a3b8;}
-        .stats-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;}
-        .stat-card {background: white; border-radius: 1rem; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; border-top: 4px solid;}
-        .stat-card.blue {border-top-color: #3b82f6;} .stat-card.green {border-top-color: #22c55e;} .stat-card.red {border-top-color: #ef4444;} .stat-card.purple {border-top-color: #a855f7;} .stat-card.yellow {border-top-color: #f59e0b;} .stat-card.pink {border-top-color: #ec4899;}
-        .stat-value {font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem;}
-        .stat-label {font-size: 0.875rem; color: #64748b; font-weight: 600;}
-        .stat-value.blue {color: #3b82f6;} .stat-value.green {color: #22c55e;} .stat-value.red {color: #ef4444;} .stat-value.purple {color: #a855f7;} .stat-value.yellow {color: #f59e0b;} .stat-value.pink {color: #ec4899;}
-        .chart-container {background: white; border-radius: 1rem; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 2rem;}
-        .chart-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;}
-        .item-list {margin-top: 1.5rem;}
-        .item-box {padding: 1rem; background: #f8fafc; margin-top: 0.75rem; border-radius: 0.75rem; display: flex; justify-content: space-between; align-items: center; border: 2px solid #e2e8f0;}
-        .genealogy-tree {padding: 2rem; background: #f8fafc; border-radius: 1rem; margin-top: 1.5rem; border: 2px solid #e2e8f0;}
-        .tree-node {background: white; padding: 1rem; border-radius: 0.75rem; margin: 0.5rem 0; border: 2px solid #e2e8f0;}
-        .tree-branch {margin-left: 2rem; border-left: 2px solid #cbd5e1; padding-left: 1rem;}
+        th {background: #f8fafc; padding: 1rem; text-align: left; font-size: 0.75rem; color: #64748b; border-bottom: 2px solid #e2e8f0;}
+        td {padding: 1rem; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;}
+        tr:hover {background: #f1f5f9; cursor: pointer;}
         .hidden {display: none;}
-        @media (max-width: 1024px) {.main-grid, .chart-grid {grid-template-columns: 1fr;} .sync-status {position: relative; top: auto; right: auto; margin-top: 1rem;}}
+        .stats-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;}
+        .stat-card {background: white; padding: 1.5rem; border-radius: 1rem; text-align: center; border-bottom: 4px solid #3b82f6;}
+        .chart-grid {display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;}
+        .item-box {display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; background: #f8fafc; border-radius: 0.5rem; margin-bottom: 0.5rem; border: 1px solid #e2e8f0;}
     </style>
 </head>
 <body>
     <div class="app-container">
         <div class="header">
-            <h1>🐄 Sistema de Controle de Animais</h1>
-            <p>Gestão completa do seu rebanho</p>
+            <h1>🐄 SisGado Pro</h1>
+            <p>Gestão Pecuária Inteligente 2026</p>
             <div class="sync-status">
-                <div class="sync-indicator"></div>
-                <span id="syncStatus">Firebase conectado ✓</span>
+                <span id="syncStatus">Dados Locais (Offline)</span>
             </div>
         </div>
 
         <div class="nav-tabs">
-            <button class="nav-tab active" onclick="showTab('animals')">🐮 Animais</button>
+            <button class="nav-tab active" onclick="showTab('animals')">🐮 Rebanho</button>
             <button class="nav-tab" onclick="showTab('reprodutores')">🐂 Reprodutores</button>
-            <button class="nav-tab" onclick="showTab('reports')">📊 Relatórios</button>
+            <button class="nav-tab" onclick="showTab('reports')">📊 Dashboard</button>
             <button class="nav-tab" onclick="showTab('genealogy')">🌳 Genealogia</button>
             <button class="nav-tab" onclick="showTab('racas')">🏷️ Raças</button>
-            <button class="nav-tab" onclick="showTab('locais')">📍 Locais</button>
-            <button class="nav-tab" onclick="showTab('tools')">🧮 Ferramentas</button>
+            <button class="nav-tab" onclick="showTab('locais')">📍 Pastos</button>
             <button class="nav-tab" onclick="showTab('owners')">👥 Proprietários</button>
+            <button class="nav-tab" onclick="showTab('tools')">🧮 Calculadoras</button>
         </div>
 
         <div class="container">
             <div id="tab-animals" class="tab-content">
                 <div class="main-grid">
                     <div class="card">
-                        <h2>📝 Dados do Animal</h2>
+                        <h2>Ficha do Animal</h2>
                         <form id="animalForm" onsubmit="salvarAnimal(event)">
                             <div class="form-group">
-                                <label>NÚMERO *</label>
-                                <div class="input-group">
+                                <label>Número/ID</label>
+                                <div style="display:flex; gap:5px">
                                     <input type="text" id="numero" required>
-                                    <button type="button" class="btn btn-primary" onclick="gerarNumero()">Gerar</button>
+                                    <button type="button" class="btn btn-secondary" onclick="gerarNumero()">Aut</button>
                                 </div>
                             </div>
-
-                            <div class="checkbox-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="usaBrinco" onchange="toggleBrinco()">
-                                    Usar Brinco
-                                </label>
-                            </div>
-
-                            <div class="form-group hidden" id="campoBrinco">
+                            <div class="form-group">
                                 <label>Brinco</label>
                                 <input type="text" id="brinco">
                             </div>
-
                             <div class="form-group">
                                 <label>Nome</label>
                                 <input type="text" id="nome">
                             </div>
-
                             <div class="grid-2">
                                 <div class="form-group">
                                     <label>Sexo</label>
@@ -136,308 +99,172 @@
                                     <select id="raca"></select>
                                 </div>
                             </div>
-
                             <div class="form-group">
                                 <label>Local/Pasto</label>
                                 <select id="local"></select>
                             </div>
-
                             <div class="form-group">
                                 <label>Proprietário</label>
                                 <select id="proprietario"></select>
                             </div>
-
                             <div class="form-group">
-                                <label>Data de Nascimento</label>
+                                <label>Nascimento</label>
                                 <input type="date" id="dataNascimento">
                             </div>
-
                             <div class="grid-2">
                                 <div class="form-group">
-                                    <label>Pai</label>
+                                    <label>Pai (Touro)</label>
                                     <select id="pai"></select>
                                 </div>
                                 <div class="form-group">
-                                    <label>Mãe</label>
+                                    <label>Mãe (Matriz)</label>
                                     <select id="mae"></select>
                                 </div>
                             </div>
-
                             <div class="checkbox-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="semFerro">
-                                    Sem Ferro
-                                </label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="amamentando">
-                                    Amamentando
-                                </label>
+                                <label><input type="checkbox" id="semFerro"> Sem Ferro</label>
+                                <label><input type="checkbox" id="amamentando"> Amamentando</label>
                             </div>
-
-                            <div class="form-group">
-                                <label>Observações</label>
-                                <textarea id="observacoes" rows="3"></textarea>
-                            </div>
-
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-secondary" onclick="limparForm()">🆕 Novo</button>
-                                <button type="submit" class="btn btn-primary">💾 Salvar</button>
-                                <button type="button" class="btn btn-danger" onclick="excluirAnimal()">🗑️ Excluir</button>
+                            <div class="btn-group" style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <button type="submit" class="btn btn-primary">Salvar</button>
+                                <button type="button" class="btn btn-warning" onclick="limparForm()">Limpar</button>
+                                <button type="button" class="btn btn-danger" onclick="excluirAnimal()" style="grid-column: span 2;">Excluir</button>
                             </div>
                         </form>
                     </div>
 
                     <div class="card">
-                        <div class="search-box">
-                            <input type="text" class="search-input" placeholder="🔍 Pesquisar..." onkeyup="pesquisarAnimais(this.value)">
+                        <div style="display:flex; justify-content: space-between; margin-bottom: 1rem;">
+                            <input type="text" placeholder="Pesquisar..." style="padding:0.5rem; width: 60%;" onkeyup="pesquisarAnimais(this.value)">
+                            <div style="display:flex; gap:5px;">
+                                <button class="btn btn-success" onclick="exportarExcel()">Excel</button>
+                                <button class="btn btn-danger" onclick="exportarPDF()">PDF</button>
+                            </div>
                         </div>
-                        <div class="table-actions">
-                            <button class="btn btn-success" onclick="exportarExcel()">📥 Excel</button>
-                            <button class="btn btn-danger" onclick="exportarPDF()">📄 PDF</button>
-                            <button class="btn btn-warning" onclick="sincronizar()">🔄 Sincronizar</button>
+                        <div style="overflow-x: auto;">
+                            <table>
+                                <thead>
+                                    <tr><th>ID</th><th>Brinco</th><th>Nome</th><th>Sexo</th><th>Raça</th><th>Local</th></tr>
+                                </thead>
+                                <tbody id="tabelaAnimais"></tbody>
+                            </table>
                         </div>
-                        <table>
-                            <thead>
-                                <tr><th>NÚMERO</th><th>Brinco</th><th>Nome</th><th>Sexo</th><th>Raça</th><th>Local</th></tr>
-                            </thead>
-                            <tbody id="tabelaAnimais">
-                                <tr><td colspan="6" class="empty-state">Nenhum animal cadastrado</td></tr>
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>
 
             <div id="tab-reprodutores" class="tab-content hidden">
-                <div class="card" style="max-width: 1200px; margin: 0 auto;">
-                    <h2>🐂 Cadastro de Reprodutores</h2>
-                    <form id="reprodutorForm" onsubmit="salvarReprodutor(event)">
-                        <div class="grid-2">
-                            <div class="form-group">
-                                <label>NÚMERO *</label>
-                                <input type="text" id="numeroReprodutor" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Nome *</label>
-                                <input type="text" id="nomeReprodutor" required>
-                            </div>
-                        </div>
-                        <div class="grid-2">
-                            <div class="form-group">
-                                <label>Raça</label>
-                                <select id="racaReprodutor"></select>
-                            </div>
-                            <div class="form-group">
-                                <label>Tipo</label>
-                                <select id="tipoReprodutor">
-                                    <option value="Touro">Touro</option>
-                                    <option value="Sêmen">Sêmen</option>
-                                </select>
-                            </div>
-                        </div>
+                <div class="card">
+                    <h2>Cadastrar Touro/Sêmen Externo</h2>
+                    <div class="grid-2">
+                        <div class="form-group"><label>Nome</label><input type="text" id="nomeReprodutor"></div>
                         <div class="form-group">
-                            <label>Observações</label>
-                            <textarea id="observacoesReprodutor" rows="3"></textarea>
+                            <label>Tipo</label>
+                            <select id="tipoReprodutor">
+                                <option value="Touro">Touro Vivo</option>
+                                <option value="Sêmen">Sêmen</option>
+                            </select>
                         </div>
-                        <div class="btn-group">
-                            <button type="button" class="btn btn-secondary" onclick="limparFormReprodutor()">🆕 Novo</button>
-                            <button type="submit" class="btn btn-primary">💾 Salvar</button>
-                            <button type="button" class="btn btn-danger" onclick="excluirReprodutor()">🗑️ Excluir</button>
-                        </div>
-                    </form>
-                    <div id="listaReprodutores" class="item-list"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="salvarReprodutor()">Adicionar Reprodutor</button>
+                    <div id="listaReprodutores" style="margin-top: 1rem;"></div>
                 </div>
             </div>
 
             <div id="tab-reports" class="tab-content hidden">
-                <h2 style="margin-bottom: 2rem;">📊 Dashboard</h2>
                 <div class="stats-grid">
-                    <div class="stat-card blue"><div class="stat-value blue" id="totalAnimais">0</div><div class="stat-label">Total</div></div>
-                    <div class="stat-card green"><div class="stat-value green" id="totalFemeas">0</div><div class="stat-label">Fêmeas</div></div>
-                    <div class="stat-card purple"><div class="stat-value purple" id="totalMachos">0</div><div class="stat-label">Machos</div></div>
-                    <div class="stat-card yellow"><div class="stat-value yellow" id="totalAmamentando">0</div><div class="stat-label">Amamentando</div></div>
-                    <div class="stat-card red"><div class="stat-value red" id="totalSemFerro">0</div><div class="stat-label">Sem Ferro</div></div>
-                    <div class="stat-card pink"><div class="stat-value pink" id="totalRacas">0</div><div class="stat-label">Raças</div></div>
+                    <div class="stat-card"><h3>Total</h3><div id="totalAnimais" style="font-size: 2rem; font-weight: bold;">0</div></div>
+                    <div class="stat-card"><h3>Fêmeas</h3><div id="totalFemeas" style="font-size: 2rem; font-weight: bold; color: #ec4899;">0</div></div>
+                    <div class="stat-card"><h3>Machos</h3><div id="totalMachos" style="font-size: 2rem; font-weight: bold; color: #3b82f6;">0</div></div>
                 </div>
                 <div class="chart-grid">
-                    <div class="chart-container"><h2>Raças</h2><canvas id="racaChart"></canvas></div>
-                    <div class="chart-container"><h2>Sexo</h2><canvas id="sexoChart"></canvas></div>
-                    <div class="chart-container"><h2>Locais</h2><canvas id="localChart"></canvas></div>
-                    <div class="chart-container"><h2>Proprietários</h2><canvas id="proprietarioChart"></canvas></div>
+                    <div class="card"><canvas id="racaChart"></canvas></div>
+                    <div class="card"><canvas id="localChart"></canvas></div>
                 </div>
-                <div class="chart-container"><h2>Idade</h2><canvas id="idadeChart"></canvas></div>
             </div>
 
             <div id="tab-genealogy" class="tab-content hidden">
                 <div class="card">
-                    <h2>🌳 Árvore Genealógica</h2>
-                    <div class="form-group">
-                        <label>Selecione um Animal</label>
-                        <select id="animalGenealogia" onchange="mostrarGenealogia()">
-                            <option value="">Escolha um animal...</option>
-                        </select>
-                    </div>
-                    <div id="arvoreGenealogia"></div>
+                    <h2>Árvore Genealógica</h2>
+                    <select id="animalGenealogia" onchange="mostrarGenealogia()" style="padding:1rem; width:100%; margin-bottom: 1rem;"></select>
+                    <div id="arvoreGenealogia" style="padding: 2rem; background: #f8fafc; border-radius: 1rem; border: 2px dashed #cbd5e1;"></div>
                 </div>
             </div>
 
             <div id="tab-racas" class="tab-content hidden">
-                <div class="card" style="max-width: 700px; margin: 0 auto;">
-                    <h2>🏷️ Raças</h2>
-                    <div class="form-group"><input type="text" id="nomeRaca" placeholder="Nome da raça"></div>
-                    <button class="btn btn-primary" onclick="adicionarRaca()">➕ Adicionar</button>
-                    <div id="listaRacas" class="item-list"></div>
+                <div class="card">
+                    <h2>Gerenciar Raças</h2>
+                    <div class="form-group"><input type="text" id="novaRaca" placeholder="Nome da Raça"></div>
+                    <button class="btn btn-primary" onclick="adicionarConfig('racas', 'novaRaca')">Adicionar</button>
+                    <div id="listaRacas" style="margin-top: 1rem;"></div>
                 </div>
             </div>
 
             <div id="tab-locais" class="tab-content hidden">
-                <div class="card" style="max-width: 700px; margin: 0 auto;">
-                    <h2>📍 Locais</h2>
-                    <div class="form-group"><input type="text" id="nomeLocal" placeholder="Nome do local"></div>
-                    <button class="btn btn-primary" onclick="adicionarLocal()">➕ Adicionar</button>
-                    <div id="listaLocais" class="item-list"></div>
-                </div>
-            </div>
-
-            <div id="tab-tools" class="tab-content hidden">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
-                    <div class="card">
-                        <h2>⚖️ Arrobas</h2>
-                        <div class="form-group"><label>Peso Vivo (KG)</label><input type="number" id="pesoVivo" step="0.01"></div>
-                        <div class="form-group"><label>Peso Morto (KG)</label><input type="number" id="pesoMorto" step="0.01"></div>
-                        <button class="btn btn-primary" onclick="calcularArrobas()">Calcular</button>
-                        <p id="resultadoArrobas" style="margin-top: 1.5rem; font-weight: bold; color: #667eea;"></p>
-                    </div>
-                    <div class="card">
-                        <h2>🤰 Parto</h2>
-                        <div class="form-group"><label>Data Inseminação</label><input type="date" id="dataInseminacao"></div>
-                        <button class="btn btn-primary" onclick="calcularParto()">Calcular</button>
-                        <p id="resultadoParto" style="margin-top: 1.5rem; font-weight: bold; color: #667eea;"></p>
-                    </div>
-                    <div class="card">
-                        <h2>📅 Idade</h2>
-                        <div class="form-group"><label>Data Nascimento</label><input type="date" id="dataNascIdade"></div>
-                        <button class="btn btn-primary" onclick="calcularIdade()">Calcular</button>
-                        <p id="resultadoIdade" style="margin-top: 1.5rem; font-weight: bold; color: #667eea;"></p>
-                    </div>
+                <div class="card">
+                    <h2>Gerenciar Pastos/Locais</h2>
+                    <div class="form-group"><input type="text" id="novoLocal" placeholder="Nome do Pasto"></div>
+                    <button class="btn btn-primary" onclick="adicionarConfig('locais', 'novoLocal')">Adicionar</button>
+                    <div id="listaLocais" style="margin-top: 1rem;"></div>
                 </div>
             </div>
 
             <div id="tab-owners" class="tab-content hidden">
-                <div class="card" style="max-width: 700px; margin: 0 auto;">
-                    <h2>👥 Proprietários</h2>
-                    <div class="form-group"><input type="text" id="nomeProprietario" placeholder="Nome do proprietário"></div>
-                    <button class="btn btn-primary" onclick="adicionarProprietario()">➕ Adicionar</button>
-                    <div id="listaProprietarios" class="item-list"></div>
+                <div class="card">
+                    <h2>Gerenciar Proprietários</h2>
+                    <div class="form-group"><input type="text" id="novoProp" placeholder="Nome do Proprietário"></div>
+                    <button class="btn btn-primary" onclick="adicionarConfig('proprietarios', 'novoProp')">Adicionar</button>
+                    <div id="listaProprietarios" style="margin-top: 1rem;"></div>
                 </div>
             </div>
+
+            <div id="tab-tools" class="tab-content hidden">
+                <div class="grid-2">
+                    <div class="card">
+                        <h3>Cálculo de Arrobas</h3>
+                        <div class="form-group"><label>Peso Vivo (kg)</label><input type="number" id="pesoV" oninput="calcArr()"></div>
+                        <p id="resArr" style="font-weight: bold; color: #3b82f6;"></p>
+                    </div>
+                    <div class="card">
+                        <h3>Previsão de Parto</h3>
+                        <div class="form-group"><label>Data Inseminação</label><input type="date" id="dataIns" onchange="calcParto()"></div>
+                        <p id="resParto" style="font-weight: bold; color: #ec4899;"></p>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
-        let animais = [];
-        let reprodutores = [];
-        let proprietarios = [];
-        let racas = ['NELORE','ANGUS','BRAHMAN','TABAPUÃ','SENEPOL','GIROLANDO','HOLANDESA','GIR','JERSEY'];
-        let locais = ['PASTO 1','PASTO 2','CURRAL'];
+        // ESTADO GLOBAL
+        let animais = JSON.parse(localStorage.getItem('gado_animais')) || [];
+        let reprodutores = JSON.parse(localStorage.getItem('gado_reprod')) || [];
+        let racas = JSON.parse(localStorage.getItem('gado_racas')) || ['NELORE', 'ANGUS', 'BRAHMAN'];
+        let locais = JSON.parse(localStorage.getItem('gado_locais')) || ['PASTO 01', 'CURRAL'];
+        let proprietarios = JSON.parse(localStorage.getItem('gado_props')) || ['FAZENDA PROPRIA'];
         let animalAtualId = null;
-        let reprodutorAtualId = null;
         let charts = {};
 
-        function gerarNumero() {
-            const proximoNumero = animais.length > 0 
-                ? Math.max(...animais.map(a => parseInt(a.numero) || 0)) + 1 
-                : 1;
-            document.getElementById('numero').value = proximoNumero;
-        }
-
-        function toggleBrinco() {
-            const usaBrinco = document.getElementById('usaBrinco').checked;
-            const campoBrinco = document.getElementById('campoBrinco');
-            if (usaBrinco) {
-                campoBrinco.classList.remove('hidden');
-            } else {
-                campoBrinco.classList.add('hidden');
-                document.getElementById('brinco').value = '';
-            }
-        }
-
-        function showTab(tabName) {
-            const tabs = document.querySelectorAll('.tab-content');
-            tabs.forEach(tab => tab.classList.add('hidden'));
-            
-            const navTabs = document.querySelectorAll('.nav-tab');
-            navTabs.forEach(tab => tab.classList.remove('active'));
-            
-            document.getElementById('tab-' + tabName).classList.remove('hidden');
-            event.target.classList.add('active');
-            
-            if (tabName === 'reports') {
-                atualizarRelatorios();
-            }
-        }
-
-        async function carregarDados() {
-            try {
-                const storageAnimais = await window.storage.get('animais').catch(() => null);
-                const storageReprodutores = await window.storage.get('reprodutores').catch(() => null);
-                const storageProp = await window.storage.get('proprietarios').catch(() => null);
-                const storageRacas = await window.storage.get('racas').catch(() => null);
-                const storageLocais = await window.storage.get('locais').catch(() => null);
-
-                if (storageAnimais) animais = JSON.parse(storageAnimais.value);
-                if (storageReprodutores) reprodutores = JSON.parse(storageReprodutores.value);
-                if (storageProp) proprietarios = JSON.parse(storageProp.value);
-                if (storageRacas) racas = JSON.parse(storageRacas.value);
-                if (storageLocais) locais = JSON.parse(storageLocais.value);
-            } catch (error) {
-                console.log('Usando dados padrão');
-            }
-
+        // INICIALIZAÇÃO
+        window.onload = () => {
             renderizarTabela();
             atualizarSelects();
-            atualizarListaProprietarios();
-            atualizarListaRacas();
-            atualizarListaLocais();
-            atualizarListaReprodutores();
-            atualizarSelectGenealogia();
+            renderListasSimples();
+        };
+
+        // NAVEGAÇÃO
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            event.currentTarget.classList.add('active');
+            if(tabName === 'reports') atualizarDashboard();
         }
 
-        async function salvarDados() {
-            console.log('Salvando dados...', {animais: animais.length, reprodutores: reprodutores.length});
-            
-            try {
-                await window.storage.set('animais', JSON.stringify(animais));
-                await window.storage.set('reprodutores', JSON.stringify(reprodutores));
-                await window.storage.set('proprietarios', JSON.stringify(proprietarios));
-                await window.storage.set('racas', JSON.stringify(racas));
-                await window.storage.set('locais', JSON.stringify(locais));
-                console.log('✅ Salvo localmente');
-            } catch (error) {
-                console.error('Erro ao salvar localmente', error);
-            }
-
-            if (window.firebaseDB && window.firebaseSet && window.firebaseRef) {
-                try {
-                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'animais'), animais);
-                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'reprodutores'), reprodutores);
-                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'proprietarios'), proprietarios);
-                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'racas'), racas);
-                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'locais'), locais);
-                    console.log('✅ Sincronizado com Firebase');
-                    document.getElementById('syncStatus').textContent = 'Sincronizado ✓';
-                } catch (error) {
-                    console.error('Erro ao sincronizar:', error);
-                    document.getElementById('syncStatus').textContent = 'Erro ao sincronizar';
-                }
-            }
-        }
-
-        function salvarAnimal(event) {
-            event.preventDefault();
-            
-            console.log('Salvando animal...');
-            
+        // CRUD ANIMAIS
+        function salvarAnimal(e) {
+            e.preventDefault();
             const animal = {
                 id: animalAtualId || Date.now().toString(),
                 numero: document.getElementById('numero').value,
@@ -451,1224 +278,234 @@
                 pai: document.getElementById('pai').value,
                 mae: document.getElementById('mae').value,
                 semFerro: document.getElementById('semFerro').checked,
-                amamentando: document.getElementById('amamentando').checked,
-                observacoes: document.getElementById('observacoes').value
+                amamentando: document.getElementById('amamentando').checked
             };
 
-            console.log('Dados do animal:', animal);
-
             if (animalAtualId) {
-                const index = animais.findIndex(a => a.id === animalAtualId);
-                if (index !== -1) {
-                    animais[index] = animal;
-                    console.log('Animal atualizado');
-                }
+                const idx = animais.findIndex(a => a.id === animalAtualId);
+                animais[idx] = animal;
             } else {
                 animais.push(animal);
-                console.log('Animal adicionado, total:', animais.length);
             }
 
-            salvarDados();
+            localStorage.setItem('gado_animais', JSON.stringify(animais));
             renderizarTabela();
             atualizarSelects();
-            atualizarSelectGenealogia();
             limparForm();
-            alert('✅ Animal salvo com sucesso!');
-        }
-
-        function limparForm() {
-            document.getElementById('animalForm').reset();
-            animalAtualId = null;
-            document.getElementById('campoBrinco').classList.add('hidden');
-            document.querySelectorAll('tbody tr').forEach(tr => tr.classList.remove('selected'));
+            alert("Sucesso!");
         }
 
         function excluirAnimal() {
-            if (!animalAtualId) {
-                alert('⚠️ Selecione um animal primeiro!');
-                return;
-            }
-            
-            if (confirm('Tem certeza que deseja excluir este animal?')) {
+            if(!animalAtualId) return;
+            if(confirm("Deseja excluir?")) {
                 animais = animais.filter(a => a.id !== animalAtualId);
-                salvarDados();
+                localStorage.setItem('gado_animais', JSON.stringify(animais));
                 renderizarTabela();
                 limparForm();
-                alert('✅ Animal excluído!');
             }
         }
 
         function selecionarAnimal(id) {
-            const animal = animais.find(a => a.id === id);
-            if (!animal) return;
-
+            const a = animais.find(x => x.id === id);
             animalAtualId = id;
-            document.getElementById('numero').value = animal.numero || '';
-            document.getElementById('brinco').value = animal.brinco || '';
-            document.getElementById('nome').value = animal.nome || '';
-            document.getElementById('sexo').value = animal.sexo || 'M';
-            document.getElementById('raca').value = animal.raca || '';
-            document.getElementById('local').value = animal.local || '';
-            document.getElementById('proprietario').value = animal.proprietario || '';
-            document.getElementById('dataNascimento').value = animal.dataNascimento || '';
-            document.getElementById('pai').value = animal.pai || '';
-            document.getElementById('mae').value = animal.mae || '';
-            document.getElementById('semFerro').checked = animal.semFerro || false;
-            document.getElementById('amamentando').checked = animal.amamentando || false;
-            document.getElementById('observacoes').value = animal.observacoes || '';
-            
-            if (animal.brinco) {
-                document.getElementById('usaBrinco').checked = true;
-                document.getElementById('campoBrinco').classList.remove('hidden');
-            }
-
-            document.querySelectorAll('tbody tr').forEach(tr => tr.classList.remove('selected'));
-            document.querySelector(`tr[data-id="${id}"]`)?.classList.add('selected');
+            document.getElementById('numero').value = a.numero;
+            document.getElementById('brinco').value = a.brinco;
+            document.getElementById('nome').value = a.nome;
+            document.getElementById('sexo').value = a.sexo;
+            document.getElementById('raca').value = a.raca;
+            document.getElementById('local').value = a.local;
+            document.getElementById('proprietario').value = a.proprietario;
+            document.getElementById('dataNascimento').value = a.dataNascimento;
+            document.getElementById('pai').value = a.pai;
+            document.getElementById('mae').value = a.mae;
+            document.getElementById('semFerro').checked = a.semFerro;
+            document.getElementById('amamentando').checked = a.amamentando;
         }
 
-        function renderizarTabela() {
-            const tbody = document.getElementById('tabelaAnimais');
-            
-            if (animais.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum animal cadastrado</td></tr>';
-                return;
-            }
+        function limparForm() {
+            animalAtualId = null;
+            document.getElementById('animalForm').reset();
+        }
 
-            tbody.innerHTML = animais.map(animal => `
-                <tr data-id="${animal.id}" onclick="selecionarAnimal('${animal.id}')">
-                    <td>${animal.numero || '-'}</td>
-                    <td>${animal.brinco || '-'}</td>
-                    <td>${animal.nome || '-'}</td>
-                    <td>${animal.sexo === 'M' ? 'Macho' : 'Fêmea'}</td>
-                    <td>${animal.raca || '-'}</td>
-                    <td>${animal.local || '-'}</td>
+        // TABELA E RENDERIZAÇÃO
+        function renderizarTabela(data = animais) {
+            const tbody = document.getElementById('tabelaAnimais');
+            tbody.innerHTML = data.map(a => `
+                <tr onclick="selecionarAnimal('${a.id}')">
+                    <td>${a.numero}</td>
+                    <td>${a.brinco || '-'}</td>
+                    <td>${a.nome || '-'}</td>
+                    <td>${a.sexo}</td>
+                    <td>${a.raca}</td>
+                    <td>${a.local}</td>
                 </tr>
             `).join('');
         }
 
-        function pesquisarAnimais(termo) {
-            const tbody = document.getElementById('tabelaAnimais');
-            const termoLower = termo.toLowerCase();
-            
-            const filtrados = animais.filter(animal => 
-                (animal.numero || '').toLowerCase().includes(termoLower) ||
-                (animal.brinco || '').toLowerCase().includes(termoLower) ||
-                (animal.nome || '').toLowerCase().includes(termoLower) ||
-                (animal.raca || '').toLowerCase().includes(termoLower) ||
-                (animal.local || '').toLowerCase().includes(termoLower)
+        function pesquisarAnimais(val) {
+            const filtrados = animais.filter(a => 
+                a.numero.includes(val) || 
+                (a.nome && a.nome.toLowerCase().includes(val.toLowerCase()))
             );
-
-            if (filtrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum resultado encontrado</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = filtrados.map(animal => `
-                <tr data-id="${animal.id}" onclick="selecionarAnimal('${animal.id}')">
-                    <td>${animal.numero || '-'}</td>
-                    <td>${animal.brinco || '-'}</td>
-                    <td>${animal.nome || '-'}</td>
-                    <td>${animal.sexo === 'M' ? 'Macho' : 'Fêmea'}</td>
-                    <td>${animal.raca || '-'}</td>
-                    <td>${animal.local || '-'}</td>
-                </tr>
-            `).join('');
+            renderizarTabela(filtrados);
         }
 
+        // SELECTS DINÂMICOS
         function atualizarSelects() {
-            const selectRaca = document.getElementById('raca');
-            const selectRacaReprodutor = document.getElementById('racaReprodutor');
-            const selectLocal = document.getElementById('local');
-            const selectProprietario = document.getElementById('proprietario');
-            const selectPai = document.getElementById('pai');
-            const selectMae = document.getElementById('mae');
+            const fill = (id, list) => {
+                const el = document.getElementById(id);
+                if(!el) return;
+                el.innerHTML = list.map(i => `<option value="${i}">${i}</option>`).join('');
+            };
 
-            const racasHTML = '<option value="">Selecione...</option>' + 
-                racas.map(r => `<option value="${r}">${r}</option>`).join('');
+            fill('raca', racas);
+            fill('local', locais);
+            fill('proprietario', proprietarios);
             
-            selectRaca.innerHTML = racasHTML;
-            if (selectRacaReprodutor) selectRacaReprodutor.innerHTML = racasHTML;
-            
-            selectLocal.innerHTML = '<option value="">Selecione...</option>' + 
-                locais.map(l => `<option value="${l}">${l}</option>`).join('');
-            
-            selectProprietario.innerHTML = '<option value="">Selecione...</option>' + 
-                proprietarios.map(p => `<option value="${p}">${p}</option>`).join('');
+            // Pais e Mães
+            const paisExternos = reprodutores.map(r => r.nome);
+            const paisInternos = animais.filter(a => a.sexo === 'M').map(a => a.numero);
+            const maes = animais.filter(a => a.sexo === 'F').map(a => a.numero);
 
-            const machos = animais.filter(a => a.sexo === 'M');
-            const femeas = animais.filter(a => a.sexo === 'F');
-            const todosReprodutores = reprodutores || [];
-
-            selectPai.innerHTML = '<option value="">Indefinido</option>' + 
-                machos.map(m => `<option value="${m.id}">${m.numero} - ${m.nome || 'Sem nome'}</option>`).join('') +
-                (todosReprodutores.length > 0 ? '<optgroup label="Reprodutores Cadastrados">' + 
-                todosReprodutores.map(r => `<option value="rep_${r.id}">${r.numero} - ${r.nome}</option>`).join('') + 
-                '</optgroup>' : '');
+            document.getElementById('pai').innerHTML = '<option value="">Corte/Desconhecido</option>' + [...paisExternos, ...paisInternos].map(p => `<option value="${p}">${p}</option>`).join('');
+            document.getElementById('mae').innerHTML = '<option value="">Desconhecida</option>' + maes.map(m => `<option value="${m}">${m}</option>`).join('');
             
-            selectMae.innerHTML = '<option value="">Indefinida</option>' + 
-                femeas.map(f => `<option value="${f.id}">${f.numero} - ${f.nome || 'Sem nome'}</option>`).join('');
+            // Select Genealogia
+            document.getElementById('animalGenealogia').innerHTML = '<option value="">Selecione um animal...</option>' + animais.map(a => `<option value="${a.id}">${a.numero} ${a.nome || ''}</option>`).join('');
         }
 
-        function adicionarProprietario() {
-            const nome = document.getElementById('nomeProprietario').value.trim();
-            if (!nome) {
-                alert('⚠️ Digite um nome!');
-                return;
-            }
-            if (proprietarios.includes(nome)) {
-                alert('⚠️ Proprietário já existe!');
-                return;
-            }
-            proprietarios.push(nome);
-            salvarDados();
-            atualizarListaProprietarios();
+        // CONFIGURAÇÕES SIMPLES
+        function adicionarConfig(tipo, inputId) {
+            const val = document.getElementById(inputId).value.toUpperCase();
+            if(!val) return;
+            if(tipo === 'racas') { racas.push(val); localStorage.setItem('gado_racas', JSON.stringify(racas)); }
+            if(tipo === 'locais') { locais.push(val); localStorage.setItem('gado_locais', JSON.stringify(locais)); }
+            if(tipo === 'proprietarios') { proprietarios.push(val); localStorage.setItem('gado_props', JSON.stringify(proprietarios)); }
+            document.getElementById(inputId).value = '';
             atualizarSelects();
-            document.getElementById('nomeProprietario').value = '';
+            renderListasSimples();
         }
 
-        function atualizarListaProprietarios() {
-            const lista = document.getElementById('listaProprietarios');
-            lista.innerHTML = proprietarios.map(p => `
+        function renderListasSimples() {
+            const render = (id, list) => {
+                document.getElementById(id).innerHTML = list.map(item => `<div class="item-box">${item}</div>`).join('');
+            };
+            render('listaRacas', racas);
+            render('listaLocais', locais);
+            render('listaProprietarios', proprietarios);
+            
+            document.getElementById('listaReprodutores').innerHTML = reprodutores.map(r => `
                 <div class="item-box">
-                    <span>${p}</span>
-                    <button class="btn btn-danger" onclick="removerProprietario('${p}')">🗑️</button>
+                    <span>${r.nome} (${r.tipo})</span>
+                    <button class="btn btn-danger" onclick="removerReprod('${r.id}')">X</button>
                 </div>
             `).join('');
         }
 
-        function removerProprietario(nome) {
-            if (confirm('Tem certeza?')) {
-                proprietarios = proprietarios.filter(p => p !== nome);
-                salvarDados();
-                atualizarListaProprietarios();
-                atualizarSelects();
-            }
-        }
-
-        function adicionarRaca() {
-            const nome = document.getElementById('nomeRaca').value.trim().toUpperCase();
-            if (!nome) {
-                alert('⚠️ Digite um nome!');
-                return;
-            }
-            if (racas.includes(nome)) {
-                alert('⚠️ Raça já existe!');
-                return;
-            }
-            racas.push(nome);
-            salvarDados();
-            atualizarListaRacas();
+        function salvarReprodutor() {
+            const nome = document.getElementById('nomeReprodutor').value.toUpperCase();
+            const tipo = document.getElementById('tipoReprodutor').value;
+            if(!nome) return;
+            reprodutores.push({id: Date.now().toString(), nome, tipo});
+            localStorage.setItem('gado_reprod', JSON.stringify(reprodutores));
+            document.getElementById('nomeReprodutor').value = '';
+            renderListasSimples();
             atualizarSelects();
-            document.getElementById('nomeRaca').value = '';
         }
 
-        function atualizarListaRacas() {
-            const lista = document.getElementById('listaRacas');
-            lista.innerHTML = racas.map(r => `
-                <div class="item-box">
-                    <span>${r}</span>
-                    <button class="btn btn-danger" onclick="removerRaca('${r}')">🗑️</button>
-                </div>
-            `).join('');
+        // DASHBOARD
+        function atualizarDashboard() {
+            document.getElementById('totalAnimais').innerText = animais.length;
+            document.getElementById('totalFemeas').innerText = animais.filter(a => a.sexo === 'F').length;
+            document.getElementById('totalMachos').innerText = animais.filter(a => a.sexo === 'M').length;
+
+            renderChart('racaChart', 'Distribuição por Raça', animais.map(a => a.raca));
+            renderChart('localChart', 'Distribuição por Pasto', animais.map(a => a.local));
         }
 
-        function removerRaca(nome) {
-            if (confirm('Tem certeza?')) {
-                racas = racas.filter(r => r !== nome);
-                salvarDados();
-                atualizarListaRacas();
-                atualizarSelects();
-            }
-        }
-
-        function adicionarLocal() {
-            const nome = document.getElementById('nomeLocal').value.trim().toUpperCase();
-            if (!nome) {
-                alert('⚠️ Digite um nome!');
-                return;
-            }
-            if (locais.includes(nome)) {
-                alert('⚠️ Local já existe!');
-                return;
-            }
-            locais.push(nome);
-            salvarDados();
-            atualizarListaLocais();
-            atualizarSelects();
-            document.getElementById('nomeLocal').value = '';
-        }
-
-        function atualizarListaLocais() {
-            const lista = document.getElementById('listaLocais');
-            lista.innerHTML = locais.map(l => `
-                <div class="item-box">
-                    <span>${l}</span>
-                    <button class="btn btn-danger" onclick="removerLocal('${l}')">🗑️</button>
-                </div>
-            `).join('');
-        }
-
-        function removerLocal(nome) {
-            if (confirm('Tem certeza?')) {
-                locais = locais.filter(l => l !== nome);
-                salvarDados();
-                atualizarListaLocais();
-                atualizarSelects();
-            }
-        }
-
-        function atualizarSelectGenealogia() {
-            const select = document.getElementById('animalGenealogia');
-            select.innerHTML = '<option value="">Escolha um animal...</option>' +
-                animais.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
-        }
-
-        function mostrarGenealogia() {
-            const id = document.getElementById('animalGenealogia').value;
-            if (!id) {
-                document.getElementById('arvoreGenealogia').innerHTML = '';
-                return;
-            }
-
-            const animal = animais.find(a => a.id === id);
-            if (!animal) return;
-
-            let pai = null;
-            let paiNome = 'Indefinido';
+        function renderChart(canvasId, label, rawData) {
+            if(charts[canvasId]) charts[canvasId].destroy();
+            const counts = rawData.reduce((acc, val) => { acc[val] = (acc[val] || 0) + 1; return acc; }, {});
             
-            if (animal.pai) {
-                if (animal.pai.startsWith('rep_')) {
-                    pai = reprodutores.find(r => r.id === animal.pai.replace('rep_', ''));
-                    if (pai) paiNome = `${pai.numero} - ${pai.nome} (${pai.tipo})`;
-                } else {
-                    pai = animais.find(a => a.id === animal.pai);
-                    if (pai) paiNome = `${pai.numero} - ${pai.nome || 'Sem nome'}`;
-                }
-            }
-
-            const mae = animais.find(a => a.id === animal.mae);
-            const maeNome = mae ? `${mae.numero} - ${mae.nome || 'Sem nome'}` : 'Indefinida';
-
-            let html = `<div class="genealogy-tree">
-                <div class="tree-node"><strong>🐮 ${animal.numero} - ${animal.nome || 'Sem nome'}</strong><br>
-                ${animal.sexo === 'M' ? 'Macho' : 'Fêmea'} | ${animal.raca || 'Sem raça'}</div>`;
-
-            html += '<div class="tree-branch">';
-            html += `<div class="tree-node">👨 Pai: ${paiNome}<br>${pai ? (pai.raca || 'Sem raça') : ''}</div>`;
-            html += `<div class="tree-node">👩 Mãe: ${maeNome}<br>${mae ? (mae.raca || 'Sem raça') : ''}</div>`;
-            html += '</div>';
-
-            html += '</div>';
-            document.getElementById('arvoreGenealogia').innerHTML = html;
-        }
-
-        function calcularArrobas() {
-            const pesoVivo = parseFloat(document.getElementById('pesoVivo').value);
-            const pesoMorto = parseFloat(document.getElementById('pesoMorto').value);
-            
-            if (pesoVivo > 0) {
-                const arrobas = pesoVivo / 15;
-                document.getElementById('resultadoArrobas').textContent = 
-                    `Peso Vivo: ${arrobas.toFixed(2)} arrobas`;
-            } else if (pesoMorto > 0) {
-                const arrobas = pesoMorto / 15;
-                document.getElementById('resultadoArrobas').textContent = 
-                    `Peso Morto: ${arrobas.toFixed(2)} arrobas`;
-            } else {
-                alert('⚠️ Preencha pelo menos um peso!');
-            }
-        }
-
-        function calcularParto() {
-            const data = document.getElementById('dataInseminacao').value;
-            if (!data) {
-                alert('⚠️ Selecione uma data!');
-                return;
-            }
-            
-            const dataInsemin = new Date(data);
-            dataInsemin.setDate(dataInsemin.getDate() + 283);
-            
-            const dia = String(dataInsemin.getDate()).padStart(2, '0');
-            const mes = String(dataInsemin.getMonth() + 1).padStart(2, '0');
-            const ano = dataInsemin.getFullYear();
-            
-            document.getElementById('resultadoParto').textContent = 
-                `Data prevista do parto: ${dia}/${mes}/${ano}`;
-        }
-
-        function calcularIdade() {
-            const data = document.getElementById('dataNascIdade').value;
-            if (!data) {
-                alert('⚠️ Selecione uma data!');
-                return;
-            }
-            
-            const nascimento = new Date(data);
-            const hoje = new Date();
-            
-            let anos = hoje.getFullYear() - nascimento.getFullYear();
-            let meses = hoje.getMonth() - nascimento.getMonth();
-            
-            if (meses < 0) {
-                anos--;
-                meses += 12;
-            }
-            
-            document.getElementById('resultadoIdade').textContent = 
-                `Idade: ${anos} anos e ${meses} meses`;
-        }
-
-        function atualizarRelatorios() {
-            const total = animais.length;
-            const femeas = animais.filter(a => a.sexo === 'F').length;
-            const machos = animais.filter(a => a.sexo === 'M').length;
-            const amamentando = animais.filter(a => a.amamentando).length;
-            const semFerro = animais.filter(a => a.semFerro).length;
-            const totalRacas = [...new Set(animais.map(a => a.raca).filter(r => r))].length;
-
-            document.getElementById('totalAnimais').textContent = total;
-            document.getElementById('totalFemeas').textContent = femeas;
-            document.getElementById('totalMachos').textContent = machos;
-            document.getElementById('totalAmamentando').textContent = amamentando;
-            document.getElementById('totalSemFerro').textContent = semFerro;
-            document.getElementById('totalRacas').textContent = totalRacas;
-
-            criarGraficos();
-        }
-
-        function criarGraficos() {
-            const racasCount = {};
-            const locaisCount = {};
-            const proprietariosCount = {};
-
-            animais.forEach(a => {
-                if (a.raca) racasCount[a.raca] = (racasCount[a.raca] || 0) + 1;
-                if (a.local) locaisCount[a.local] = (locaisCount[a.local] || 0) + 1;
-                if (a.proprietario) proprietariosCount[a.proprietario] = (proprietariosCount[a.proprietario] || 0) + 1;
-            });
-
-            if (charts.raca) charts.raca.destroy();
-            charts.raca = new Chart(document.getElementById('racaChart'), {
+            charts[canvasId] = new Chart(document.getElementById(canvasId), {
                 type: 'pie',
                 data: {
-                    labels: Object.keys(racasCount),
+                    labels: Object.keys(counts),
                     datasets: [{
-                        data: Object.values(racasCount),
-                        backgroundColor: ['#3b82f6', '#22c55e', '#ef4444', '#a855f7', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6']
+                        data: Object.values(counts),
+                        backgroundColor: ['#3b82f6', '#ec4899', '#f59e0b', '#22c55e', '#64748b']
                     }]
                 },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-
-            if (charts.sexo) charts.sexo.destroy();
-            charts.sexo = new Chart(document.getElementById('sexoChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Machos', 'Fêmeas'],
-                    datasets: [{
-                        data: [animais.filter(a => a.sexo === 'M').length, animais.filter(a => a.sexo === 'F').length],
-                        backgroundColor: ['#3b82f6', '#ec4899']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-
-            if (charts.local) charts.local.destroy();
-            charts.local = new Chart(document.getElementById('localChart'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(locaisCount),
-                    datasets: [{
-                        label: 'Animais por Local',
-                        data: Object.values(locaisCount),
-                        backgroundColor: '#22c55e'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-
-            if (charts.proprietario) charts.proprietario.destroy();
-            charts.proprietario = new Chart(document.getElementById('proprietarioChart'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(proprietariosCount),
-                    datasets: [{
-                        label: 'Animais por Proprietário',
-                        data: Object.values(proprietariosCount),
-                        backgroundColor: '#a855f7'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-
-            const idades = {};
-            animais.forEach(a => {
-                if (a.dataNascimento) {
-                    const nasc = new Date(a.dataNascimento);
-                    const anos = new Date().getFullYear() - nasc.getFullYear();
-                    idades[anos] = (idades[anos] || 0) + 1;
-                }
-            });
-
-            if (charts.idade) charts.idade.destroy();
-            charts.idade = new Chart(document.getElementById('idadeChart'), {
-                type: 'line',
-                data: {
-                    labels: Object.keys(idades).sort((a, b) => a - b),
-                    datasets: [{
-                        label: 'Distribuição por Idade',
-                        data: Object.keys(idades).sort((a, b) => a - b).map(k => idades[k]),
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
+                options: { plugins: { title: { display: true, text: label } } }
             });
         }
 
-        function exportarExcel() {
-            const dados = animais.map(a => ({
-                'NÚMERO': a.numero,
-                'Brinco': a.brinco,
-                'Nome': a.nome,
-                'Sexo': a.sexo === 'M' ? 'Macho' : 'Fêmea',
-                'Raça': a.raca,
-                'Local': a.local,
-                'Proprietário': a.proprietario,
-                'Nascimento': a.dataNascimento,
-                'Pai': animais.find(p => p.id === a.pai)?.numero || '',
-                'Mãe': animais.find(m => m.id === a.mae)?.numero || '',
-                'Sem Ferro': a.semFerro ? 'Sim' : 'Não',
-                'Amamentando': a.amamentando ? 'Sim' : 'Não',
-                'Observações': a.observacoes
-            }));
+        // GENEALOGIA
+        function mostrarGenealogia() {
+            const id = document.getElementById('animalGenealogia').value;
+            const a = animais.find(x => x.id === id);
+            const box = document.getElementById('arvoreGenealogia');
+            if(!a) { box.innerHTML = "Selecione um animal para ver a árvore"; return; }
 
-            const ws = XLSX.utils.json_to_sheet(dados);
+            box.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="background: white; padding: 10px; border: 2px solid #3b82f6; display: inline-block; border-radius: 8px;">
+                        <strong>${a.numero}</strong><br><small>${a.nome || ''}</small>
+                    </div>
+                    <div style="margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div style="padding: 10px; background: #e0f2fe; border-radius: 8px;">
+                            <strong>PAI:</strong><br>${a.pai || '---'}
+                        </div>
+                        <div style="padding: 10px; background: #fce7f3; border-radius: 8px;">
+                            <strong>MÃE:</strong><br>${a.mae || '---'}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // CALCULADORAS
+        function calcArr() {
+            const kg = document.getElementById('pesoV').value;
+            if(kg) {
+                const arr = (kg * 0.50) / 15;
+                document.getElementById('resArr').innerText = `Rendimento Estimado: ${arr.toFixed(2)} @`;
+            }
+        }
+
+        function calcParto() {
+            const d = document.getElementById('dataIns').value;
+            if(d) {
+                let p = new Date(d);
+                p.setDate(p.getDate() + 284);
+                document.getElementById('resParto').innerText = `Parto Previsto: ${p.toLocaleDateString('pt-BR')}`;
+            }
+        }
+
+        // EXPORTAÇÃO
+        function exportarExcel() {
+            const ws = XLSX.utils.json_to_sheet(animais);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Animais');
-            XLSX.writeFile(wb, 'animais.xlsx');
+            XLSX.utils.book_append_sheet(wb, ws, "Rebanho");
+            XLSX.writeFile(wb, "Rebanho_Completo.xlsx");
         }
 
         function exportarPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            
-            doc.setFontSize(16);
-            doc.text('Lista de Animais', 20, 20);
-            
-            let y = 40;
-            animais.forEach((a, i) => {
-                if (y > 270) {
-                    doc.addPage();
-                    y = 20;
-                }
-                doc.setFontSize(10);
-                doc.text(`${i + 1}. ${a.numero} - ${a.nome || 'Sem nome'} | ${a.sexo === 'M' ? 'Macho' : 'Fêmea'} | ${a.raca || '-'}`, 20, y);
+            doc.text("Relatório de Rebanho", 10, 10);
+            let y = 20;
+            animais.forEach(a => {
+                doc.text(`${a.numero} | ${a.nome || '-'} | ${a.raca} | ${a.local}`, 10, y);
                 y += 10;
             });
-            
-            doc.save('animais.pdf');
+            doc.save("Relatorio.pdf");
         }
 
-        async function sincronizar() {
-            await salvarDados();
-            alert('✅ Sincronizado com Firebase!');
+        function gerarNumero() {
+            const max = animais.length > 0 ? Math.max(...animais.map(a => parseInt(a.numero) || 0)) : 0;
+            document.getElementById('numero').value = max + 1;
         }
     </script>
-
-                 
 </body>
 </html>
-        
-    <script>
-        let animais = [];
-        let proprietarios = [];
-        let racas = ['NELORE','ANGUS','BRAHMAN','TABAPUÃ','SENEPOL','GIROLANDO','HOLANDESA','GIR','JERSEY'];
-        let locais = ['PASTO 1','PASTO 2','CURRAL'];
-        let animalAtualId = null;
-        let charts = {};
-
-        async function carregarDados() {
-            try {
-                const storageAnimais = await window.storage.get('animais').catch(() => null);
-                const storageProp = await window.storage.get('proprietarios').catch(() => null);
-                const storageRacas = await window.storage.get('racas').catch(() => null);
-                const storageLocais = await window.storage.get('locais').catch(() => null);
-
-                if (storageAnimais) animais = JSON.parse(storageAnimais.value);
-                if (storageProp) proprietarios = JSON.parse(storageProp.value);
-                if (storageRacas) racas = JSON.parse(storageRacas.value);
-                if (storageLocais) locais = JSON.parse(storageLocais.value);
-            } catch (error) {
-                console.log('Usando dados padrão');
-            }
-
-            renderizarTabela();
-            atualizarSelects();
-            atualizarListaProprietarios();
-            atualizarListaRacas();
-            atualizarListaLocais();
-            atualizarSelectGenealogia();
-        }
-
-        async function salvarDados() {
-            console.log('Salvando dados...', {animais: animais.length, proprietarios: proprietarios.length});
-            
-            try {
-                await window.storage.set('animais', JSON.stringify(animais));
-                await window.storage.set('proprietarios', JSON.stringify(proprietarios));
-                await window.storage.set('racas', JSON.stringify(racas));
-                await window.storage.set('locais', JSON.stringify(locais));
-                console.log('✅ Salvo localmente');
-            } catch (error) {
-                console.log('Erro ao salvar localmente', error);
-            }
-
-            if (window.firebaseDB && window.firebaseSet && window.firebaseRef) {
-                try {
-                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'animais'), animais);
-                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'proprietarios'), proprietarios);
-                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'racas'), racas);
-                    await window.firebaseSet(window.firebaseRef(window.firebaseDB, 'locais'), locais);
-                    console.log('✅ Sincronizado com Firebase');
-                    document.getElementById('syncStatus').textContent = 'Sincronizado ✓';
-                } catch (error) {
-                    console.error('Erro ao sincronizar:', error);
-                    document.getElementById('syncStatus').textContent = 'Erro ao sincronizar';
-                }
-            }
-        }
-
-        function toggleBrinco() {
-            const usaBrinco = document.getElementById('usaBrinco').checked;
-            const campoBrinco = document.getElementById('campoBrinco');
-            if (usaBrinco) {
-                campoBrinco.classList.remove('hidden');
-            } else {
-                campoBrinco.classList.add('hidden');
-                document.getElementById('brinco').value = '';
-            }
-        }
-
-        function gerarNumero() {
-            const numero = Math.floor(Math.random() * 900000) + 100000;
-            document.getElementById('numero').value = numero;
-        }
-
-        function showTab(tabName) {
-            const tabs = document.querySelectorAll('.tab-content');
-            tabs.forEach(tab => tab.classList.add('hidden'));
-            
-            const navTabs = document.querySelectorAll('.nav-tab');
-            navTabs.forEach(tab => tab.classList.remove('active'));
-            
-            document.getElementById('tab-' + tabName).classList.remove('hidden');
-            event.target.classList.add('active');
-            
-            if (tabName === 'reports') {
-                atualizarRelatorios();
-            }
-        }
-
-        function salvarAnimal(event) {
-            event.preventDefault();
-            
-            console.log('Salvando animal...');
-            
-            const animal = {
-                id: animalAtualId || Date.now().toString(),
-                numero: document.getElementById('numero').value,
-                brinco: document.getElementById('brinco').value,
-                nome: document.getElementById('nome').value,
-                sexo: document.getElementById('sexo').value,
-                raca: document.getElementById('raca').value,
-                local: document.getElementById('local').value,
-                proprietario: document.getElementById('proprietario').value,
-                dataNascimento: document.getElementById('dataNascimento').value,
-                pai: document.getElementById('pai').value,
-                mae: document.getElementById('mae').value,
-                semFerro: document.getElementById('semFerro').checked,
-                amamentando: document.getElementById('amamentando').checked,
-                observacoes: document.getElementById('observacoes').value
-            };
-
-            console.log('Dados do animal:', animal);
-
-            if (animalAtualId) {
-                const index = animais.findIndex(a => a.id === animalAtualId);
-                if (index !== -1) {
-                    animais[index] = animal;
-                    console.log('Animal atualizado');
-                }
-            } else {
-                animais.push(animal);
-                console.log('Animal adicionado, total:', animais.length);
-            }
-
-            salvarDados();
-            renderizarTabela();
-            atualizarSelects();
-            atualizarSelectGenealogia();
-            limparForm();
-            alert('✅ Animal salvo com sucesso!');
-        }
-
-        function limparForm() {
-            document.getElementById('animalForm').reset();
-            animalAtualId = null;
-            document.getElementById('campoBrinco').classList.add('hidden');
-            document.querySelectorAll('tbody tr').forEach(tr => tr.classList.remove('selected'));
-        }
-
-        function excluirAnimal() {
-            if (!animalAtualId) {
-                alert('⚠️ Selecione um animal primeiro!');
-                return;
-            }
-            
-            if (confirm('Tem certeza que deseja excluir este animal?')) {
-                animais = animais.filter(a => a.id !== animalAtualId);
-                salvarDados();
-                renderizarTabela();
-                limparForm();
-                alert('✅ Animal excluído!');
-            }
-        }
-
-        function selecionarAnimal(id) {
-            const animal = animais.find(a => a.id === id);
-            if (!animal) return;
-
-            animalAtualId = id;
-            document.getElementById('numero').value = animal.numero || '';
-            document.getElementById('brinco').value = animal.brinco || '';
-            document.getElementById('nome').value = animal.nome || '';
-            document.getElementById('sexo').value = animal.sexo || 'M';
-            document.getElementById('raca').value = animal.raca || '';
-            document.getElementById('local').value = animal.local || '';
-            document.getElementById('proprietario').value = animal.proprietario || '';
-            document.getElementById('dataNascimento').value = animal.dataNascimento || '';
-            document.getElementById('pai').value = animal.pai || '';
-            document.getElementById('mae').value = animal.mae || '';
-            document.getElementById('semFerro').checked = animal.semFerro || false;
-            document.getElementById('amamentando').checked = animal.amamentando || false;
-            document.getElementById('observacoes').value = animal.observacoes || '';
-            
-            if (animal.brinco) {
-                document.getElementById('usaBrinco').checked = true;
-                document.getElementById('campoBrinco').classList.remove('hidden');
-            }
-
-            document.querySelectorAll('tbody tr').forEach(tr => tr.classList.remove('selected'));
-            document.querySelector(`tr[data-id="${id}"]`)?.classList.add('selected');
-        }
-
-        function renderizarTabela() {
-            const tbody = document.getElementById('tabelaAnimais');
-            
-            if (animais.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum animal cadastrado</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = animais.map(animal => `
-                <tr data-id="${animal.id}" onclick="selecionarAnimal('${animal.id}')">
-                    <td>${animal.numero || '-'}</td>
-                    <td>${animal.brinco || '-'}</td>
-                    <td>${animal.nome || '-'}</td>
-                    <td>${animal.sexo === 'M' ? 'Macho' : 'Fêmea'}</td>
-                    <td>${animal.raca || '-'}</td>
-                    <td>${animal.local || '-'}</td>
-                </tr>
-            `).join('');
-        }
-
-        function pesquisarAnimais(termo) {
-            const tbody = document.getElementById('tabelaAnimais');
-            const termoLower = termo.toLowerCase();
-            
-            const filtrados = animais.filter(animal => 
-                (animal.numero || '').toLowerCase().includes(termoLower) ||
-                (animal.brinco || '').toLowerCase().includes(termoLower) ||
-                (animal.nome || '').toLowerCase().includes(termoLower) ||
-                (animal.raca || '').toLowerCase().includes(termoLower) ||
-                (animal.local || '').toLowerCase().includes(termoLower)
-            );
-
-            if (filtrados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum resultado encontrado</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = filtrados.map(animal => `
-                <tr data-id="${animal.id}" onclick="selecionarAnimal('${animal.id}')">
-                    <td>${animal.numero || '-'}</td>
-                    <td>${animal.brinco || '-'}</td>
-                    <td>${animal.nome || '-'}</td>
-                    <td>${animal.sexo === 'M' ? 'Macho' : 'Fêmea'}</td>
-                    <td>${animal.raca || '-'}</td>
-                    <td>${animal.local || '-'}</td>
-                </tr>
-            `).join('');
-        }
-
-        function atualizarSelects() {
-            const selectRaca = document.getElementById('raca');
-            const selectLocal = document.getElementById('local');
-            const selectProprietario = document.getElementById('proprietario');
-            const selectPai = document.getElementById('pai');
-            const selectMae = document.getElementById('mae');
-
-            selectRaca.innerHTML = '<option value="">Selecione...</option>' + 
-                racas.map(r => `<option value="${r}">${r}</option>`).join('');
-            
-            selectLocal.innerHTML = '<option value="">Selecione...</option>' + 
-                locais.map(l => `<option value="${l}">${l}</option>`).join('');
-            
-            selectProprietario.innerHTML = '<option value="">Selecione...</option>' + 
-                proprietarios.map(p => `<option value="${p}">${p}</option>`).join('');
-
-            const machos = animais.filter(a => a.sexo === 'M');
-            const femeas = animais.filter(a => a.sexo === 'F');
-
-            selectPai.innerHTML = '<option value="">Selecione...</option>' + 
-                machos.map(m => `<option value="${m.id}">${m.numero} - ${m.nome || 'Sem nome'}</option>`).join('');
-            
-            selectMae.innerHTML = '<option value="">Selecione...</option>' + 
-                femeas.map(f => `<option value="${f.id}">${f.numero} - ${f.nome || 'Sem nome'}</option>`).join('');
-        }
-
-        function adicionarProprietario() {
-            const nome = document.getElementById('nomeProprietario').value.trim();
-            if (!nome) {
-                alert('⚠️ Digite um nome!');
-                return;
-            }
-            if (proprietarios.includes(nome)) {
-                alert('⚠️ Proprietário já existe!');
-                return;
-            }
-            proprietarios.push(nome);
-            salvarDados();
-            atualizarListaProprietarios();
-            atualizarSelects();
-            document.getElementById('nomeProprietario').value = '';
-        }
-
-        function atualizarListaProprietarios() {
-            const lista = document.getElementById('listaProprietarios');
-            lista.innerHTML = proprietarios.map(p => `
-                <div class="item-box">
-                    <span>${p}</span>
-                    <button class="btn btn-danger" onclick="removerProprietario('${p}')">🗑️</button>
-                </div>
-            `).join('');
-        }
-
-        function removerProprietario(nome) {
-            if (confirm('Tem certeza?')) {
-                proprietarios = proprietarios.filter(p => p !== nome);
-                salvarDados();
-                atualizarListaProprietarios();
-                atualizarSelects();
-            }
-        }
-
-        function adicionarRaca() {
-            const nome = document.getElementById('nomeRaca').value.trim().toUpperCase();
-            if (!nome) {
-                alert('⚠️ Digite um nome!');
-                return;
-            }
-            if (racas.includes(nome)) {
-                alert('⚠️ Raça já existe!');
-                return;
-            }
-            racas.push(nome);
-            salvarDados();
-            atualizarListaRacas();
-            atualizarSelects();
-            document.getElementById('nomeRaca').value = '';
-        }
-
-        function atualizarListaRacas() {
-            const lista = document.getElementById('listaRacas');
-            lista.innerHTML = racas.map(r => `
-                <div class="item-box">
-                    <span>${r}</span>
-                    <button class="btn btn-danger" onclick="removerRaca('${r}')">🗑️</button>
-                </div>
-            `).join('');
-        }
-
-        function removerRaca(nome) {
-            if (confirm('Tem certeza?')) {
-                racas = racas.filter(r => r !== nome);
-                salvarDados();
-                atualizarListaRacas();
-                atualizarSelects();
-            }
-        }
-
-        function adicionarLocal() {
-            const nome = document.getElementById('nomeLocal').value.trim().toUpperCase();
-            if (!nome) {
-                alert('⚠️ Digite um nome!');
-                return;
-            }
-            if (locais.includes(nome)) {
-                alert('⚠️ Local já existe!');
-                return;
-            }
-            locais.push(nome);
-            salvarDados();
-            atualizarListaLocais();
-            atualizarSelects();
-            document.getElementById('nomeLocal').value = '';
-        }
-
-        function atualizarListaLocais() {
-            const lista = document.getElementById('listaLocais');
-            lista.innerHTML = locais.map(l => `
-                <div class="item-box">
-                    <span>${l}</span>
-                    <button class="btn btn-danger" onclick="removerLocal('${l}')">🗑️</button>
-                </div>
-            `).join('');
-        }
-
-        function removerLocal(nome) {
-            if (confirm('Tem certeza?')) {
-                locais = locais.filter(l => l !== nome);
-                salvarDados();
-                atualizarListaLocais();
-                atualizarSelects();
-            }
-        }
-
-        function atualizarSelectGenealogia() {
-            const select = document.getElementById('animalGenealogia');
-            select.innerHTML = '<option value="">Escolha um animal...</option>' +
-                animais.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
-        }
-
-        function mostrarGenealogia() {
-            const id = document.getElementById('animalGenealogia').value;
-            if (!id) {
-                document.getElementById('arvoreGenealogia').innerHTML = '';
-                return;
-            }
-
-            const animal = animais.find(a => a.id === id);
-            if (!animal) return;
-
-            const pai = animais.find(a => a.id === animal.pai);
-            const mae = animais.find(a => a.id === animal.mae);
-
-            let html = `<div class="genealogy-tree">
-                <div class="tree-node"><strong>🐮 ${animal.numero} - ${animal.nome || 'Sem nome'}</strong><br>
-                ${animal.sexo === 'M' ? 'Macho' : 'Fêmea'} | ${animal.raca || 'Sem raça'}</div>`;
-
-            if (pai || mae) {
-                html += '<div class="tree-branch">';
-                if (pai) {
-                    html += `<div class="tree-node">👨 Pai: ${pai.numero} - ${pai.nome || 'Sem nome'}<br>${pai.raca || 'Sem raça'}</div>`;
-                }
-                if (mae) {
-                    html += `<div class="tree-node">👩 Mãe: ${mae.numero} - ${mae.nome || 'Sem nome'}<br>${mae.raca || 'Sem raça'}</div>`;
-                }
-                html += '</div>';
-            }
-
-            html += '</div>';
-            document.getElementById('arvoreGenealogia').innerHTML = html;
-        }
-
-        function calcularArrobas() {
-            const pesoVivo = parseFloat(document.getElementById('pesoVivo').value);
-            const pesoMorto = parseFloat(document.getElementById('pesoMorto').value);
-            
-            if (pesoVivo > 0) {
-                const arrobas = pesoVivo / 15;
-                document.getElementById('resultadoArrobas').textContent = 
-                    `Peso Vivo: ${arrobas.toFixed(2)} arrobas`;
-            } else if (pesoMorto > 0) {
-                const arrobas = pesoMorto / 15;
-                document.getElementById('resultadoArrobas').textContent = 
-                    `Peso Morto: ${arrobas.toFixed(2)} arrobas`;
-            } else {
-                alert('⚠️ Preencha pelo menos um peso!');
-            }
-        }
-
-        function calcularParto() {
-            const data = document.getElementById('dataInseminacao').value;
-            if (!data) {
-                alert('⚠️ Selecione uma data!');
-                return;
-            }
-            
-            const dataInsemin = new Date(data);
-            dataInsemin.setDate(dataInsemin.getDate() + 283);
-            
-            const dia = String(dataInsemin.getDate()).padStart(2, '0');
-            const mes = String(dataInsemin.getMonth() + 1).padStart(2, '0');
-            const ano = dataInsemin.getFullYear();
-            
-            document.getElementById('resultadoParto').textContent = 
-                `Data prevista do parto: ${dia}/${mes}/${ano}`;
-        }
-
-        function calcularIdade() {
-            const data = document.getElementById('dataNascIdade').value;
-            if (!data) {
-                alert('⚠️ Selecione uma data!');
-                return;
-            }
-            
-            const nascimento = new Date(data);
-            const hoje = new Date();
-            
-            let anos = hoje.getFullYear() - nascimento.getFullYear();
-            let meses = hoje.getMonth() - nascimento.getMonth();
-            
-            if (meses < 0) {
-                anos--;
-                meses += 12;
-            }
-            
-            document.getElementById('resultadoIdade').textContent = 
-                `Idade: ${anos} anos e ${meses} meses`;
-        }
-
-        function atualizarRelatorios() {
-            const total = animais.length;
-            const femeas = animais.filter(a => a.sexo === 'F').length;
-            const machos = animais.filter(a => a.sexo === 'M').length;
-            const amamentando = animais.filter(a => a.amamentando).length;
-            const semFerro = animais.filter(a => a.semFerro).length;
-            const totalRacas = [...new Set(animais.map(a => a.raca).filter(r => r))].length;
-
-            document.getElementById('totalAnimais').textContent = total;
-            document.getElementById('totalFemeas').textContent = femeas;
-            document.getElementById('totalMachos').textContent = machos;
-            document.getElementById('totalAmamentando').textContent = amamentando;
-            document.getElementById('totalSemFerro').textContent = semFerro;
-            document.getElementById('totalRacas').textContent = totalRacas;
-
-            criarGraficos();
-        }
-
-        function criarGraficos() {
-            const racasCount = {};
-            const locaisCount = {};
-            const proprietariosCount = {};
-
-            animais.forEach(a => {
-                if (a.raca) racasCount[a.raca] = (racasCount[a.raca] || 0) + 1;
-                if (a.local) locaisCount[a.local] = (locaisCount[a.local] || 0) + 1;
-                if (a.proprietario) proprietariosCount[a.proprietario] = (proprietariosCount[a.proprietario] || 0) + 1;
-            });
-
-            if (charts.raca) charts.raca.destroy();
-            charts.raca = new Chart(document.getElementById('racaChart'), {
-                type: 'pie',
-                data: {
-                    labels: Object.keys(racasCount),
-                    datasets: [{
-                        data: Object.values(racasCount),
-                        backgroundColor: ['#3b82f6', '#22c55e', '#ef4444', '#a855f7', '#f59e0b', '#ec4899', '#06b6d4', '#8b5cf6']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-
-            if (charts.sexo) charts.sexo.destroy();
-            charts.sexo = new Chart(document.getElementById('sexoChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: ['Machos', 'Fêmeas'],
-                    datasets: [{
-                        data: [animais.filter(a => a.sexo === 'M').length, animais.filter(a => a.sexo === 'F').length],
-                        backgroundColor: ['#3b82f6', '#ec4899']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            });
-
-            if (charts.local) charts.local.destroy();
-            charts.local = new Chart(document.getElementById('localChart'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(locaisCount),
-                    datasets: [{
-                        label: 'Animais por Local',
-                        data: Object.values(locaisCount),
-                        backgroundColor: '#22c55e'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-
-            if (charts.proprietario) charts.proprietario.destroy();
-            charts.proprietario = new Chart(document.getElementById('proprietarioChart'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(proprietariosCount),
-                    datasets: [{
-                        label: 'Animais por Proprietário',
-                        data: Object.values(proprietariosCount),
-                        backgroundColor: '#a855f7'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-
-            const idades = {};
-            animais.forEach(a => {
-                if (a.dataNascimento) {
-                    const nasc = new Date(a.dataNascimento);
-                    const anos = new Date().getFullYear() - nasc.getFullYear();
-                    idades[anos] = (idades[anos] || 0) + 1;
-                }
-            });
-
-            if (charts.idade) charts.idade.destroy();
-            charts.idade = new Chart(document.getElementById('idadeChart'), {
-                type: 'line',
-                data: {
-                    labels: Object.keys(idades).sort((a, b) => a - b),
-                    datasets: [{
-                        label: 'Distribuição por Idade',
-                        data: Object.keys(idades).sort((a, b) => a - b).map(k => idades[k]),
-                        borderColor: '#667eea',
-                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-        }
-
-        function exportarExcel() {
-            const dados = animais.map(a => ({
-                'NÚMERO': a.numero,
-                'Brinco': a.brinco,
-                'Nome': a.nome,
-                'Sexo': a.sexo === 'M' ? 'Macho' : 'Fêmea',
-                'Raça': a.raca,
-                'Local': a.local,
-                'Proprietário': a.proprietario,
-                'Nascimento': a.dataNascimento,
-                'Pai': animais.find(p => p.id === a.pai)?.numero || '',
-                'Mãe': animais.find(m => m.id === a.mae)?.numero || '',
-                'Sem Ferro': a.semFerro ? 'Sim' : 'Não',
-                'Amamentando': a.amamentando ? 'Sim' : 'Não',
-                'Observações': a.observacoes
-            }));
-
-            const ws = XLSX.utils.json_to_sheet(dados);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Animais');
-            XLSX.writeFile(wb, 'animais.xlsx');
-        }
-
-        function exportarPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            
-            doc.setFontSize(16);
-            doc.text('Lista de Animais', 20, 20);
-            
-            let y = 40;
-            animais.forEach((a, i) => {
-                if (y > 270) {
-                    doc.addPage();
-                    y = 20;
-                }
-                doc.setFontSize(10);
-                doc.text(`${i + 1}. ${a.numero} - ${a.nome || 'Sem nome'} | ${a.sexo === 'M' ? 'Macho' : 'Fêmea'} | ${a.raca || '-'}`, 20, y);
-                y += 10;
-            });
-            
-            doc.save('animais.pdf');
-        }
-
-        async function sincronizar() {
-            await salvarDados();
-            alert('✅ Sincronizado com Firebase!');
-        }
