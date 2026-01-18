@@ -670,20 +670,67 @@
 
         function renderizarTabela(data = animais) {
             const tbody = document.getElementById('tabelaAnimais');
-            const ordenados = ordenarAnimaisPorNumero(data);
             
-            if (ordenados.length === 0) {
+            // Ordenar animais por número
+            const animaisOrdenados = ordenarAnimaisPorNumero(data);
+            
+            // Pegar reprodutores ativos
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            
+            // Calcular próximo número fictício
+            let proximoNumero = 1;
+            if (animais.length > 0) {
+                const maiorNumero = Math.max(...animais.map(a => parseInt(a.numero) || 0));
+                proximoNumero = maiorNumero + 1;
+            }
+            
+            // Combinar animais + reprodutores com números fictícios
+            const todosRegistros = [
+                ...animaisOrdenados,
+                ...reprodutoresAtivos.map((r, index) => ({
+                    id: `reprodutor_${r.id}`,
+                    numero: (proximoNumero + index).toString(),
+                    nome: `${r.nome} (Reprodutor)`,
+                    sexo: 'M',
+                    raca: r.raca,
+                    local: r.local,
+                    dataNascimento: r.dataNascimento,
+                    isReprodutor: true,
+                    reprodutorOriginal: r
+                }))
+            ];
+            
+            if (todosRegistros.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum animal cadastrado</td></tr>';
                 return;
             }
             
-            tbody.innerHTML = ordenados.map(a => {
+            tbody.innerHTML = todosRegistros.map(a => {
                 const idade = calcularIdade(a.dataNascimento);
                 const sexoBadge = a.sexo === 'F' ? '<span class="badge badge-pink">♀</span>' : '<span class="badge badge-blue">♂</span>';
+                
+                // Determinar cor da linha
+                let corLinha = '';
+                if (a.isReprodutor) {
+                    corLinha = 'background: linear-gradient(90deg, #dbeafe 0%, #bfdbfe 100%);';
+                } else if (a.amamentando) {
+                    corLinha = 'background: linear-gradient(90deg, #d1fae5 0%, #a7f3d0 100%);';
+                } else if (a.semFerro) {
+                    corLinha = 'background: linear-gradient(90deg, #fecaca 0%, #fca5a5 100%);';
+                }
+                
+                const nomeExibir = a.isReprodutor 
+                    ? `<strong>${a.nome}</strong> <span class="badge" style="background: #3b82f6; color: white; font-size: 0.7rem;">🐂 REPRODUTOR</span>`
+                    : (a.nome || '-');
+                
+                const onclickAction = a.isReprodutor 
+                    ? `selecionarReprodutor('${a.reprodutorOriginal.id}')`
+                    : `selecionarAnimal('${a.id}')`;
+                
                 return `
-                    <tr onclick="selecionarAnimal('${a.id}')">
+                    <tr onclick="${onclickAction}" style="${corLinha}">
                         <td><strong>${a.numero}</strong></td>
-                        <td>${a.nome || '-'}</td>
+                        <td>${nomeExibir}</td>
                         <td>${sexoBadge}</td>
                         <td>${a.raca}</td>
                         <td>${a.local}</td>
@@ -1188,34 +1235,78 @@
                     const reprodutorId = a.pai.replace('reprodutor_', '');
                     pai = reprodutores.find(x => x.id === reprodutorId);
                     if (pai) {
-                        paiTexto = `🐂 ${pai.registro} - ${pai.nome} (Reprodutor)`;
+                        paiTexto = `
+                            <div style="font-size:1.3rem; font-weight:800; margin-bottom:0.5rem;">🐂 ${pai.registro} - ${pai.nome}</div>
+                            <div style="font-size:0.9rem; opacity:0.9; margin-top:0.3rem;">
+                                <div>📋 <strong>Raça:</strong> ${pai.raca}</div>
+                                <div>🏷️ <strong>Tipo:</strong> ${pai.tipo}</div>
+                                <div>📍 <strong>Local:</strong> ${pai.local}</div>
+                                ${pai.origem ? `<div>🏢 <strong>Origem:</strong> ${pai.origem}</div>` : ''}
+                                ${pai.dataNascimento ? `<div>🎂 <strong>Nascimento:</strong> ${new Date(pai.dataNascimento).toLocaleDateString('pt-BR')}</div>` : ''}
+                                <div style="margin-top:0.5rem; padding:0.4rem 0.8rem; background:rgba(255,255,255,0.3); border-radius:0.5rem; display:inline-block;">
+                                    <strong>👤 ${pai.proprietario}</strong>
+                                </div>
+                            </div>
+                        `;
                     }
                 } else {
                     pai = animais.find(x => x.id === a.pai);
                     if (pai) {
-                        paiTexto = `${pai.numero} - ${pai.nome || 'Sem nome'}`;
+                        paiTexto = `
+                            <div style="font-size:1.3rem; font-weight:800;">${pai.numero} - ${pai.nome || 'Sem nome'}</div>
+                            <div style="font-size:0.9rem; opacity:0.9; margin-top:0.3rem;">
+                                <div>📋 <strong>Raça:</strong> ${pai.raca}</div>
+                                <div>📍 <strong>Local:</strong> ${pai.local}</div>
+                                ${pai.dataNascimento ? `<div>🎂 <strong>Nascimento:</strong> ${new Date(pai.dataNascimento).toLocaleDateString('pt-BR')}</div>` : ''}
+                            </div>
+                        `;
                     }
                 }
+            } else {
+                paiTexto = '<div style="font-size:1.3rem; font-weight:800; opacity:0.6;">Não registrado</div>';
             }
             
             const mae = a.mae ? animais.find(x => x.id === a.mae) : null;
-            const maeTexto = mae ? `${mae.numero} - ${mae.nome || 'Sem nome'}` : (a.mae || 'Não registrada');
+            let maeTexto = '';
+            if (mae) {
+                maeTexto = `
+                    <div style="font-size:1.3rem; font-weight:800;">${mae.numero} - ${mae.nome || 'Sem nome'}</div>
+                    <div style="font-size:0.9rem; opacity:0.9; margin-top:0.3rem;">
+                        <div>📋 <strong>Raça:</strong> ${mae.raca}</div>
+                        <div>📍 <strong>Local:</strong> ${mae.local}</div>
+                        ${mae.dataNascimento ? `<div>🎂 <strong>Nascimento:</strong> ${new Date(mae.dataNascimento).toLocaleDateString('pt-BR')}</div>` : ''}
+                    </div>
+                `;
+            } else {
+                maeTexto = '<div style="font-size:1.3rem; font-weight:800; opacity:0.6;">Não registrada</div>';
+            }
             
             document.getElementById('arvoreGenealogia').innerHTML = `
                 <div style="text-align:center;">
-                    <div style="background:linear-gradient(135deg, #3b82f6, #2563eb); color:white; padding:2rem; border-radius:1rem; display:inline-block; min-width:250px; margin-bottom:2rem;">
-                        <div style="font-size:2rem; font-weight:800;">${a.numero}</div>
-                        <div style="font-size:1.2rem;">${a.nome || 'Sem nome'}</div>
-                        <div style="margin-top:0.5rem;">${a.sexo === 'F' ? '♀' : '♂'} ${a.raca}</div>
-                    </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; max-width:600px; margin:0 auto;">
-                        <div style="padding:1.5rem; background:#dbeafe; border-radius:1rem; border:3px solid #3b82f6;">
-                            <div style="font-size:0.9rem; color:#1e40af; font-weight:700; margin-bottom:0.5rem;">🐂 PAI</div>
-                            <div style="font-size:1.2rem; font-weight:700;">${paiTexto}</div>
+                    <div style="background:linear-gradient(135deg, #3b82f6, #2563eb); color:white; padding:2.5rem; border-radius:1.2rem; display:inline-block; min-width:300px; margin-bottom:3rem; box-shadow:0 10px 30px rgba(59,130,246,0.3);">
+                        <div style="font-size:2.5rem; font-weight:800; margin-bottom:0.5rem;">${a.numero}</div>
+                        <div style="font-size:1.4rem; margin-bottom:0.8rem;">${a.nome || 'Sem nome'}</div>
+                        <div style="font-size:1rem; opacity:0.9; margin-top:0.5rem;">
+                            <div>${a.sexo === 'F' ? '♀' : '♂'} ${a.raca}</div>
+                            <div style="margin-top:0.3rem;">📍 ${a.local}</div>
+                            ${a.dataNascimento ? `<div style="margin-top:0.3rem;">🎂 ${new Date(a.dataNascimento).toLocaleDateString('pt-BR')}</div>` : ''}
+                            <div style="margin-top:0.5rem; padding:0.3rem 0.8rem; background:rgba(255,255,255,0.2); border-radius:0.5rem; display:inline-block;">
+                                👤 ${a.proprietario}
+                            </div>
                         </div>
-                        <div style="padding:1.5rem; background:#fce7f3; border-radius:1rem; border:3px solid #ec4899;">
-                            <div style="font-size:0.9rem; color:#be185d; font-weight:700; margin-bottom:0.5rem;">🐄 MÃE</div>
-                            <div style="font-size:1.2rem; font-weight:700;">${maeTexto}</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2rem; max-width:900px; margin:0 auto;">
+                        <div style="padding:2rem; background:#dbeafe; border-radius:1.2rem; border:3px solid #3b82f6; min-height:200px; box-shadow:0 4px 12px rgba(59,130,246,0.2);">
+                            <div style="font-size:1.1rem; color:#1e40af; font-weight:700; margin-bottom:1rem; text-align:left;">🐂 PAI</div>
+                            <div style="text-align:left; color:#1e293b;">
+                                ${paiTexto}
+                            </div>
+                        </div>
+                        <div style="padding:2rem; background:#fce7f3; border-radius:1.2rem; border:3px solid #ec4899; min-height:200px; box-shadow:0 4px 12px rgba(236,72,153,0.2);">
+                            <div style="font-size:1.1rem; color:#be185d; font-weight:700; margin-bottom:1rem; text-align:left;">🐄 MÃE</div>
+                            <div style="text-align:left; color:#1e293b;">
+                                ${maeTexto}
+                            </div>
                         </div>
                     </div>
                 </div>
