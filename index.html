@@ -85,16 +85,105 @@
         .modal-content {margin: auto; display: block; max-width: 90%; max-height: 90%; margin-top: 2%;}
         .close-modal {position: absolute; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer;}
         .close-modal:hover {color: #bbb;}
+        
+        /* Tela de Login */
+        .login-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+        }
+        .login-box {
+            background: white;
+            padding: 3rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+        }
+        .login-box h1 {
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+            font-size: 2rem;
+        }
+        .login-box p {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+        .login-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 0.7rem;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+        }
+        .login-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 0.7rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 0.5rem;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+        .login-error {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 0.8rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            display: none;
+            font-size: 0.9rem;
+        }
+        .hidden {display: none;}
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <!-- TELA DE LOGIN -->
+    <div class="login-screen" id="loginScreen">
+        <div class="login-box">
+            <h1>🐄 SisGado Pro</h1>
+            <p>Sistema de Gestão Pecuária</p>
+            <div class="login-error" id="loginError">❌ Usuário ou senha incorretos!</div>
+            <form onsubmit="realizarLogin(event)">
+                <input type="text" id="loginUsuario" class="login-input" placeholder="👤 Usuário" required autocomplete="username">
+                <input type="password" id="loginSenha" class="login-input" placeholder="🔒 Senha" required autocomplete="current-password">
+                <button type="submit" class="login-btn">🔓 Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-container" id="appContainer" style="display: none;">
         <div class="header">
             <h1>🐄 SisGado Pro</h1>
             <p>Gestão Pecuária Inteligente 2026</p>
             <div class="sync-status" id="syncStatus" onclick="sincronizarDados()">
                 <span id="syncText">🔄 Sincronizar</span>
             </div>
+            <button class="btn btn-danger btn-small" onclick="fazerLogout()" style="position: absolute; top: 2rem; right: 12rem; padding: 0.6rem 1rem;">🚪 Sair</button>
         </div>
 
         <div class="nav-tabs">
@@ -129,6 +218,15 @@
                                 </label>
                                 <input type="text" id="brinco" placeholder="Número do brinco" style="display: none; margin-top: 0.5rem;">
                             </div>
+                            
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; text-transform: none;">
+                                    <input type="checkbox" id="temPO" onchange="togglePO()" style="width: auto;">
+                                    PO (Puro de Origem)
+                                </label>
+                                <input type="text" id="po" placeholder="Número/Registro PO" style="display: none; margin-top: 0.5rem;">
+                            </div>
+                            
                             <div class="form-group">
                                 <label>Nome</label>
                                 <input type="text" id="nome">
@@ -172,15 +270,17 @@
                             <div class="grid-2">
                                 <div class="form-group">
                                     <label>Pai</label>
-                                    <select id="pai">
+                                    <select id="pai" onchange="togglePaiManual()">
                                         <option value="">Não informado</option>
                                     </select>
+                                    <input type="text" id="paiManual" placeholder="Digite o registro ou nome do pai" style="display: none; margin-top: 0.5rem;">
                                 </div>
                                 <div class="form-group">
                                     <label>Mãe</label>
-                                    <select id="mae">
+                                    <select id="mae" onchange="toggleMaeManual()">
                                         <option value="">Não informada</option>
                                     </select>
+                                    <input type="text" id="maeManual" placeholder="Digite o número ou nome da mãe" style="display: none; margin-top: 0.5rem;">
                                 </div>
                             </div>
                             <div class="checkbox-group">
@@ -210,6 +310,7 @@
                                         <th>⚥ Sexo</th>
                                         <th>🐄 Raça</th>
                                         <th>📍 Local</th>
+                                        <th>👤 Proprietário</th>
                                         <th>🎂 Idade</th>
                                     </tr>
                                 </thead>
@@ -284,6 +385,93 @@
                                     </select>
                                 </div>
                             </div>
+                            
+                            <!-- GENEALOGIA DO REPRODUTOR -->
+                            <div style="background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%); padding: 1.5rem; border-radius: 0.7rem; margin: 1.5rem 0; border: 2px solid #cbd5e1;">
+                                <h3 style="margin-bottom: 1rem; color: #1e40af;">🧬 Genealogia</h3>
+                                
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label>Pai</label>
+                                        <input type="text" id="paiReprodutor" placeholder="Nome do pai">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Mãe</label>
+                                        <input type="text" id="maeReprodutor" placeholder="Nome da mãe">
+                                    </div>
+                                </div>
+                                
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label>Avô Paterno</label>
+                                        <input type="text" id="avoPatReprodutor" placeholder="Pai do pai">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Avó Paterna</label>
+                                        <input type="text" id="avoaPatReprodutor" placeholder="Mãe do pai">
+                                    </div>
+                                </div>
+                                
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label>Avô Materno</label>
+                                        <input type="text" id="avoMatReprodutor" placeholder="Pai da mãe">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Avó Materna</label>
+                                        <input type="text" id="avoaMatReprodutor" placeholder="Mãe da mãe">
+                                    </div>
+                                </div>
+                                
+                                <h4 style="margin: 1rem 0 0.5rem; color: #475569; font-size: 0.9rem;">👴👵 Bisavós Paternos (Pais do Avô Paterno)</h4>
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label style="font-size: 0.75rem;">Bisavô Paterno (PP)</label>
+                                        <input type="text" id="bisavoPP" placeholder="Pai do avô paterno">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="font-size: 0.75rem;">Bisavó Paterna (PM)</label>
+                                        <input type="text" id="bisavoPM" placeholder="Mãe do avô paterno">
+                                    </div>
+                                </div>
+                                
+                                <h4 style="margin: 1rem 0 0.5rem; color: #475569; font-size: 0.9rem;">👴👵 Bisavós Paternos (Pais da Avó Paterna)</h4>
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label style="font-size: 0.75rem;">Bisavô Paterno (MP)</label>
+                                        <input type="text" id="bisavoMP" placeholder="Pai da avó paterna">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="font-size: 0.75rem;">Bisavó Paterna (MM)</label>
+                                        <input type="text" id="bisavoMM" placeholder="Mãe da avó paterna">
+                                    </div>
+                                </div>
+                                
+                                <h4 style="margin: 1rem 0 0.5rem; color: #475569; font-size: 0.9rem;">👴👵 Bisavós Maternos (Pais do Avô Materno)</h4>
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label style="font-size: 0.75rem;">Bisavô Materno (PP)</label>
+                                        <input type="text" id="bisavoMatPP" placeholder="Pai do avô materno">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="font-size: 0.75rem;">Bisavó Materna (PM)</label>
+                                        <input type="text" id="bisavoMatPM" placeholder="Mãe do avô materno">
+                                    </div>
+                                </div>
+                                
+                                <h4 style="margin: 1rem 0 0.5rem; color: #475569; font-size: 0.9rem;">👴👵 Bisavós Maternos (Pais da Avó Materna)</h4>
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label style="font-size: 0.75rem;">Bisavô Materno (MP)</label>
+                                        <input type="text" id="bisavoMatMP" placeholder="Pai da avó materna">
+                                    </div>
+                                    <div class="form-group">
+                                        <label style="font-size: 0.75rem;">Bisavó Materna (MM)</label>
+                                        <input type="text" id="bisavoMatMM" placeholder="Mãe da avó materna">
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="form-group">
                                 <label>Observações</label>
                                 <textarea id="obsReprodutor" rows="3" placeholder="Informações adicionais sobre o reprodutor"></textarea>
@@ -361,6 +549,7 @@
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;">
                     <div class="card"><canvas id="racaChart"></canvas></div>
                     <div class="card"><canvas id="localChart"></canvas></div>
+                    <div class="card"><canvas id="idadeChart"></canvas></div>
                 </div>
             </div>
 
@@ -389,6 +578,13 @@
                                 <div style="color: #64748b; font-size: 0.9rem;">Matrizes</div>
                             </div>
                             <div style="font-size: 2rem;">🐮</div>
+                        </div>
+                        <div class="item-box" onclick="gerarRelatorioMachos()" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); cursor: pointer;">
+                            <div>
+                                <div style="font-size: 1.2rem; font-weight: 700;">♂ Machos</div>
+                                <div style="color: #64748b; font-size: 0.9rem;">Reprodutores e machos</div>
+                            </div>
+                            <div style="font-size: 2rem;">🐂</div>
                         </div>
                         <div class="item-box" onclick="gerarRelatorioPorProprietario()" style="background: linear-gradient(135deg, #e0e7ff, #c7d2fe); cursor: pointer;">
                             <div>
@@ -474,6 +670,54 @@
     </div>
 
     <script>
+        // SISTEMA DE LOGIN
+        const USUARIO_MASTER = 'master';
+        const SENHA_MASTER = '05048989';
+        
+        function verificarLogin() {
+            const logado = sessionStorage.getItem('sisgadoLogado');
+            if (logado === 'true') {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+                return true;
+            }
+            return false;
+        }
+        
+        function realizarLogin(event) {
+            event.preventDefault();
+            
+            const usuario = document.getElementById('loginUsuario').value.trim();
+            const senha = document.getElementById('loginSenha').value;
+            
+            if (usuario === USUARIO_MASTER && senha === SENHA_MASTER) {
+                sessionStorage.setItem('sisgadoLogado', 'true');
+                document.getElementById('loginError').style.display = 'none';
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'block';
+                
+                // Carregar dados após login
+                setTimeout(async () => {
+                    await carregarDados();
+                    renderizarTabela();
+                    atualizarSelects();
+                    renderListas();
+                }, 100);
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+                document.getElementById('loginSenha').value = '';
+                document.getElementById('loginSenha').focus();
+            }
+        }
+        
+        function fazerLogout() {
+            if (confirm('🚪 Deseja realmente sair do sistema?')) {
+                sessionStorage.removeItem('sisgadoLogado');
+                location.reload();
+            }
+        }
+        
+        // DADOS DO SISTEMA
         let animais = [];
         let racas = ['NELORE', 'ANGUS', 'BRAHMAN', 'GIROLAND'];
         let locais = ['PASTO 01', 'PASTO 02', 'CURRAL'];
@@ -485,13 +729,18 @@
         let fotoAtual = null;
         let fotoAtualReprodutor = null;
 
-        window.onload = async () => {
-            setTimeout(async () => {
-                await carregarDados();
-                renderizarTabela();
-                atualizarSelects();
-                renderListas();
-            }, 500);
+        window.onload = () => {
+            // Verificar se está logado
+            if (!verificarLogin()) {
+                document.getElementById('loginUsuario').focus();
+            } else {
+                setTimeout(async () => {
+                    await carregarDados();
+                    renderizarTabela();
+                    atualizarSelects();
+                    renderListas();
+                }, 500);
+            }
         };
 
         async function carregarDados() {
@@ -659,6 +908,34 @@
             document.getElementById('modalFoto').style.display = 'none';
         }
 
+        // Alternar entre select e input manual para mãe
+        function toggleMaeManual() {
+            const selectMae = document.getElementById('mae');
+            const inputMaeManual = document.getElementById('maeManual');
+            
+            if (selectMae.value === 'manual') {
+                inputMaeManual.style.display = 'block';
+                inputMaeManual.focus();
+            } else {
+                inputMaeManual.style.display = 'none';
+                inputMaeManual.value = '';
+            }
+        }
+
+        // Alternar entre select e input manual para pai
+        function togglePaiManual() {
+            const selectPai = document.getElementById('pai');
+            const inputPaiManual = document.getElementById('paiManual');
+            
+            if (selectPai.value === 'manual') {
+                inputPaiManual.style.display = 'block';
+                inputPaiManual.focus();
+            } else {
+                inputPaiManual.style.display = 'none';
+                inputPaiManual.value = '';
+            }
+        }
+
         async function salvarAnimal(e) {
             e.preventDefault();
             
@@ -673,18 +950,31 @@
                 return;
             }
             
+            // Verificar se foi selecionado entrada manual para pai
+            const selectPai = document.getElementById('pai');
+            const paiValue = selectPai.value === 'manual' 
+                ? document.getElementById('paiManual').value.trim()
+                : selectPai.value;
+            
+            // Verificar se foi selecionado entrada manual para mãe
+            const selectMae = document.getElementById('mae');
+            const maeValue = selectMae.value === 'manual' 
+                ? document.getElementById('maeManual').value.trim()
+                : selectMae.value;
+            
             const animal = {
                 id: animalAtualId || Date.now().toString(),
                 numero: formatarNumero(numero),
                 brinco: document.getElementById('temBrinco').checked ? document.getElementById('brinco').value : '',
+                po: document.getElementById('temPO').checked ? document.getElementById('po').value : '',
                 nome: document.getElementById('nome').value,
                 sexo: document.getElementById('sexo').value,
                 raca: document.getElementById('raca').value,
                 local: document.getElementById('local').value,
                 proprietario: document.getElementById('proprietario').value,
                 dataNascimento: document.getElementById('dataNascimento').value,
-                pai: document.getElementById('pai').value,
-                mae: document.getElementById('mae').value,
+                pai: paiValue,
+                mae: maeValue,
                 semFerro: document.getElementById('semFerro').checked,
                 amamentando: document.getElementById('amamentando').checked,
                 foto: fotoAtual || ''
@@ -737,14 +1027,63 @@
                 document.getElementById('brinco').value = '';
             }
             
+            if (a.po) {
+                document.getElementById('temPO').checked = true;
+                document.getElementById('po').style.display = 'block';
+                document.getElementById('po').value = a.po;
+            } else {
+                document.getElementById('temPO').checked = false;
+                document.getElementById('po').style.display = 'none';
+                document.getElementById('po').value = '';
+            }
+            
             document.getElementById('nome').value = a.nome || '';
             document.getElementById('sexo').value = a.sexo;
             document.getElementById('raca').value = a.raca;
             document.getElementById('local').value = a.local;
             document.getElementById('proprietario').value = a.proprietario || '';
             document.getElementById('dataNascimento').value = a.dataNascimento || '';
-            document.getElementById('pai').value = a.pai || '';
-            document.getElementById('mae').value = a.mae || '';
+            
+            // Tratar pai - se não for um ID válido, é entrada manual
+            const paiValue = a.pai || '';
+            const selectPai = document.getElementById('pai');
+            const inputPaiManual = document.getElementById('paiManual');
+            
+            // Verificar se o valor do pai existe no select
+            const paiExisteNoSelect = Array.from(selectPai.options).some(opt => opt.value === paiValue);
+            
+            if (paiValue && !paiExisteNoSelect) {
+                // É entrada manual
+                selectPai.value = 'manual';
+                inputPaiManual.value = paiValue;
+                inputPaiManual.style.display = 'block';
+            } else {
+                // É do select
+                selectPai.value = paiValue;
+                inputPaiManual.style.display = 'none';
+                inputPaiManual.value = '';
+            }
+            
+            // Tratar mãe - se não for um ID válido, é entrada manual
+            const maeValue = a.mae || '';
+            const selectMae = document.getElementById('mae');
+            const inputMaeManual = document.getElementById('maeManual');
+            
+            // Verificar se o valor da mãe existe no select
+            const maeExisteNoSelect = Array.from(selectMae.options).some(opt => opt.value === maeValue);
+            
+            if (maeValue && !maeExisteNoSelect) {
+                // É entrada manual
+                selectMae.value = 'manual';
+                inputMaeManual.value = maeValue;
+                inputMaeManual.style.display = 'block';
+            } else {
+                // É do select
+                selectMae.value = maeValue;
+                inputMaeManual.style.display = 'none';
+                inputMaeManual.value = '';
+            }
+            
             document.getElementById('semFerro').checked = a.semFerro || false;
             document.getElementById('amamentando').checked = a.amamentando || false;
             
@@ -763,12 +1102,23 @@
             document.getElementById('animalForm').reset();
             document.getElementById('temBrinco').checked = false;
             document.getElementById('brinco').style.display = 'none';
+            document.getElementById('temPO').checked = false;
+            document.getElementById('po').style.display = 'none';
+            document.getElementById('paiManual').style.display = 'none';
+            document.getElementById('paiManual').value = '';
+            document.getElementById('maeManual').style.display = 'none';
+            document.getElementById('maeManual').value = '';
             removerFoto();
         }
 
         function toggleBrinco() {
             const campo = document.getElementById('brinco');
             campo.style.display = document.getElementById('temBrinco').checked ? 'block' : 'none';
+        }
+
+        function togglePO() {
+            const campo = document.getElementById('po');
+            campo.style.display = document.getElementById('temPO').checked ? 'block' : 'none';
         }
 
         function gerarNumero() {
@@ -805,7 +1155,7 @@
             ];
             
             if (todosRegistros.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum animal cadastrado</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum animal cadastrado</td></tr>';
                 return;
             }
             
@@ -842,6 +1192,7 @@
                         <td>${sexoBadge}</td>
                         <td>${a.raca}</td>
                         <td>${a.local}</td>
+                        <td>${a.proprietario || (a.isReprodutor ? a.reprodutorOriginal.proprietario : '-')}</td>
                         <td>${idade}</td>
                     </tr>
                 `;
@@ -876,28 +1227,6 @@
             renderizarTabela(filtrados);
         }
 
-        function atualizarSelects() {
-            document.getElementById('raca').innerHTML = racas.map(r => `<option value="${r}">${r}</option>`).join('');
-            document.getElementById('local').innerHTML = locais.map(l => `<option value="${l}">${l}</option>`).join('');
-            document.getElementById('proprietario').innerHTML = proprietarios.map(p => `<option value="${p}">${p}</option>`).join('');
-            
-            const machos = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'M'));
-            const femeas = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'F'));
-            
-            const reprodutoresMachos = reprodutores
-                .filter(r => r.status === 'Ativo')
-                .sort((a, b) => a.registro.localeCompare(b.registro));
-            
-            let optionsPai = '<option value="">Não informado</option>';
-            
-            if (reprodutoresMachos.length > 0) {
-                optionsPai += '<optgroup label="🐂 Reprodutores">';
-                reprodutoresMachos.forEach(r => {
-                    optionsPai += `<option value="reprodutor_${r.id}">🐂 ${r.registro} - ${r.nome}</option>`;
-                });
-                optionsPai += '</optgroup>';
-            }
-            // ATUALIZAR SELECTS
     function atualizarSelects() {
         document.getElementById('raca').innerHTML = racas.map(r => `<option value="${r}">${r}</option>`).join('');
         document.getElementById('local').innerHTML = locais.map(l => `<option value="${l}">${l}</option>`).join('');
@@ -906,15 +1235,17 @@
         const machos = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'M'));
         const femeas = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'F'));
         
-        // TODOS os reprodutores (não apenas ativos)
+        // TODOS os reprodutores (inclusive descartados)
         const todosReprodutores = reprodutores
             .sort((a, b) => a.registro.localeCompare(b.registro));
         
-        let optionsPai = '<option value="">Indefinido</option>';
+        // Lista de PAIS com opção Desconhecido e entrada manual
+        let optionsPai = '<option value="">Não informado</option>';
         optionsPai += '<option value="manual">✏️ Digitar manualmente...</option>';
+        optionsPai += '<option value="desconhecido">❓ Desconhecido</option>';
         
         if (todosReprodutores.length > 0) {
-            optionsPai += '<optgroup label="🐂 Reprodutores">';
+            optionsPai += '<optgroup label="🐂 Reprodutores (Todos)">';
             todosReprodutores.forEach(r => {
                 const statusIcon = r.status === 'Ativo' ? '✓' : r.status === 'Inativo' ? '⏸' : '✗';
                 optionsPai += `<option value="reprodutor_${r.id}">${statusIcon} ${r.registro} - ${r.nome} (${r.tipo})</option>`;
@@ -932,9 +1263,10 @@
         
         document.getElementById('pai').innerHTML = optionsPai;
         
-        // Permitir entrada manual para mãe
-        let optionsMae = '<option value="">Indefinida</option>';
+        // Lista de MÃES com entrada manual
+        let optionsMae = '<option value="">Não informada</option>';
         optionsMae += '<option value="manual">✏️ Digitar manualmente...</option>';
+        
         if (femeas.length > 0) {
             optionsMae += '<optgroup label="🐄 Fêmeas do Rebanho">';
             femeas.forEach(a => {
@@ -944,25 +1276,34 @@
         }
         
         document.getElementById('mae').innerHTML = optionsMae;
-    }
-   
-            if (machos.length > 0) {
-                optionsPai += '<optgroup label="🐮 Animais do Rebanho">';
-                machos.forEach(a => {
-                    optionsPai += `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`;
-                });
-                optionsPai += '</optgroup>';
-            }
-            
-            document.getElementById('pai').innerHTML = optionsPai;
-            
-            document.getElementById('mae').innerHTML = '<option value="">Não informada</option>' + 
-                femeas.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
-            
-            const todosOrdenados = ordenarAnimaisPorNumero(animais);
-            document.getElementById('animalGenealogia').innerHTML = '<option value="">Selecione...</option>' + 
-                todosOrdenados.map(a => `<option value="${a.id}">${a.numero} - ${a.nome || 'Sem nome'}</option>`).join('');
+        
+        // Lista para genealogia - incluindo reprodutores ativos
+        const todosOrdenados = ordenarAnimaisPorNumero(animais);
+        const reprodutoresAtivosGenealogia = reprodutores
+            .filter(r => r.status === 'Ativo')
+            .sort((a, b) => a.registro.localeCompare(b.registro));
+        
+        let optionsGenealogia = '<option value="">Selecione...</option>';
+        
+        if (reprodutoresAtivosGenealogia.length > 0) {
+            optionsGenealogia += '<optgroup label="🐂 Reprodutores Ativos">';
+            reprodutoresAtivosGenealogia.forEach(r => {
+                optionsGenealogia += `<option value="reprodutor_${r.id}">🐂 ${r.registro} - ${r.nome} (${r.tipo})</option>`;
+            });
+            optionsGenealogia += '</optgroup>';
         }
+        
+        if (todosOrdenados.length > 0) {
+            optionsGenealogia += '<optgroup label="🐄 Animais do Rebanho">';
+            optionsGenealogia += todosOrdenados.map(a => {
+                const sexoIcon = a.sexo === 'F' ? '♀' : '♂';
+                return `<option value="${a.id}">${sexoIcon} ${a.numero} - ${a.nome || 'Sem nome'}</option>`;
+            }).join('');
+            optionsGenealogia += '</optgroup>';
+        }
+        
+        document.getElementById('animalGenealogia').innerHTML = optionsGenealogia;
+    }
 
         async function adicionarRaca() {
             const val = document.getElementById('novaRaca').value.toUpperCase().trim();
@@ -1153,21 +1494,39 @@
         }
 
         function atualizarDashboard() {
-            document.getElementById('totalAnimais').innerText = animais.length;
-            document.getElementById('totalFemeas').innerText = animais.filter(a => a.sexo === 'F').length;
-            document.getElementById('totalMachos').innerText = animais.filter(a => a.sexo === 'M').length;
+            // Incluir reprodutores ativos nas contagens
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            
+            const totalFemeas = animais.filter(a => a.sexo === 'F').length;
+            const totalMachos = animais.filter(a => a.sexo === 'M').length + reprodutoresAtivos.length;
+            const totalGeral = animais.length + reprodutoresAtivos.length;
+            
+            document.getElementById('totalAnimais').innerText = totalGeral;
+            document.getElementById('totalFemeas').innerText = totalFemeas;
+            document.getElementById('totalMachos').innerText = totalMachos;
 
             if (charts.racaChart) charts.racaChart.destroy();
             if (charts.localChart) charts.localChart.destroy();
 
+            // Contar raças incluindo reprodutores
             const racaCounts = animais.reduce((acc, a) => {
                 acc[a.raca] = (acc[a.raca] || 0) + 1;
                 return acc;
             }, {});
-            const localCounts = animais.reduce((acc, a) => {
-                acc[a.local] = (acc[a.local] || 0) + 1;
+            
+            reprodutoresAtivos.forEach(r => {
+                racaCounts[r.raca] = (racaCounts[r.raca] || 0) + 1;
+            });
+            
+            // Contar proprietários incluindo reprodutores
+            const proprietarioCounts = animais.reduce((acc, a) => {
+                acc[a.proprietario] = (acc[a.proprietario] || 0) + 1;
                 return acc;
             }, {});
+            
+            reprodutoresAtivos.forEach(r => {
+                proprietarioCounts[r.proprietario] = (proprietarioCounts[r.proprietario] || 0) + 1;
+            });
 
             const cores = ['#3b82f6', '#ec4899', '#f59e0b', '#22c55e', '#8b5cf6'];
 
@@ -1194,9 +1553,9 @@
             charts.localChart = new Chart(document.getElementById('localChart'), {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(localCounts),
+                    labels: Object.keys(proprietarioCounts),
                     datasets: [{
-                        data: Object.values(localCounts),
+                        data: Object.values(proprietarioCounts),
                         backgroundColor: cores,
                         borderRadius: 8
                     }]
@@ -1205,13 +1564,79 @@
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Por Local',
+                            text: 'Por Proprietário',
                             font: { size: 16 }
                         },
                         legend: { display: false }
                     },
                     scales: {
                         y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            // Gráfico por Idade
+            if (charts.idadeChart) charts.idadeChart.destroy();
+            
+            const idadeCounts = {
+                'Até 6 meses': 0,
+                '6m - 1 ano': 0,
+                '1 - 2 anos': 0,
+                '2 - 4 anos': 0,
+                'Mais de 4 anos': 0,
+                'Sem data': 0
+            };
+            
+            [...animais, ...reprodutoresAtivos].forEach(item => {
+                if (!item.dataNascimento) {
+                    idadeCounts['Sem data']++;
+                    return;
+                }
+                
+                const hoje = new Date();
+                const nasc = new Date(item.dataNascimento);
+                const diffDays = Math.ceil((hoje - nasc) / (1000 * 60 * 60 * 24));
+                const diffMonths = diffDays / 30;
+                const diffYears = diffDays / 365;
+                
+                if (diffMonths <= 6) {
+                    idadeCounts['Até 6 meses']++;
+                } else if (diffYears < 1) {
+                    idadeCounts['6m - 1 ano']++;
+                } else if (diffYears < 2) {
+                    idadeCounts['1 - 2 anos']++;
+                } else if (diffYears < 4) {
+                    idadeCounts['2 - 4 anos']++;
+                } else {
+                    idadeCounts['Mais de 4 anos']++;
+                }
+            });
+            
+            charts.idadeChart = new Chart(document.getElementById('idadeChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(idadeCounts),
+                    datasets: [{
+                        label: 'Quantidade',
+                        data: Object.values(idadeCounts),
+                        backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#94a3b8'],
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Distribuição por Idade',
+                            font: { size: 16 }
+                        },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 }
+                        }
                     }
                 }
             });
@@ -1296,6 +1721,45 @@
             femeas.forEach(a => {
                 html += `<div style="padding:1rem; background:#fef3f2; margin:0.5rem 0; border-radius:0.5rem; border-left:4px solid #ec4899;"><strong>${a.numero} - ${a.nome || '-'}</strong><br><span style="color:#64748b;">${a.raca} | ${a.local}</span></div>`;
             });
+            html += '</div>';
+            document.getElementById('conteudoRelatorio').innerHTML = html;
+        }
+
+        function gerarRelatorioMachos() {
+            const machos = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'M'));
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const totalMachos = machos.length + reprodutoresAtivos.length;
+            
+            if (totalMachos === 0) return alert('⚠️ Sem machos!');
+            
+            document.getElementById('tituloRelatorio').innerText = `♂ Machos (${totalMachos} total)`;
+            document.getElementById('previewRelatorio').style.display = 'block';
+            
+            let html = '<div style="background:white; padding:1.5rem; border-radius:0.7rem;">';
+            
+            // Reprodutores ativos primeiro
+            if (reprodutoresAtivos.length > 0) {
+                html += '<h3 style="color:#3b82f6; margin-bottom:1rem;">🐂 Reprodutores Ativos</h3>';
+                reprodutoresAtivos.forEach(r => {
+                    html += `<div style="padding:1rem; background:#dbeafe; margin:0.5rem 0; border-radius:0.5rem; border-left:4px solid #3b82f6;">
+                        <strong>${r.registro} - ${r.nome}</strong>
+                        <span style="background:#3b82f6; color:white; padding:0.2rem 0.6rem; border-radius:0.3rem; font-size:0.75rem; margin-left:0.5rem;">${r.tipo}</span>
+                        <br><span style="color:#64748b;">${r.raca} | ${r.local} | ${r.proprietario || '-'}</span>
+                    </div>`;
+                });
+            }
+            
+            // Machos do rebanho
+            if (machos.length > 0) {
+                html += `<h3 style="color:#3b82f6; margin-top:1.5rem; margin-bottom:1rem;">🐮 Machos do Rebanho</h3>`;
+                machos.forEach(a => {
+                    html += `<div style="padding:1rem; background:#e0f2fe; margin:0.5rem 0; border-radius:0.5rem; border-left:4px solid #0284c7;">
+                        <strong>${a.numero} - ${a.nome || '-'}</strong>
+                        <br><span style="color:#64748b;">${a.raca} | ${a.local} | ${a.proprietario || '-'}</span>
+                    </div>`;
+                });
+            }
+            
             html += '</div>';
             document.getElementById('conteudoRelatorio').innerHTML = html;
         }
@@ -1424,12 +1888,144 @@
         // GENEALOGIA EXPANDIDA COM AVÓS E BISAVÓS
         function mostrarGenealogia() {
             const id = document.getElementById('animalGenealogia').value;
-            const a = animais.find(x => x.id === id);
+            
+            // Verificar se é um reprodutor ou animal
+            let a = null;
+            let isReprodutor = false;
+            
+            if (id.startsWith('reprodutor_')) {
+                const reprodutorId = id.replace('reprodutor_', '');
+                a = reprodutores.find(x => x.id === reprodutorId);
+                isReprodutor = true;
+            } else {
+                a = animais.find(x => x.id === id);
+            }
+            
             if (!a) {
-                document.getElementById('arvoreGenealogia').innerHTML = '<div style="text-align:center; color:#94a3b8; padding:3rem;">Selecione um animal</div>';
+                document.getElementById('arvoreGenealogia').innerHTML = '<div style="text-align:center; color:#94a3b8; padding:3rem;">Selecione um animal ou reprodutor</div>';
                 return;
             }
             
+            // LÓGICA ESPECÍFICA PARA REPRODUTORES (com genealogia completa)
+            if (isReprodutor) {
+                const animalPrincipal = `
+                    <div style="font-size:2rem; font-weight:800;">🐂 ${a.registro}</div>
+                    <div style="font-size:1.2rem; margin:0.5rem 0;">${a.nome}</div>
+                    <div style="font-size:0.9rem; opacity:0.9;">${a.raca} | ${a.tipo} | ${a.local}</div>
+                `;
+                
+                const paiTexto = a.pai || 'Não registrado';
+                const maeTexto = a.mae || 'Não registrada';
+                
+                // Avós
+                const avoPatTexto = a.avoPaterno || 'Não registrado';
+                const avoaPatTexto = a.avoaPaterna || 'Não registrada';
+                const avoMatTexto = a.avoMaterno || 'Não registrado';
+                const avoaMatTexto = a.avoaMaterna || 'Não registrada';
+                
+                // Bisavós
+                const bisavoPPTexto = a.bisavoPP || 'Não registrado';
+                const bisavoPMTexto = a.bisavoPM || 'Não registrada';
+                const bisavoMPTexto = a.bisavoMP || 'Não registrado';
+                const bisavoMMTexto = a.bisavoMM || 'Não registrada';
+                const bisavoMatPPTexto = a.bisavoMatPP || 'Não registrado';
+                const bisavoMatPMTexto = a.bisavoMatPM || 'Não registrada';
+                const bisavoMatMPTexto = a.bisavoMatMP || 'Não registrado';
+                const bisavoMatMMTexto = a.bisavoMatMM || 'Não registrada';
+                
+                document.getElementById('arvoreGenealogia').innerHTML = `
+                    <div style="text-align:center;">
+                        <!-- ANIMAL PRINCIPAL -->
+                        <div style="background:linear-gradient(135deg, #3b82f6, #2563eb); color:white; padding:2rem; border-radius:1.2rem; display:inline-block; min-width:300px; margin-bottom:2rem; box-shadow:0 10px 30px rgba(59,130,246,0.3);">
+                            ${animalPrincipal}
+                        </div>
+                        
+                        <!-- PAIS -->
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; max-width:1000px; margin:0 auto 2rem;">
+                            <div style="padding:1.5rem; background:#dbeafe; border-radius:1rem; border:3px solid #3b82f6;">
+                                <div style="font-weight:700; margin-bottom:0.8rem; color:#1e40af;">🐂 PAI</div>
+                                <div style="color:#1e293b;">${paiTexto}</div>
+                            </div>
+                            <div style="padding:1.5rem; background:#fce7f3; border-radius:1rem; border:3px solid #ec4899;">
+                                <div style="font-weight:700; margin-bottom:0.8rem; color:#be185d;">🐄 MÃE</div>
+                                <div style="color:#1e293b;">${maeTexto}</div>
+                            </div>
+                        </div>
+                        
+                        <!-- AVÓS -->
+                        <div style="margin-bottom:1.5rem;">
+                            <h3 style="margin-bottom:1rem; color:#475569;">👴👵 AVÓS</h3>
+                            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:1rem; max-width:1200px; margin:0 auto;">
+                                <div style="padding:1rem; background:#e0f2fe; border-radius:0.8rem; border:2px solid #7dd3fc;">
+                                    <div style="font-size:0.8rem; font-weight:700; color:#0369a1; margin-bottom:0.5rem;">Avô Paterno</div>
+                                    <div style="font-size:0.85rem; color:#1e293b;">${avoPatTexto}</div>
+                                </div>
+                                <div style="padding:1rem; background:#fce7f3; border-radius:0.8rem; border:2px solid #f9a8d4;">
+                                    <div style="font-size:0.8rem; font-weight:700; color:#be185d; margin-bottom:0.5rem;">Avó Paterna</div>
+                                    <div style="font-size:0.85rem; color:#1e293b;">${avoaPatTexto}</div>
+                                </div>
+                                <div style="padding:1rem; background:#e0f2fe; border-radius:0.8rem; border:2px solid #7dd3fc;">
+                                    <div style="font-size:0.8rem; font-weight:700; color:#0369a1; margin-bottom:0.5rem;">Avô Materno</div>
+                                    <div style="font-size:0.85rem; color:#1e293b;">${avoMatTexto}</div>
+                                </div>
+                                <div style="padding:1rem; background:#fce7f3; border-radius:0.8rem; border:2px solid #f9a8d4;">
+                                    <div style="font-size:0.8rem; font-weight:700; color:#be185d; margin-bottom:0.5rem;">Avó Materna</div>
+                                    <div style="font-size:0.85rem; color:#1e293b;">${avoaMatTexto}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- BISAVÓS -->
+                        <div style="margin-bottom:1.5rem;">
+                            <h3 style="margin-bottom:1rem; color:#475569;">👴👵👴👵 BISAVÓS</h3>
+                            <div style="background:#f8fafc; padding:1.5rem; border-radius:1rem; max-width:1400px; margin:0 auto;">
+                                <h4 style="font-size:0.9rem; color:#64748b; margin-bottom:0.8rem;">Linha Paterna do Pai</h4>
+                                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.8rem; margin-bottom:1.5rem;">
+                                    <div style="padding:0.8rem; background:#e0f2fe; border-radius:0.6rem; border:1px solid #bae6fd;">
+                                        <div style="font-size:0.7rem; font-weight:700; color:#0369a1;">Bisavô (PP)</div>
+                                        <div style="font-size:0.75rem; color:#1e293b;">${bisavoPPTexto}</div>
+                                    </div>
+                                    <div style="padding:0.8rem; background:#fce7f3; border-radius:0.6rem; border:1px solid #fbcfe8;">
+                                        <div style="font-size:0.7rem; font-weight:700; color:#be185d;">Bisavó (PM)</div>
+                                        <div style="font-size:0.75rem; color:#1e293b;">${bisavoPMTexto}</div>
+                                    </div>
+                                    <div style="padding:0.8rem; background:#e0f2fe; border-radius:0.6rem; border:1px solid #bae6fd;">
+                                        <div style="font-size:0.7rem; font-weight:700; color:#0369a1;">Bisavô (MP)</div>
+                                        <div style="font-size:0.75rem; color:#1e293b;">${bisavoMPTexto}</div>
+                                    </div>
+                                    <div style="padding:0.8rem; background:#fce7f3; border-radius:0.6rem; border:1px solid #fbcfe8;">
+                                        <div style="font-size:0.7rem; font-weight:700; color:#be185d;">Bisavó (MM)</div>
+                                        <div style="font-size:0.75rem; color:#1e293b;">${bisavoMMTexto}</div>
+                                    </div>
+                                </div>
+                                
+                                <h4 style="font-size:0.9rem; color:#64748b; margin-bottom:0.8rem;">Linha Materna da Mãe</h4>
+                                <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:0.8rem;">
+                                    <div style="padding:0.8rem; background:#e0f2fe; border-radius:0.6rem; border:1px solid #bae6fd;">
+                                        <div style="font-size:0.7rem; font-weight:700; color:#0369a1;">Bisavô (PP)</div>
+                                        <div style="font-size:0.75rem; color:#1e293b;">${bisavoMatPPTexto}</div>
+                                    </div>
+                                    <div style="padding:0.8rem; background:#fce7f3; border-radius:0.6rem; border:1px solid #fbcfe8;">
+                                        <div style="font-size:0.7rem; font-weight:700; color:#be185d;">Bisavó (PM)</div>
+                                        <div style="font-size:0.75rem; color:#1e293b;">${bisavoMatPMTexto}</div>
+                                    </div>
+                                    <div style="padding:0.8rem; background:#e0f2fe; border-radius:0.6rem; border:1px solid #bae6fd;">
+                                        <div style="font-size:0.7rem; font-weight:700; color:#0369a1;">Bisavô (MP)</div>
+                                        <div style="font-size:0.75rem; color:#1e293b;">${bisavoMatMPTexto}</div>
+                                    </div>
+                                    <div style="padding:0.8rem; background:#fce7f3; border-radius:0.6rem; border:1px solid #fbcfe8;">
+                                        <div style="font-size:0.7rem; font-weight:700; color:#be185d;">Bisavó (MM)</div>
+                                        <div style="font-size:0.75rem; color:#1e293b;">${bisavoMatMMTexto}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // LÓGICA PARA ANIMAIS (original)
             // Buscar pai
             let pai = null;
             let paiInfo = { texto: 'Não registrado', dados: null };
@@ -1447,6 +2043,9 @@
                     if (pai) {
                         paiInfo.texto = `${pai.numero} - ${pai.nome || 'Sem nome'}<br><span style="font-size:0.85rem;">${pai.raca}</span>`;
                         paiInfo.dados = pai;
+                    } else if (!pai) {
+                        // Pode ser entrada manual
+                        paiInfo.texto = a.pai;
                     }
                 }
             }
@@ -1457,6 +2056,9 @@
             if (mae) {
                 maeInfo.texto = `${mae.numero} - ${mae.nome || 'Sem nome'}<br><span style="font-size:0.85rem;">${mae.raca}</span>`;
                 maeInfo.dados = mae;
+            } else if (a.mae && !mae) {
+                // Pode ser entrada manual
+                maeInfo.texto = a.mae;
             }
             
             // Buscar avós paternos
@@ -1472,12 +2074,18 @@
                     } else {
                         const av = animais.find(x => x.id === paiInfo.dados.pai);
                         if (av) avoPaterno.texto = `${av.numero} - ${av.nome || 'Sem nome'}`;
+                        else avoPaterno.texto = paiInfo.dados.pai; // Entrada manual
                     }
                 }
                 if (paiInfo.dados.mae) {
                     const av = animais.find(x => x.id === paiInfo.dados.mae);
                     if (av) avoaPaterna.texto = `${av.numero} - ${av.nome || 'Sem nome'}`;
+                    else avoaPaterna.texto = paiInfo.dados.mae; // Entrada manual
                 }
+            } else if (paiInfo.dados && paiInfo.dados.registro) {
+                // É reprodutor - buscar genealogia dele
+                if (paiInfo.dados.pai) avoPaterno.texto = paiInfo.dados.pai;
+                if (paiInfo.dados.mae) avoaPaterna.texto = paiInfo.dados.mae;
             }
             
             // Buscar avós maternos
@@ -1498,16 +2106,22 @@
                 if (maeInfo.dados.mae) {
                     const av = animais.find(x => x.id === maeInfo.dados.mae);
                     if (av) avoaMaterna.texto = `${av.numero} - ${av.nome || 'Sem nome'}`;
+                    else avoaMaterna.texto = maeInfo.dados.mae; // Entrada manual
                 }
             }
+            
+            // Montar informações do animal principal
+            const animalPrincipal = `
+                <div style="font-size:2rem; font-weight:800;">${a.numero}</div>
+                <div style="font-size:1.2rem; margin:0.5rem 0;">${a.nome || 'Sem nome'}</div>
+                <div style="font-size:0.9rem; opacity:0.9;">${a.sexo === 'F' ? '♀' : '♂'} ${a.raca} | ${a.local}</div>
+            `;
             
             document.getElementById('arvoreGenealogia').innerHTML = `
                 <div style="text-align:center;">
                     <!-- ANIMAL PRINCIPAL -->
                     <div style="background:linear-gradient(135deg, #3b82f6, #2563eb); color:white; padding:2rem; border-radius:1.2rem; display:inline-block; min-width:300px; margin-bottom:2rem; box-shadow:0 10px 30px rgba(59,130,246,0.3);">
-                        <div style="font-size:2rem; font-weight:800;">${a.numero}</div>
-                        <div style="font-size:1.2rem; margin:0.5rem 0;">${a.nome || 'Sem nome'}</div>
-                        <div style="font-size:0.9rem; opacity:0.9;">${a.sexo === 'F' ? '♀' : '♂'} ${a.raca} | ${a.local}</div>
+                        ${animalPrincipal}
                     </div>
                     
                     <!-- PAIS -->
@@ -1547,7 +2161,7 @@
                     
                     <div style="margin-top:2rem; padding:1rem; background:#fef3c7; border-radius:0.8rem; max-width:1200px; margin:2rem auto 0;">
                         <div style="font-size:0.85rem; color:#92400e;">
-                            💡 <strong>Observação:</strong> Para visualizar bisavós, cadastre os pais dos avós na ficha de cada animal correspondente.
+                            💡 <strong>Observação:</strong> Reprodutores mostram bisavós quando cadastrados. Para animais, os bisavós são calculados a partir da genealogia dos pais.
                         </div>
                     </div>
                 </div>
@@ -1634,7 +2248,22 @@
                 dataNascimento: document.getElementById('nascReprodutor').value,
                 status: document.getElementById('statusReprodutor').value,
                 observacoes: document.getElementById('obsReprodutor').value.trim(),
-                foto: fotoAtualReprodutor || ''
+                foto: fotoAtualReprodutor || '',
+                // Genealogia
+                pai: document.getElementById('paiReprodutor').value.trim(),
+                mae: document.getElementById('maeReprodutor').value.trim(),
+                avoPaterno: document.getElementById('avoPatReprodutor').value.trim(),
+                avoaPaterna: document.getElementById('avoaPatReprodutor').value.trim(),
+                avoMaterno: document.getElementById('avoMatReprodutor').value.trim(),
+                avoaMaterna: document.getElementById('avoaMatReprodutor').value.trim(),
+                bisavoPP: document.getElementById('bisavoPP').value.trim(),
+                bisavoPM: document.getElementById('bisavoPM').value.trim(),
+                bisavoMP: document.getElementById('bisavoMP').value.trim(),
+                bisavoMM: document.getElementById('bisavoMM').value.trim(),
+                bisavoMatPP: document.getElementById('bisavoMatPP').value.trim(),
+                bisavoMatPM: document.getElementById('bisavoMatPM').value.trim(),
+                bisavoMatMP: document.getElementById('bisavoMatMP').value.trim(),
+                bisavoMatMM: document.getElementById('bisavoMatMM').value.trim()
             };
 
             if (reprodutorAtualId) {
@@ -1727,6 +2356,22 @@
             document.getElementById('nascReprodutor').value = r.dataNascimento || '';
             document.getElementById('statusReprodutor').value = r.status;
             document.getElementById('obsReprodutor').value = r.observacoes || '';
+            
+            // Carregar genealogia
+            document.getElementById('paiReprodutor').value = r.pai || '';
+            document.getElementById('maeReprodutor').value = r.mae || '';
+            document.getElementById('avoPatReprodutor').value = r.avoPaterno || '';
+            document.getElementById('avoaPatReprodutor').value = r.avoaPaterna || '';
+            document.getElementById('avoMatReprodutor').value = r.avoMaterno || '';
+            document.getElementById('avoaMatReprodutor').value = r.avoaMaterna || '';
+            document.getElementById('bisavoPP').value = r.bisavoPP || '';
+            document.getElementById('bisavoPM').value = r.bisavoPM || '';
+            document.getElementById('bisavoMP').value = r.bisavoMP || '';
+            document.getElementById('bisavoMM').value = r.bisavoMM || '';
+            document.getElementById('bisavoMatPP').value = r.bisavoMatPP || '';
+            document.getElementById('bisavoMatPM').value = r.bisavoMatPM || '';
+            document.getElementById('bisavoMatMP').value = r.bisavoMatMP || '';
+            document.getElementById('bisavoMatMM').value = r.bisavoMatMM || '';
             
             // Carregar foto
             if (r.foto) {
