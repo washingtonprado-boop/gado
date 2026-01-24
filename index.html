@@ -6,6 +6,7 @@
     <title>SisGado Pro - Sistema Premium</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     
     <!-- Firebase -->
     <script type="module">
@@ -194,6 +195,7 @@
             <button class="nav-tab" onclick="showTab('genealogy')">🌳 Genealogia</button>
             <button class="nav-tab" onclick="showTab('racas')">🏷️ Raças/Locais</button>
             <button class="nav-tab" onclick="showTab('owners')">👥 Proprietários</button>
+            <button class="nav-tab" onclick="showTab('backups')">💾 Backups</button>
         </div>
 
         <div class="container">
@@ -282,6 +284,10 @@
                                     </select>
                                     <input type="text" id="maeManual" placeholder="Digite o número ou nome da mãe" style="display: none; margin-top: 0.5rem;">
                                 </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Observações</label>
+                                <textarea id="observacoes" rows="3" placeholder="Informações adicionais sobre o animal"></textarea>
                             </div>
                             <div class="checkbox-group">
                                 <label><input type="checkbox" id="semFerro"> Sem Ferro</label>
@@ -607,6 +613,13 @@
                             </div>
                             <div style="font-size: 2rem;">🚫</div>
                         </div>
+                        <div class="item-box" onclick="gerarRelatorioPorIdade()" style="background: linear-gradient(135deg, #ddd6fe, #c4b5fd); cursor: pointer;">
+                            <div>
+                                <div style="font-size: 1.2rem; font-weight: 700;">📅 Por Idade</div>
+                                <div style="color: #64748b; font-size: 0.9rem;">Faixas etárias</div>
+                            </div>
+                            <div style="font-size: 2rem;">🎂</div>
+                        </div>
                     </div>
                     <div id="previewRelatorio" style="margin-top: 2rem; display: none;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
@@ -658,6 +671,85 @@
                     </div>
                     <button class="btn btn-primary" onclick="adicionarProprietario()">➕ Adicionar Proprietário</button>
                     <div id="listaProprietarios" style="margin-top: 1.5rem;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB BACKUPS -->
+        <div id="tab-backups" class="tab-content hidden">
+            <div class="card">
+                <h2>💾 Sistema de Backups</h2>
+                <p style="color: #64748b; margin-bottom: 2rem;">Faça backups regulares dos seus dados para garantir a segurança das informações.</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+                    <!-- Backup Online (Firebase) -->
+                    <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 2rem; border-radius: 1rem; border: 2px solid #3b82f6;">
+                        <h3 style="color: #1e40af; margin-bottom: 1rem;">☁️ Backup Online (Firebase)</h3>
+                        <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                            Seus dados são salvos automaticamente na nuvem sempre que você faz alterações.
+                        </p>
+                        <div style="background: white; padding: 1rem; border-radius: 0.7rem; margin-bottom: 1rem;">
+                            <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem;">Status da Sincronização:</div>
+                            <div id="statusSyncBackup" style="font-weight: 700; color: #22c55e;">✓ Sincronizado</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="forcarSincronizacao()" style="width: 100%;">
+                            🔄 Forçar Sincronização Agora
+                        </button>
+                    </div>
+                    
+                    <!-- Backup Offline (Download) -->
+                    <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 2rem; border-radius: 1rem; border: 2px solid #f59e0b;">
+                        <h3 style="color: #92400e; margin-bottom: 1rem;">💻 Backup Offline (Arquivo Local)</h3>
+                        <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                            Baixe uma cópia completa dos seus dados em formato JSON para guardar no seu computador.
+                        </p>
+                        <button class="btn btn-warning" onclick="fazerBackupOffline()" style="width: 100%; margin-bottom: 0.5rem;">
+                            📥 Baixar Backup Completo (.json)
+                        </button>
+                        <div style="font-size: 0.75rem; color: #92400e; text-align: center; margin-top: 0.5rem;">
+                            Última exportação: <span id="ultimoBackup">Nunca</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Restaurar Backup -->
+                <div style="background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); padding: 2rem; border-radius: 1rem; border: 2px solid #ec4899;">
+                    <h3 style="color: #be185d; margin-bottom: 1rem;">📤 Restaurar Backup</h3>
+                    <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                        Importe um arquivo de backup (.json) para restaurar seus dados.
+                    </p>
+                    <input type="file" id="arquivoBackup" accept=".json" style="display: none;" onchange="restaurarBackup(event)">
+                    <button class="btn btn-danger" onclick="document.getElementById('arquivoBackup').click()" style="width: 100%;">
+                        📂 Selecionar Arquivo de Backup
+                    </button>
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; padding: 1rem; border-radius: 0.7rem; margin-top: 1rem;">
+                        <strong style="color: #dc2626;">⚠️ Atenção:</strong>
+                        <div style="color: #991b1b; font-size: 0.85rem; margin-top: 0.5rem;">
+                            Restaurar um backup irá <strong>substituir TODOS os dados atuais</strong>. Esta ação não pode ser desfeita!
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Exportar PDF -->
+                <div style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); padding: 2rem; border-radius: 1rem; border: 2px solid #6366f1; margin-top: 2rem;">
+                    <h3 style="color: #4338ca; margin-bottom: 1rem;">📄 Exportar Relatórios em PDF</h3>
+                    <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                        Gere relatórios em PDF para impressão ou arquivo.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <button class="btn btn-primary" onclick="exportarPDFCompleto()">
+                            📄 Rebanho Completo
+                        </button>
+                        <button class="btn btn-primary" onclick="exportarPDFReprodutores()">
+                            🐂 Reprodutores
+                        </button>
+                        <button class="btn btn-primary" onclick="exportarPDFPorRaca()">
+                            🏷️ Por Raça
+                        </button>
+                        <button class="btn btn-primary" onclick="exportarPDFPorIdade()">
+                            📅 Por Idade
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -977,6 +1069,7 @@
                 mae: maeValue,
                 semFerro: document.getElementById('semFerro').checked,
                 amamentando: document.getElementById('amamentando').checked,
+                observacoes: document.getElementById('observacoes').value.trim(),
                 foto: fotoAtual || ''
             };
 
@@ -1086,6 +1179,7 @@
             
             document.getElementById('semFerro').checked = a.semFerro || false;
             document.getElementById('amamentando').checked = a.amamentando || false;
+            document.getElementById('observacoes').value = a.observacoes || '';
             
             // Carregar foto
             if (a.foto) {
@@ -1881,6 +1975,132 @@
             document.getElementById('conteudoRelatorio').innerHTML = html;
         }
 
+        function gerarRelatorioPorIdade() {
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const total = animais.length + reprodutoresAtivos.length;
+            
+            if (total === 0) return alert('⚠️ Sem dados!');
+            
+            document.getElementById('tituloRelatorio').innerText = '📅 Por Faixa Etária';
+            document.getElementById('previewRelatorio').style.display = 'block';
+            
+            // Agrupar por faixas etárias
+            const faixasEtarias = {
+                'Até 6 meses': { animais: [], reprodutores: [] },
+                '6 meses - 1 ano': { animais: [], reprodutores: [] },
+                '1 - 2 anos': { animais: [], reprodutores: [] },
+                '2 - 4 anos': { animais: [], reprodutores: [] },
+                'Mais de 4 anos': { animais: [], reprodutores: [] },
+                'Sem data de nascimento': { animais: [], reprodutores: [] }
+            };
+            
+            // Classificar animais
+            animais.forEach(a => {
+                if (!a.dataNascimento) {
+                    faixasEtarias['Sem data de nascimento'].animais.push(a);
+                    return;
+                }
+                
+                const hoje = new Date();
+                const nasc = new Date(a.dataNascimento);
+                const diffDays = Math.ceil((hoje - nasc) / (1000 * 60 * 60 * 24));
+                const diffMonths = diffDays / 30;
+                const diffYears = diffDays / 365;
+                
+                if (diffMonths <= 6) {
+                    faixasEtarias['Até 6 meses'].animais.push(a);
+                } else if (diffYears < 1) {
+                    faixasEtarias['6 meses - 1 ano'].animais.push(a);
+                } else if (diffYears < 2) {
+                    faixasEtarias['1 - 2 anos'].animais.push(a);
+                } else if (diffYears < 4) {
+                    faixasEtarias['2 - 4 anos'].animais.push(a);
+                } else {
+                    faixasEtarias['Mais de 4 anos'].animais.push(a);
+                }
+            });
+            
+            // Classificar reprodutores ativos
+            reprodutoresAtivos.forEach(r => {
+                if (!r.dataNascimento) {
+                    faixasEtarias['Sem data de nascimento'].reprodutores.push(r);
+                    return;
+                }
+                
+                const hoje = new Date();
+                const nasc = new Date(r.dataNascimento);
+                const diffDays = Math.ceil((hoje - nasc) / (1000 * 60 * 60 * 24));
+                const diffMonths = diffDays / 30;
+                const diffYears = diffDays / 365;
+                
+                if (diffMonths <= 6) {
+                    faixasEtarias['Até 6 meses'].reprodutores.push(r);
+                } else if (diffYears < 1) {
+                    faixasEtarias['6 meses - 1 ano'].reprodutores.push(r);
+                } else if (diffYears < 2) {
+                    faixasEtarias['1 - 2 anos'].reprodutores.push(r);
+                } else if (diffYears < 4) {
+                    faixasEtarias['2 - 4 anos'].reprodutores.push(r);
+                } else {
+                    faixasEtarias['Mais de 4 anos'].reprodutores.push(r);
+                }
+            });
+            
+            // Cores para cada faixa
+            const cores = {
+                'Até 6 meses': '#22c55e',
+                '6 meses - 1 ano': '#3b82f6',
+                '1 - 2 anos': '#f59e0b',
+                '2 - 4 anos': '#ec4899',
+                'Mais de 4 anos': '#8b5cf6',
+                'Sem data de nascimento': '#94a3b8'
+            };
+            
+            let html = '';
+            Object.keys(faixasEtarias).forEach(faixa => {
+                const dados = faixasEtarias[faixa];
+                const totalFaixa = dados.animais.length + dados.reprodutores.length;
+                
+                if (totalFaixa === 0) return; // Pular faixas vazias
+                
+                const femeas = dados.animais.filter(a => a.sexo === 'F').length;
+                const machos = dados.animais.filter(a => a.sexo === 'M').length;
+                
+                html += `<div style="background:white; padding:1.5rem; border-radius:0.7rem; margin-bottom:1rem; border-left:5px solid ${cores[faixa]};">
+                    <h3 style="margin-bottom:1rem; color:${cores[faixa]};">🎂 ${faixa} 
+                        <span style="color:#64748b; font-size:0.9rem;">(${totalFaixa} - ${dados.animais.length} animais [${femeas}♀ ${machos}♂] + ${dados.reprodutores.length} reprodutores)</span>
+                    </h3>`;
+                
+                // Listar animais
+                if (dados.animais.length > 0) {
+                    const ordenados = ordenarAnimaisPorNumero(dados.animais);
+                    ordenados.forEach(a => {
+                        const idade = calcularIdade(a.dataNascimento);
+                        const sexoBadge = a.sexo === 'F' ? '♀' : '♂';
+                        html += `<div style="padding:0.7rem; background:#f8fafc; margin:0.3rem 0; border-radius:0.5rem; display:flex; justify-content:space-between;">
+                            <span><strong>${a.numero}</strong> - ${a.nome || '-'} ${sexoBadge}</span>
+                            <span style="color:#64748b;">${a.raca} | ${a.local} | Idade: ${idade}</span>
+                        </div>`;
+                    });
+                }
+                
+                // Listar reprodutores
+                if (dados.reprodutores.length > 0) {
+                    dados.reprodutores.forEach(r => {
+                        const idade = calcularIdade(r.dataNascimento);
+                        html += `<div style="padding:0.7rem; background:#e0f2fe; margin:0.3rem 0; border-radius:0.5rem; display:flex; justify-content:space-between; border-left:3px solid #3b82f6;">
+                            <span><strong>${r.registro}</strong> - ${r.nome} 🐂</span>
+                            <span style="color:#64748b;">${r.raca} | ${r.tipo} | Idade: ${idade}</span>
+                        </div>`;
+                    });
+                }
+                
+                html += '</div>';
+            });
+            
+            document.getElementById('conteudoRelatorio').innerHTML = html;
+        }
+
         function fecharRelatorio() {
             document.getElementById('previewRelatorio').style.display = 'none';
         }
@@ -2430,6 +2650,448 @@
             XLSX.utils.book_append_sheet(wb, ws, "Reprodutores");
             XLSX.writeFile(wb, "Reprodutores_" + Date.now() + ".xlsx");
             alert("✅ Excel exportado!");
+        }
+
+        // ===================== FUNÇÕES DE BACKUP =====================
+        
+        async function forcarSincronizacao() {
+            const statusDiv = document.getElementById('statusSyncBackup');
+            statusDiv.innerHTML = '⏳ Sincronizando...';
+            statusDiv.style.color = '#f59e0b';
+            
+            const sucesso = await salvarDadosOnline();
+            
+            if (sucesso) {
+                statusDiv.innerHTML = '✓ Sincronizado com sucesso!';
+                statusDiv.style.color = '#22c55e';
+                alert('✅ Dados sincronizados com sucesso na nuvem!');
+            } else {
+                statusDiv.innerHTML = '✗ Erro na sincronização';
+                statusDiv.style.color = '#ef4444';
+                alert('❌ Erro ao sincronizar dados!');
+            }
+        }
+        
+        function fazerBackupOffline() {
+            const backup = {
+                versao: '2.0',
+                dataBackup: new Date().toISOString(),
+                dados: {
+                    animais: animais,
+                    reprodutores: reprodutores,
+                    racas: racas,
+                    locais: locais,
+                    proprietarios: proprietarios
+                }
+            };
+            
+            const dataStr = JSON.stringify(backup, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `SisGado_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            URL.revokeObjectURL(url);
+            
+            // Atualizar data do último backup
+            const agora = new Date().toLocaleString('pt-BR');
+            document.getElementById('ultimoBackup').innerText = agora;
+            localStorage.setItem('ultimoBackup', agora);
+            
+            alert('✅ Backup baixado com sucesso!');
+        }
+        
+        async function restaurarBackup(event) {
+            const arquivo = event.target.files[0];
+            if (!arquivo) return;
+            
+            if (!confirm('⚠️ ATENÇÃO! Restaurar este backup irá SUBSTITUIR TODOS os dados atuais.\n\nEsta ação NÃO pode ser desfeita!\n\nDeseja continuar?')) {
+                event.target.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    
+                    if (!backup.dados) {
+                        throw new Error('Arquivo de backup inválido!');
+                    }
+                    
+                    // Restaurar dados
+                    animais = backup.dados.animais || [];
+                    reprodutores = backup.dados.reprodutores || [];
+                    racas = backup.dados.racas || [];
+                    locais = backup.dados.locais || [];
+                    proprietarios = backup.dados.proprietarios || [];
+                    
+                    // Salvar no Firebase
+                    await salvarDadosOnline();
+                    
+                    // Atualizar interface
+                    renderizarTabela();
+                    renderizarTabelaReprodutores();
+                    atualizarSelects();
+                    renderListas();
+                    
+                    alert('✅ Backup restaurado com sucesso!\n\nData do backup: ' + new Date(backup.dataBackup).toLocaleString('pt-BR'));
+                    
+                } catch (error) {
+                    alert('❌ Erro ao restaurar backup: ' + error.message);
+                }
+                
+                event.target.value = '';
+            };
+            reader.readAsText(arquivo);
+        }
+        
+        // Carregar data do último backup ao iniciar
+        window.addEventListener('load', () => {
+            const ultimoBackup = localStorage.getItem('ultimoBackup');
+            if (ultimoBackup) {
+                document.getElementById('ultimoBackup').innerText = ultimoBackup;
+            }
+        });
+        
+        // ===================== FUNÇÕES DE EXPORTAÇÃO PDF =====================
+        
+        function exportarPDFCompleto() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const ordenados = ordenarAnimaisPorNumero(animais);
+            
+            // Título
+            doc.setFontSize(18);
+            doc.text('REBANHO COMPLETO', 105, 15, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.text('SisGado Pro - Sistema de Gestão Pecuária', 105, 22, { align: 'center' });
+            doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 105, 28, { align: 'center' });
+            
+            let y = 40;
+            
+            // Animais
+            doc.setFontSize(14);
+            doc.text(`ANIMAIS DO REBANHO (${ordenados.length})`, 15, y);
+            y += 8;
+            
+            doc.setFontSize(9);
+            ordenados.forEach(a => {
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+                
+                const sexo = a.sexo === 'F' ? 'Femea' : 'Macho';
+                const idade = calcularIdade(a.dataNascimento);
+                doc.text(`${a.numero} - ${a.nome || 'S/N'} (${sexo}) | ${a.raca} | ${a.local} | ${a.proprietario} | Idade: ${idade}`, 15, y);
+                y += 6;
+            });
+            
+            // Reprodutores
+            if (reprodutoresAtivos.length > 0) {
+                y += 5;
+                if (y > 260) {
+                    doc.addPage();
+                    y = 20;
+                }
+                
+                doc.setFontSize(14);
+                doc.text(`REPRODUTORES ATIVOS (${reprodutoresAtivos.length})`, 15, y);
+                y += 8;
+                
+                doc.setFontSize(9);
+                reprodutoresAtivos.forEach(r => {
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    
+                    const idade = calcularIdade(r.dataNascimento);
+                    doc.text(`${r.registro} - ${r.nome} | ${r.raca} | ${r.tipo} | ${r.local} | ${r.proprietario} | Idade: ${idade}`, 15, y);
+                    y += 6;
+                });
+            }
+            
+            // Rodapé
+            const totalPaginas = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPaginas; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.text(`Página ${i} de ${totalPaginas}`, 105, 290, { align: 'center' });
+            }
+            
+            doc.save(`Rebanho_Completo_${Date.now()}.pdf`);
+            alert('✅ PDF gerado com sucesso!');
+        }
+        
+        function exportarPDFReprodutores() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const ordenados = [...reprodutores].sort((a, b) => a.registro.localeCompare(b.registro));
+            
+            // Título
+            doc.setFontSize(18);
+            doc.text('CADASTRO DE REPRODUTORES', 105, 15, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.text('SisGado Pro - Sistema de Gestão Pecuária', 105, 22, { align: 'center' });
+            doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 105, 28, { align: 'center' });
+            
+            let y = 40;
+            
+            doc.setFontSize(12);
+            doc.text(`Total de Reprodutores: ${ordenados.length}`, 15, y);
+            y += 10;
+            
+            ordenados.forEach(r => {
+                if (y > 250) {
+                    doc.addPage();
+                    y = 20;
+                }
+                
+                doc.setFontSize(11);
+                doc.setFont(undefined, 'bold');
+                doc.text(`${r.registro} - ${r.nome}`, 15, y);
+                y += 6;
+                
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+                doc.text(`Raça: ${r.raca}`, 15, y);
+                y += 5;
+                doc.text(`Tipo: ${r.tipo}`, 15, y);
+                y += 5;
+                doc.text(`Status: ${r.status}`, 15, y);
+                y += 5;
+                doc.text(`Local: ${r.local}`, 15, y);
+                y += 5;
+                doc.text(`Proprietário: ${r.proprietario}`, 15, y);
+                y += 5;
+                
+                if (r.dataNascimento) {
+                    const idade = calcularIdade(r.dataNascimento);
+                    doc.text(`Idade: ${idade} (Nascimento: ${new Date(r.dataNascimento).toLocaleDateString('pt-BR')})`, 15, y);
+                    y += 5;
+                }
+                
+                if (r.origem) {
+                    doc.text(`Origem: ${r.origem}`, 15, y);
+                    y += 5;
+                }
+                
+                // Genealogia
+                if (r.pai || r.mae) {
+                    doc.text(`Pai: ${r.pai || 'Não informado'} | Mãe: ${r.mae || 'Não informada'}`, 15, y);
+                    y += 5;
+                }
+                
+                if (r.observacoes) {
+                    doc.text(`Obs: ${r.observacoes.substring(0, 80)}`, 15, y);
+                    y += 5;
+                }
+                
+                y += 5; // Espaço entre reprodutores
+            });
+            
+            // Rodapé
+            const totalPaginas = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPaginas; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.text(`Página ${i} de ${totalPaginas}`, 105, 290, { align: 'center' });
+            }
+            
+            doc.save(`Reprodutores_${Date.now()}.pdf`);
+            alert('✅ PDF gerado com sucesso!');
+        }
+        
+        function exportarPDFPorRaca() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            
+            // Título
+            doc.setFontSize(18);
+            doc.text('REBANHO POR RAÇA', 105, 15, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.text('SisGado Pro - Sistema de Gestão Pecuária', 105, 22, { align: 'center' });
+            doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 105, 28, { align: 'center' });
+            
+            // Agrupar por raça
+            const porRaca = {};
+            animais.forEach(a => {
+                if (!porRaca[a.raca]) porRaca[a.raca] = { animais: [], reprodutores: [] };
+                porRaca[a.raca].animais.push(a);
+            });
+            
+            reprodutoresAtivos.forEach(r => {
+                if (!porRaca[r.raca]) porRaca[r.raca] = { animais: [], reprodutores: [] };
+                porRaca[r.raca].reprodutores.push(r);
+            });
+            
+            let y = 40;
+            
+            Object.keys(porRaca).sort().forEach(raca => {
+                const dados = porRaca[raca];
+                const ordenados = ordenarAnimaisPorNumero(dados.animais);
+                const total = dados.animais.length + dados.reprodutores.length;
+                
+                if (y > 260) {
+                    doc.addPage();
+                    y = 20;
+                }
+                
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text(`${raca} (${total})`, 15, y);
+                y += 7;
+                
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+                
+                // Animais
+                ordenados.forEach(a => {
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    const sexo = a.sexo === 'F' ? 'F' : 'M';
+                    doc.text(`  ${a.numero} - ${a.nome || 'S/N'} (${sexo}) | ${a.local} | ${a.proprietario}`, 15, y);
+                    y += 5;
+                });
+                
+                // Reprodutores
+                dados.reprodutores.forEach(r => {
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    doc.text(`  ${r.registro} - ${r.nome} (Reprodutor ${r.tipo}) | ${r.local} | ${r.proprietario}`, 15, y);
+                    y += 5;
+                });
+                
+                y += 5;
+            });
+            
+            // Rodapé
+            const totalPaginas = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPaginas; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.text(`Página ${i} de ${totalPaginas}`, 105, 290, { align: 'center' });
+            }
+            
+            doc.save(`Rebanho_Por_Raca_${Date.now()}.pdf`);
+            alert('✅ PDF gerado com sucesso!');
+        }
+        
+        function exportarPDFPorIdade() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            
+            // Título
+            doc.setFontSize(18);
+            doc.text('REBANHO POR FAIXA ETÁRIA', 105, 15, { align: 'center' });
+            
+            doc.setFontSize(10);
+            doc.text('SisGado Pro - Sistema de Gestão Pecuária', 105, 22, { align: 'center' });
+            doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 105, 28, { align: 'center' });
+            
+            // Agrupar por idade
+            const faixas = {
+                'Até 6 meses': [],
+                '6 meses - 1 ano': [],
+                '1 - 2 anos': [],
+                '2 - 4 anos': [],
+                'Mais de 4 anos': [],
+                'Sem data': []
+            };
+            
+            [...animais, ...reprodutoresAtivos].forEach(item => {
+                if (!item.dataNascimento) {
+                    faixas['Sem data'].push(item);
+                    return;
+                }
+                
+                const hoje = new Date();
+                const nasc = new Date(item.dataNascimento);
+                const diffDays = Math.ceil((hoje - nasc) / (1000 * 60 * 60 * 24));
+                const diffMonths = diffDays / 30;
+                const diffYears = diffDays / 365;
+                
+                if (diffMonths <= 6) {
+                    faixas['Até 6 meses'].push(item);
+                } else if (diffYears < 1) {
+                    faixas['6 meses - 1 ano'].push(item);
+                } else if (diffYears < 2) {
+                    faixas['1 - 2 anos'].push(item);
+                } else if (diffYears < 4) {
+                    faixas['2 - 4 anos'].push(item);
+                } else {
+                    faixas['Mais de 4 anos'].push(item);
+                }
+            });
+            
+            let y = 40;
+            
+            Object.keys(faixas).forEach(faixa => {
+                const lista = faixas[faixa];
+                if (lista.length === 0) return;
+                
+                if (y > 260) {
+                    doc.addPage();
+                    y = 20;
+                }
+                
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text(`${faixa} (${lista.length})`, 15, y);
+                y += 7;
+                
+                doc.setFontSize(9);
+                doc.setFont(undefined, 'normal');
+                
+                lista.forEach(item => {
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    
+                    const idade = calcularIdade(item.dataNascimento);
+                    
+                    if (item.registro) {
+                        // É reprodutor
+                        doc.text(`  ${item.registro} - ${item.nome} (Reprodutor) | ${item.raca} | ${item.proprietario} | Idade: ${idade}`, 15, y);
+                    } else {
+                        // É animal
+                        const sexo = item.sexo === 'F' ? 'F' : 'M';
+                        doc.text(`  ${item.numero} - ${item.nome || 'S/N'} (${sexo}) | ${item.raca} | ${item.proprietario} | Idade: ${idade}`, 15, y);
+                    }
+                    y += 5;
+                });
+                
+                y += 5;
+            });
+            
+            // Rodapé
+            const totalPaginas = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= totalPaginas; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.text(`Página ${i} de ${totalPaginas}`, 105, 290, { align: 'center' });
+            }
+            
+            doc.save(`Rebanho_Por_Idade_${Date.now()}.pdf`);
+            alert('✅ PDF gerado com sucesso!');
         }
     </script>
 </body>
