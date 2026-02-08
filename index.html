@@ -160,6 +160,27 @@
             font-size: 0.9rem;
         }
         .hidden {display: none;}
+    
+        /* Estilos para linhas de vagas */
+        tr.vaga-disponivel {
+            background: linear-gradient(90deg, #fef3c7 0%, #fef9e7 100%);
+            opacity: 0.8;
+            cursor: default !important;
+        }
+        tr.vaga-disponivel:hover {
+            background: linear-gradient(90deg, #fde68a 0%, #fef3c7 100%);
+            transform: none !important;
+        }
+        .badge-vaga {
+            background: #fbbf24;
+            color: #78350f;
+            padding: 0.2rem 0.6rem;
+            border-radius: 1rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+        }
+
     </style>
 </head>
 <body>
@@ -943,6 +964,9 @@ Exemplos de uso:
         let locais = ['PASTO 01', 'PASTO 02', 'CURRAL'];
         let proprietarios = ['FAZENDA PRÓPRIA'];
         let reprodutores = [];
+        
+        let vagasDisponiveis = []; // Sistema de vagas - reutilização de números
+        let movimentacoes = [];
         let notas = '';
         let animalAtualId = null;
         let reprodutorAtualId = null;
@@ -3583,6 +3607,460 @@ Exemplos de uso:
             
             alert('🗑️ Notas apagadas com sucesso!');
         }
+    
+        // =====================================================
+        // SISTEMA DE GESTÃO DE VAGAS - SisGado Pro V2
+        // =====================================================
+        
+        // Substituir função gerarNumero existente
+        const gerarNumeroOriginal = gerarNumero;
+        gerarNumero = function() {
+            if (vagasDisponiveis.length > 0) {
+                vagasDisponiveis.sort((a, b) => a - b);
+                const numeroVaga = vagasDisponiveis[0];
+                const proximo = getProximoNumero();
+                
+                const usar = confirm(
+                    `🔢 VAGA DISPONÍVEL!\n\n` +
+                    `Número ${numeroVaga} está vago.\n\n` +
+                    `Deseja usar este número?\n\n` +
+                    `✅ SIM = ${numeroVaga}\n` +
+                    `❌ NÃO = ${proximo} (novo)`
+                );
+                
+                if (usar) {
+                    document.getElementById('numero').value = numeroVaga;
+                    alert(`✅ Usando vaga ${numeroVaga}\nVagas restantes: ${vagasDisponiveis.length - 1}`);
+                    return;
+                }
+            }
+            
+            const proximo = getProximoNumero();
+            document.getElementById('numero').value = proximo;
+            
+            if (vagasDisponiveis.length > 0) {
+                alert(`🔢 Número: ${proximo}\n\n💡 ${vagasDisponiveis.length} vaga(s): ${vagasDisponiveis.slice(0,5).join(', ')}`);
+            }
+        };
+        
+        function getProximoNumero() {
+            if (animais.length === 0) return 1;
+            const numeros = animais.map(a => parseInt(a.numero)).filter(n => !isNaN(n));
+            return Math.max(...numeros, 0) + 1;
+        }
+        
+        // Substituir função excluirAnimal
+        const excluirAnimalOriginal = excluirAnimal;
+        excluirAnimal = async function() {
+            if (!animalAtualId) {
+                alert("⚠️ Selecione um animal!");
+                return;
+            }
+            
+            const animal = animais.find(a => a.id === animalAtualId);
+            if (!animal) return;
+            
+            const numero = parseInt(animal.numero);
+            const nomeExibicao = animal.nome || `Animal ${numero}`;
+            
+            if (!confirm(`🗑️ Excluir ${nomeExibicao} (#${numero})?`)) return;
+            
+            // Adicionar à lista de vagas
+            if (!isNaN(numero) && !vagasDisponiveis.includes(numero)) {
+                vagasDisponiveis.push(numero);
+                vagasDisponiveis.sort((a, b) => a - b);
+            }
+            
+            animais = animais.filter(a => a.id !== animalAtualId);
+            await salvarDadosOnline();
+            renderizarTabela();
+            atualizarSelects();
+            limparForm();
+            
+            alert(`✅ Excluído!\n🔢 Vaga ${numero} disponível\n📋 Total vagas: ${vagasDisponiveis.length}`);
+        };
+        
+        // Funções auxiliares
+        function visualizarVagas() {
+            if (vagasDisponiveis.length === 0) {
+                alert('✅ Nenhuma vaga disponível!');
+                return;
+            }
+            vagasDisponiveis.sort((a, b) => a - b);
+            alert(`📋 VAGAS DISPONÍVEIS (${vagasDisponiveis.length})\n\n${vagasDisponiveis.join(', ')}\n\n💡 Use o botão 🔢 ao cadastrar novo animal`);
+        }
+        
+        function limparVagas() {
+            if (vagasDisponiveis.length === 0) return alert('✅ Nenhuma vaga!');
+            if (!confirm(`Limpar ${vagasDisponiveis.length} vaga(s)?\n\nIsso removerá os números da lista de reutilização.`)) return;
+            vagasDisponiveis = [];
+            salvarDadosOnline();
+            alert('✅ Vagas limpas com sucesso!');
+        }
+        
+        
+        // Patch para salvar/carregar vagas
+        const salvarDadosOnlineOriginal = salvarDadosOnline;
+        salvarDadosOnline = async function() {
+            // Salvar vagas no localStorage
+            localStorage.setItem('vagasDisponiveis', JSON.stringify(vagasDisponiveis));
+            // Chamar função original
+            return await salvarDadosOnlineOriginal();
+        };
+        
+        // Interceptar carregamento
+        window.addEventListener('load', function() {
+            const vagasSalvas = localStorage.getItem('vagasDisponiveis');
+            if (vagasSalvas) {
+                vagasDisponiveis = JSON.parse(vagasSalvas);
+                console.log(`📋 ${vagasDisponiveis.length} vaga(s) carregada(s)`);
+            }
+        });
+        
+        // Interceptar salvarAnimal para remover vaga quando usada
+        const salvarAnimalOriginal = salvarAnimal;
+        salvarAnimal = async function(event) {
+            const numeroUsado = parseInt(document.getElementById('numero').value);
+            const resultado = await salvarAnimalOriginal(event);
+            
+            // Remover da lista de vagas se foi usada
+            if (vagasDisponiveis.includes(numeroUsado)) {
+                vagasDisponiveis = vagasDisponiveis.filter(v => v !== numeroUsado);
+                console.log(`🔢 Vaga ${numeroUsado} preenchida e removida`);
+                await salvarDadosOnline();
+            }
+            
+            return resultado;
+        };
+
+        
+        // Modificar renderizarTabela para mostrar vagas como linhas vazias
+        const renderizarTabelaOriginal = renderizarTabela;
+        renderizarTabela = function(data = animais) {
+            const tbody = document.getElementById('tabelaAnimais');
+            if (!tbody) return;
+            
+            const animaisOrdenados = ordenarAnimaisPorNumero(data);
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            
+            // Aplicar paginação
+            const inicio = (paginaAtual - 1) * itensPorPagina;
+            const fim = inicio + itensPorPagina;
+            
+            // Obter todos os números (animais + vagas)
+            const numerosAnimais = animaisOrdenados.map(a => parseInt(a.numero)).filter(n => !isNaN(n));
+            const todosNumeros = [...numerosAnimais, ...vagasDisponiveis].sort((a, b) => a - b);
+            
+            // Remover duplicados
+            const numerosUnicos = [...new Set(todosNumeros)];
+            
+            // Aplicar paginação nos números
+            const numerosPagina = numerosUnicos.slice(inicio, fim);
+            
+            let html = '';
+            
+            numerosPagina.forEach(numero => {
+                const animal = animaisOrdenados.find(a => parseInt(a.numero) === numero);
+                
+                if (animal) {
+                    // Animal existe - renderizar normalmente
+                    const idade = calcularIdade(animal.dataNascimento);
+                    const sexoIcon = animal.sexo === 'F' ? '♀️' : '♂️';
+                    const gestanteIcon = animal.gestante ? ' 🤰' : '';
+                    
+                    html += `
+                        <tr onclick="selecionarAnimal('${animal.id}')" style="cursor: pointer;">
+                            <td><strong>${animal.numero}</strong></td>
+                            <td>${animal.nome || '-'}</td>
+                            <td>${sexoIcon} ${animal.sexo}${gestanteIcon}</td>
+                            <td>${animal.raca}</td>
+                            <td>${animal.local}</td>
+                            <td>${idade}</td>
+                            <td>${animal.peso || '-'} kg</td>
+                        </tr>
+                    `;
+                } else {
+                    // Vaga disponível - linha em branco com destaque
+                    html += `
+                        <tr style="background: linear-gradient(90deg, #fef3c7 0%, #fef9e7 100%); cursor: default; opacity: 0.7;">
+                            <td><strong style="color: #f59e0b;">${numero}</strong> <span style="font-size: 0.75rem; color: #92400e;">VAGA</span></td>
+                            <td colspan="6" style="text-align: center; color: #92400e; font-style: italic;">
+                                🔢 Número disponível para reutilização
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            tbody.innerHTML = html;
+            
+            // Atualizar informações de paginação
+            const totalItens = numerosUnicos.length;
+            const totalPaginas = Math.ceil(totalItens / itensPorPagina);
+            
+            document.getElementById('paginaInfo').textContent = 
+                `Página ${paginaAtual} de ${totalPaginas} | Total: ${animaisOrdenados.length} animais` +
+                (vagasDisponiveis.length > 0 ? ` | ${vagasDisponiveis.length} vaga(s)` : '');
+            
+            // Atualizar botões de paginação
+            document.getElementById('btnAnterior').disabled = paginaAtual === 1;
+            document.getElementById('btnProxima').disabled = paginaAtual >= totalPaginas;
+        };
+        
+        function mudarPagina(direcao) {
+            const animaisOrdenados = ordenarAnimaisPorNumero(animais);
+            const numerosAnimais = animaisOrdenados.map(a => parseInt(a.numero)).filter(n => !isNaN(n));
+            const todosNumeros = [...numerosAnimais, ...vagasDisponiveis].sort((a, b) => a - b);
+            const numerosUnicos = [...new Set(todosNumeros)];
+            const totalPaginas = Math.ceil(numerosUnicos.length / itensPorPagina);
+            
+            if (direcao === 'anterior' && paginaAtual > 1) {
+                paginaAtual--;
+            } else if (direcao === 'proxima' && paginaAtual < totalPaginas) {
+                paginaAtual++;
+            }
+            
+            renderizarTabela();
+        }
+        
+        function mudarItensPorPagina() {
+            const select = document.getElementById('itensPorPagina');
+            itensPorPagina = parseInt(select.value);
+            paginaAtual = 1;
+            renderizarTabela();
+        }
+
+        
+        
+        
+        
+        // Sistema de renderização COMPLETO - Animais + Vagas + Reprodutores Ativos
+        const renderizarTabelaOriginalSistema = renderizarTabela;
+        renderizarTabela = function(data = animais) {
+            const tbody = document.getElementById('tabelaAnimais');
+            if (!tbody) return;
+            
+            const animaisOrdenados = ordenarAnimaisPorNumero(data);
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            
+            // Calcular próximo número para reprodutores
+            let proximoNumero = 1;
+            if (animais.length > 0) {
+                const maiorNumero = Math.max(...animais.map(a => parseInt(a.numero) || 0));
+                proximoNumero = maiorNumero + 1;
+            }
+            
+            // Criar lista de números dos animais + vagas
+            const numerosAnimais = animaisOrdenados.map(a => parseInt(a.numero)).filter(n => !isNaN(n));
+            const todosNumerosAnimais = [...numerosAnimais, ...vagasDisponiveis];
+            const numerosUnicosAnimais = [...new Set(todosNumerosAnimais)].sort((a, b) => a - b);
+            
+            // Criar registros de reprodutores com numeração após os animais
+            const reprodutoresComNumero = reprodutoresAtivos.map((r, index) => ({
+                id: `reprodutor_${r.id}`,
+                numero: formatarNumero(proximoNumero + index),
+                nome: `${r.nome} (Reprodutor)`,
+                sexo: 'M',
+                raca: r.raca,
+                local: r.local,
+                proprietario: r.proprietario,
+                dataNascimento: r.dataNascimento,
+                foto: r.foto || '',
+                isReprodutor: true,
+                reprodutorOriginal: r
+            }));
+            
+            // Total de registros
+            const totalRegistros = numerosUnicosAnimais.length + reprodutoresComNumero.length;
+            
+            if (totalRegistros === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #94a3b8; padding: 2rem;">Nenhum animal cadastrado</td></tr>';
+                const paginationControls = document.getElementById('paginationControls');
+                if (paginationControls) paginationControls.style.display = 'none';
+                return;
+            }
+            
+            // Paginação
+            const itensPorPaginaValue = itensPorPagina === 'all' ? totalRegistros : parseInt(itensPorPagina);
+            const totalPaginas = itensPorPagina === 'all' ? 1 : Math.ceil(totalRegistros / itensPorPaginaValue);
+            
+            if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+            if (paginaAtual < 1) paginaAtual = 1;
+            
+            const inicio = itensPorPagina === 'all' ? 0 : (paginaAtual - 1) * itensPorPaginaValue;
+            const fim = itensPorPagina === 'all' ? totalRegistros : inicio + itensPorPaginaValue;
+            
+            // Renderizar
+            let html = '';
+            let contador = 0;
+            
+            // Animais e Vagas
+            numerosUnicosAnimais.forEach(numero => {
+                if (contador >= inicio && contador < fim) {
+                    const animal = animaisOrdenados.find(a => parseInt(a.numero) === numero);
+                    
+                    if (animal) {
+                        const idade = calcularIdade(animal.dataNascimento);
+                        const sexoBadge = animal.sexo === 'F' ? '<span class="badge badge-pink">♀</span>' : '<span class="badge badge-blue">♂</span>';
+                        const corLinha = animal.amamentando ? 'background: linear-gradient(90deg, #d1fae5 0%, #a7f3d0 100%);' : '';
+                        const fotoHTML = animal.foto 
+                            ? `<img src="${animal.foto}" style="width: 40px; height: 40px; border-radius: 0.5rem; object-fit: cover; cursor: pointer;" onclick="event.stopPropagation(); ampliarFotoTabela('${animal.foto}')">`
+                            : '<div style="width: 40px; height: 40px; background: #f1f5f9; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">📷</div>';
+                        
+                        html += `<tr onclick="selecionarAnimal('${animal.id}')" style="cursor: pointer; ${corLinha}">
+                                <td>${fotoHTML}</td>
+                                <td><strong>${animal.numero}</strong></td>
+                                <td>${animal.nome || '-'}</td>
+                                <td>${sexoBadge}</td>
+                                <td>${animal.raca}</td>
+                                <td>${animal.local}</td>
+                                <td>${animal.proprietario || '-'}</td>
+                                <td>${idade}</td>
+                            </tr>`;
+                    } else {
+                        html += `<tr class="vaga-disponivel" style="cursor: default;">
+                                <td><div style="width: 40px; height: 40px; background: #fbbf24; border-radius: 0.4rem; display: flex; align-items: center; justify-content: center; color: #78350f; font-size: 1.2rem;">🔢</div></td>
+                                <td><strong style="color: #f59e0b;">${numero}</strong><span class="badge-vaga">VAGA</span></td>
+                                <td style="color: #92400e; font-style: italic;">Disponível</td>
+                                <td style="color: #92400e;">-</td>
+                                <td style="color: #92400e;">-</td>
+                                <td style="color: #92400e;">-</td>
+                                <td style="color: #92400e;">-</td>
+                                <td style="color: #92400e; font-size: 0.85rem;">🔢 Use botão</td>
+                            </tr>`;
+                    }
+                }
+                contador++;
+            });
+            
+            // Reprodutores no final
+            reprodutoresComNumero.forEach(r => {
+                if (contador >= inicio && contador < fim) {
+                    const idade = calcularIdade(r.dataNascimento);
+                    const fotoHTML = r.foto 
+                        ? `<img src="${r.foto}" style="width: 40px; height: 40px; border-radius: 0.5rem; object-fit: cover;" onclick="event.stopPropagation(); ampliarFotoTabela('${r.foto}')">`
+                        : '<div style="width: 40px; height: 40px; background: #f1f5f9; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center;">📷</div>';
+                    
+                    html += `<tr onclick="selecionarReprodutor('${r.reprodutorOriginal.id}')" style="cursor: pointer; background: linear-gradient(90deg, #dbeafe 0%, #bfdbfe 100%);">
+                            <td>${fotoHTML}</td>
+                            <td><strong>${r.numero}</strong></td>
+                            <td><strong>${r.nome}</strong> <span class="badge" style="background: #3b82f6; color: white; font-size: 0.7rem;">🐂 REPRODUTOR</span></td>
+                            <td><span class="badge badge-blue">♂</span></td>
+                            <td>${r.raca}</td>
+                            <td>${r.local}</td>
+                            <td>${r.proprietario || '-'}</td>
+                            <td>${idade}</td>
+                        </tr>`;
+                }
+                contador++;
+            });
+            
+            tbody.innerHTML = html;
+            
+            // Info paginação
+            const paginationInfo = document.getElementById('paginationInfo');
+            if (paginationInfo) {
+                const totalAnimais = animaisOrdenados.length;
+                const totalVagas = vagasDisponiveis.length;
+                const totalReprodutores = reprodutoresAtivos.length;
+                
+                if (itensPorPagina === 'all' || totalRegistros <= 10) {
+                    paginationInfo.textContent = `${totalAnimais} animais` + 
+                        (totalVagas > 0 ? ` | ${totalVagas} vaga(s)` : '') +
+                        (totalReprodutores > 0 ? ` | ${totalReprodutores} repr.` : '');
+                } else {
+                    paginationInfo.textContent = `${inicio + 1}-${Math.min(fim, totalRegistros)} de ${totalRegistros} | ${totalAnimais} animais` +
+                        (totalVagas > 0 ? ` | ${totalVagas} vaga(s)` : '') +
+                        (totalReprodutores > 0 ? ` | ${totalReprodutores} repr.` : '');
+                }
+            }
+            
+            // Botões
+            const btnAnterior = document.getElementById('btnAnterior');
+            const btnProxima = document.getElementById('btnProxima');
+            const paginationControls = document.getElementById('paginationControls');
+            
+            if (btnAnterior) btnAnterior.disabled = paginaAtual === 1;
+            if (btnProxima) btnProxima.disabled = paginaAtual >= totalPaginas;
+            if (paginationControls) {
+                paginationControls.style.display = (itensPorPagina === 'all' || totalRegistros <= 10) ? 'none' : 'block';
+            }
+            
+            renderizarNumerosPagina(totalPaginas);
+        };
+        
+        function ampliarFotoTabela(fotoUrl) {
+            const modal = document.getElementById('fotoModal');
+            const img = document.getElementById('fotoModalImg');
+            if (modal && img) {
+                img.src = fotoUrl;
+                modal.style.display = 'block';
+            }
+        }
+
+        function renderizarNumerosPagina(totalPaginas) {
+            const container = document.getElementById('paginationNumbers');
+            if (!container) return;
+            
+            let html = '';
+            const maxBotoes = 5;
+            let inicio = Math.max(1, paginaAtual - Math.floor(maxBotoes / 2));
+            let fim = Math.min(totalPaginas, inicio + maxBotoes - 1);
+            
+            if (fim - inicio < maxBotoes - 1) {
+                inicio = Math.max(1, fim - maxBotoes + 1);
+            }
+            
+            for (let i = inicio; i <= fim; i++) {
+                const ativo = i === paginaAtual;
+                html += `
+                    <button 
+                        onclick="irParaPagina(${i})" 
+                        class="btn btn-small ${ativo ? 'btn-primary' : 'btn-secondary'}"
+                        style="min-width: 2.5rem; ${ativo ? 'font-weight: 700;' : ''}"
+                    >
+                        ${i}
+                    </button>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        function paginaAnterior() {
+            if (paginaAtual > 1) {
+                paginaAtual--;
+                renderizarTabela();
+            }
+        }
+        
+        function proximaPagina() {
+            const animaisOrdenados = ordenarAnimaisPorNumero(animais);
+            const numerosAnimais = animaisOrdenados.map(a => parseInt(a.numero)).filter(n => !isNaN(n));
+            const todosNumeros = [...numerosAnimais, ...vagasDisponiveis];
+            const numerosUnicos = [...new Set(todosNumeros)];
+            const itensPorPaginaValue = itensPorPagina === 'all' ? numerosUnicos.length : parseInt(itensPorPagina);
+            const totalPaginas = Math.ceil(numerosUnicos.length / itensPorPaginaValue);
+            
+            if (paginaAtual < totalPaginas) {
+                paginaAtual++;
+                renderizarTabela();
+            }
+        }
+        
+        function irParaPagina(pagina) {
+            paginaAtual = pagina;
+            renderizarTabela();
+        }
+        
+        function mudarItensPorPagina(valor) {
+            itensPorPagina = valor;
+            paginaAtual = 1;
+            renderizarTabela();
+        }
+
+        console.log('✅ Sistema de Gestão de Vagas ativado!');
+
     </script>
 </body>
 </html>
