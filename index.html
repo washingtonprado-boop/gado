@@ -232,6 +232,7 @@
                                 <div style="display:flex; gap:8px">
                                     <input type="text" id="numero" required style="flex: 1;">
                                     <button type="button" class="btn btn-secondary" onclick="gerarNumero()" style="padding: 0.8rem 1rem;">🔢</button>
+                                    <button type="button" class="btn" onclick="mostrarBotaoEscanearVagas()" style="padding: 0.8rem 1rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; font-weight: 600;" title="Escanear e detectar números vagos automaticamente">🔍 Escanear Vagas</button>
                                 </div>
                             </div>
 
@@ -1379,10 +1380,262 @@ Exemplos de uso:
             campo.style.display = document.getElementById('temPO').checked ? 'block' : 'none';
         }
 
-        function gerarNumero() {
-            const max = animais.length > 0 ? Math.max(...animais.map(a => parseInt(a.numero) || 0)) : 0;
-            document.getElementById('numero').value = formatarNumero(max + 1);
+        
+
+        // DETECTAR VAGAS AUTOMATICAMENTE - Escanear números faltantes
+        function detectarVagasAutomaticamente() {
+            console.log('🔍 Escaneando números para detectar vagas...');
+            
+            if (animais.length === 0) {
+                console.log('⚠️ Nenhum animal cadastrado');
+                return [];
+            }
+            
+            // Obter todos os números existentes
+            const numerosExistentes = animais
+                .map(a => parseInt(a.numero))
+                .filter(n => !isNaN(n))
+                .sort((a, b) => a - b);
+            
+            if (numerosExistentes.length === 0) {
+                console.log('⚠️ Nenhum número válido encontrado');
+                return [];
+            }
+            
+            const menor = numerosExistentes[0];
+            const maior = numerosExistentes[numerosExistentes.length - 1];
+            
+            console.log(`📊 Faixa: ${menor} até ${maior}`);
+            console.log(`📋 Animais cadastrados: ${numerosExistentes.length}`);
+            
+            // Encontrar números faltantes na faixa
+            const vagasEncontradas = [];
+            for (let i = menor; i <= maior; i++) {
+                if (!numerosExistentes.includes(i)) {
+                    vagasEncontradas.push(i);
+                }
+            }
+            
+            console.log(`🔢 Vagas detectadas: ${vagasEncontradas.length}`);
+            console.log(`📋 Lista: ${vagasEncontradas.join(', ')}`);
+            
+            return vagasEncontradas;
         }
+        
+        // Sincronizar vagas detectadas com a lista
+        function sincronizarVagas() {
+            const vagasDetectadas = detectarVagasAutomaticamente();
+            
+            // Mesclar com vagas já existentes (sem duplicar)
+            vagasDetectadas.forEach(vaga => {
+                if (!vagasDisponiveis.includes(vaga)) {
+                    vagasDisponiveis.push(vaga);
+                }
+            });
+            
+            // Ordenar
+            vagasDisponiveis.sort((a, b) => a - b);
+            
+            // Salvar
+            localStorage.setItem('vagasDisponiveis', JSON.stringify(vagasDisponiveis));
+            
+            console.log(`✅ Vagas sincronizadas! Total: ${vagasDisponiveis.length}`);
+            console.log(`📋 Lista completa: ${vagasDisponiveis.join(', ')}`);
+            
+            return vagasDisponiveis.length;
+        }
+        
+        // Adicionar botão visual para escanear vagas
+        function mostrarBotaoEscanearVagas() {
+            const totalVagas = sincronizarVagas();
+            
+            if (totalVagas > 0) {
+                alert(`🔍 ESCANEAMENTO COMPLETO!\n\n` +
+                      `✅ ${totalVagas} vaga(s) detectada(s):\n` +
+                      `${vagasDisponiveis.slice(0, 20).join(', ')}` +
+                      `${totalVagas > 20 ? '...' : ''}\n\n` +
+                      `💡 Use o botão 🔢 ao cadastrar novo animal!`);
+            } else {
+                alert('✅ Nenhuma vaga detectada!\n\nTodos os números estão em sequência.');
+            }
+        }
+
+                // SELETOR VISUAL DE VAGAS - Escolha entre vagas disponíveis
+        function gerarNumero() {
+            alert('🔢 FUNÇÃO CHAMADA! Vagas: ' + (vagasDisponiveis ? vagasDisponiveis.length : 'undefined'));
+            console.log('🔢 gerarNumero() CHAMADA!');
+            console.log('📋 vagasDisponiveis:', vagasDisponiveis);
+            console.log('🐮 animais.length:', animais.length);
+            
+            if (vagasDisponiveis.length > 0) {
+                console.log('✅ TEM VAGAS! Abrindo modal...');
+                // Ordenar vagas em ordem crescente
+                vagasDisponiveis.sort((a, b) => a - b);
+                
+                // Calcular próximo número sequencial
+                let proximoNumero = 1;
+                if (animais.length > 0) {
+                    const maiorNumero = Math.max(...animais.map(a => parseInt(a.numero) || 0));
+                    proximoNumero = maiorNumero + 1;
+                }
+                
+                // Criar cards das vagas
+                const vagasHTML = vagasDisponiveis.map(vaga => `
+                    <div class="vaga-card" onclick="selecionarVaga(${vaga})" style="
+                        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+                        border: 3px solid #f59e0b;
+                        border-radius: 1rem;
+                        padding: 1.5rem;
+                        margin: 0.5rem;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        text-align: center;
+                        min-width: 120px;
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                    " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 8px 12px rgba(0,0,0,0.15)';" 
+                       onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.1)';">
+                        <div style="font-size: 2.5rem; font-weight: 800; color: #f59e0b; margin-bottom: 0.5rem;">
+                            ${vaga}
+                        </div>
+                        <div style="font-size: 0.75rem; font-weight: 600; color: #92400e; text-transform: uppercase; letter-spacing: 0.05em;">
+                            🔢 VAGA
+                        </div>
+                        <div style="font-size: 0.7rem; color: #78350f; margin-top: 0.3rem;">
+                            Clique para usar
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Criar modal
+                const modalHTML = `
+                    <div id="modalSeletorVagas" style="
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.75);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 10000;
+                        animation: fadeIn 0.3s ease;
+                    ">
+                        <div style="
+                            background: white;
+                            border-radius: 1.5rem;
+                            padding: 2rem;
+                            max-width: 800px;
+                            max-height: 90vh;
+                            overflow-y: auto;
+                            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                            animation: slideUp 0.4s ease;
+                        ">
+                            <div style="text-align: center; margin-bottom: 2rem;">
+                                <h2 style="font-size: 1.8rem; color: #1e293b; margin-bottom: 0.5rem; font-weight: 700;">
+                                    🔢 Escolha um Número
+                                </h2>
+                                <p style="color: #64748b; font-size: 1rem;">
+                                    ${vagasDisponiveis.length} vaga(s) disponível(is) em ordem crescente
+                                </p>
+                            </div>
+                            
+                            <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin-bottom: 2rem;">
+                                ${vagasHTML}
+                            </div>
+                            
+                            <div style="border-top: 2px solid #e2e8f0; padding-top: 1.5rem; margin-top: 1.5rem;">
+                                <div style="text-align: center; margin-bottom: 1rem;">
+                                    <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 1rem;">
+                                        Ou gerar novo número sequencial:
+                                    </p>
+                                    <button onclick="selecionarVaga(${proximoNumero})" style="
+                                        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                                        color: white;
+                                        border: none;
+                                        padding: 1rem 2rem;
+                                        font-size: 1.1rem;
+                                        font-weight: 600;
+                                        border-radius: 0.75rem;
+                                        cursor: pointer;
+                                        box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+                                        transition: all 0.3s ease;
+                                    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 12px rgba(59, 130, 246, 0.4)';" 
+                                       onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 6px rgba(59, 130, 246, 0.3)';">
+                                        🆕 Gerar Novo #${proximoNumero}
+                                    </button>
+                                </div>
+                                
+                                <div style="text-align: center;">
+                                    <button onclick="fecharSeletorVagas()" style="
+                                        background: #f1f5f9;
+                                        color: #475569;
+                                        border: 2px solid #e2e8f0;
+                                        padding: 0.75rem 1.5rem;
+                                        font-size: 0.95rem;
+                                        border-radius: 0.75rem;
+                                        cursor: pointer;
+                                        transition: all 0.3s ease;
+                                    ">
+                                        ✖️ Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <style>
+                        @keyframes fadeIn {
+                            from { opacity: 0; }
+                            to { opacity: 1; }
+                        }
+                        @keyframes slideUp {
+                            from { opacity: 0; transform: translateY(50px); }
+                            to { opacity: 1; transform: translateY(0); }
+                        }
+                        @keyframes fadeOut {
+                            from { opacity: 1; }
+                            to { opacity: 0; }
+                        }
+                    </style>
+                `;
+                
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+                
+            } else {
+                // Sem vagas - gerar próximo número direto
+                let proximoNumero = 1;
+                if (animais.length > 0) {
+                    const maiorNumero = Math.max(...animais.map(a => parseInt(a.numero) || 0));
+                    proximoNumero = maiorNumero + 1;
+                }
+                document.getElementById('numero').value = formatarNumero(proximoNumero);
+                mostrarMensagem('✅ Número gerado: ' + proximoNumero, 'success');
+            }
+        }
+        
+        function selecionarVaga(numero) {
+            document.getElementById('numero').value = formatarNumero(numero);
+            fecharSeletorVagas();
+            
+            if (vagasDisponiveis.includes(numero)) {
+                mostrarMensagem(`🔢 Vaga #${numero} selecionada! Complete o cadastro para confirmar.`, 'success');
+            } else {
+                mostrarMensagem(`🆕 Novo número #${numero} gerado!`, 'success');
+            }
+            
+            const nomeField = document.getElementById('nome');
+            if (nomeField) nomeField.focus();
+        }
+        
+        function fecharSeletorVagas() {
+            const modal = document.getElementById('modalSeletorVagas');
+            if (modal) {
+                modal.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => modal.remove(), 300);
+            }
+        }
+
 
         // Variáveis de paginação
         let paginaAtual = 1;
@@ -3612,36 +3865,7 @@ Exemplos de uso:
         // SISTEMA DE GESTÃO DE VAGAS - SisGado Pro V2
         // =====================================================
         
-        // Substituir função gerarNumero existente
-        const gerarNumeroOriginal = gerarNumero;
-        gerarNumero = function() {
-            if (vagasDisponiveis.length > 0) {
-                vagasDisponiveis.sort((a, b) => a - b);
-                const numeroVaga = vagasDisponiveis[0];
-                const proximo = getProximoNumero();
-                
-                const usar = confirm(
-                    `🔢 VAGA DISPONÍVEL!\n\n` +
-                    `Número ${numeroVaga} está vago.\n\n` +
-                    `Deseja usar este número?\n\n` +
-                    `✅ SIM = ${numeroVaga}\n` +
-                    `❌ NÃO = ${proximo} (novo)`
-                );
-                
-                if (usar) {
-                    document.getElementById('numero').value = numeroVaga;
-                    alert(`✅ Usando vaga ${numeroVaga}\nVagas restantes: ${vagasDisponiveis.length - 1}`);
-                    return;
-                }
-            }
-            
-            const proximo = getProximoNumero();
-            document.getElementById('numero').value = proximo;
-            
-            if (vagasDisponiveis.length > 0) {
-                alert(`🔢 Número: ${proximo}\n\n💡 ${vagasDisponiveis.length} vaga(s): ${vagasDisponiveis.slice(0,5).join(', ')}`);
-            }
-        };
+        // gerarNumero já definido acima
         
         function getProximoNumero() {
             if (animais.length === 0) return 1;
@@ -3652,6 +3876,7 @@ Exemplos de uso:
         // Substituir função excluirAnimal
         const excluirAnimalOriginal = excluirAnimal;
         excluirAnimal = async function() {
+            console.log('🗑️ excluirAnimal() CHAMADA - VERSÃO COM VAGAS');
             if (!animalAtualId) {
                 alert("⚠️ Selecione um animal!");
                 return;
@@ -3661,14 +3886,22 @@ Exemplos de uso:
             if (!animal) return;
             
             const numero = parseInt(animal.numero);
+            console.log('🔢 Número do animal:', numero);
             const nomeExibicao = animal.nome || `Animal ${numero}`;
             
             if (!confirm(`🗑️ Excluir ${nomeExibicao} (#${numero})?`)) return;
             
             // Adicionar à lista de vagas
+            console.log('➕ Adicionando à lista de vagas...');
             if (!isNaN(numero) && !vagasDisponiveis.includes(numero)) {
                 vagasDisponiveis.push(numero);
                 vagasDisponiveis.sort((a, b) => a - b);
+                // SALVAR IMEDIATAMENTE no localStorage
+                localStorage.setItem('vagasDisponiveis', JSON.stringify(vagasDisponiveis));
+                console.log('✅ Vaga adicionada! Total:', vagasDisponiveis.length, 'Lista:', vagasDisponiveis);
+                console.log('💾 Salvo no localStorage:', localStorage.getItem('vagasDisponiveis'));
+            } else {
+                console.log('⚠️ Não adicionou. isNaN:', isNaN(numero), 'includes:', vagasDisponiveis.includes(numero));
             }
             
             animais = animais.filter(a => a.id !== animalAtualId);
@@ -3711,10 +3944,27 @@ Exemplos de uso:
         // Interceptar carregamento
         window.addEventListener('load', function() {
             const vagasSalvas = localStorage.getItem('vagasDisponiveis');
+            console.log('🔍 Carregando vagas do localStorage...');
+            console.log('📦 localStorage contém:', vagasSalvas);
             if (vagasSalvas) {
-                vagasDisponiveis = JSON.parse(vagasSalvas);
-                console.log(`📋 ${vagasDisponiveis.length} vaga(s) carregada(s)`);
+                try {
+                    vagasDisponiveis = JSON.parse(vagasSalvas);
+                    console.log(`✅ ${vagasDisponiveis.length} vaga(s) carregada(s):`, vagasDisponiveis);
+                } catch (e) {
+                    console.error('❌ Erro ao parsear vagas:', e);
+                    vagasDisponiveis = [];
+                }
+            } else {
+                console.log('⚠️ Nenhuma vaga salva no localStorage');
             }
+            
+            // ESCANEAR VAGAS AUTOMATICAMENTE ao carregar
+            setTimeout(() => {
+                if (animais && animais.length > 0) {
+                    console.log('🔍 Iniciando escaneamento automático de vagas...');
+                    sincronizarVagas();
+                }
+            }, 1000);
         });
         
         // Interceptar salvarAnimal para remover vaga quando usada
