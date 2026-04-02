@@ -232,7 +232,7 @@
                                 <div style="display:flex; gap:8px">
                                     <input type="text" id="numero" required style="flex: 1;">
                                     <button type="button" class="btn btn-secondary" onclick="gerarNumero()" style="padding: 0.8rem 1rem;">🔢</button>
-                                    <button type="button" class="btn" onclick="mostrarBotaoEscanearVagas()" style="padding: 0.8rem 1rem; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border: none; font-weight: 600;" title="Escanear e detectar números vagos automaticamente">🔍 Escanear Vagas</button>
+                                    
                                 </div>
                             </div>
 
@@ -318,6 +318,7 @@
                             </div>
                             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <button type="submit" class="btn btn-primary">💾 Salvar</button>
+                            
                                 <button type="button" class="btn btn-warning" onclick="limparForm()">🔄 Novo</button>
                             </div>
                             <button type="button" class="btn btn-danger" onclick="excluirAnimal()" style="width: 100%; margin-top: 10px;">🗑️ Excluir</button>
@@ -330,6 +331,35 @@
                             <button class="btn btn-success" onclick="exportarExcel()">📊 Excel</button>
                         </div>
                         
+                        <!-- RESUMO VISUAL DO REBANHO -->
+                        <div id="resumoRebanho" style="
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                            gap: 1rem;
+                            margin-bottom: 1.5rem;
+                        ">
+                            <!-- Cards serão inseridos aqui -->
+                        </div>
+
+                        <!-- FILTROS RÁPIDOS -->
+                        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+                            <button onclick="filtrarRapido('todos')" id="btnTodos" class="btn" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                                🐮 Todos
+                            </button>
+                            <button onclick="filtrarRapido('femeas')" id="btnFemeas" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                                ♀️ Fêmeas
+                            </button>
+                            <button onclick="filtrarRapido('machos')" id="btnMachos" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                                ♂️ Machos
+                            </button>
+                            <button onclick="filtrarRapido('gestantes')" id="btnGestantes" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                                🤰 Gestantes
+                            </button>
+                            <button onclick="filtrarRapido('bezerros')" id="btnBezerros" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                                🍼 Bezerros
+                            </button>
+                        </div>
+
                         <!-- FILTROS -->
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; padding: 1.2rem; background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%); border-radius: 0.7rem; border: 2px solid #cbd5e1;">
                             <div>
@@ -1268,7 +1298,81 @@ Exemplos de uso:
             }
         }
 
-        function selecionarAnimal(id) {
+
+
+        // FILTROS RÁPIDOS
+        let filtroRapidoAtivo = 'todos';
+        
+        function filtrarRapido(tipo) {
+            filtroRapidoAtivo = tipo;
+            
+            // Atualizar botões visuais
+            ['btnTodos', 'btnFemeas', 'btnMachos', 'btnGestantes', 'btnBezerros'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.className = 'btn btn-secondary';
+                    btn.style.background = '';
+                }
+            });
+            
+            const btnAtivo = document.getElementById('btn' + tipo.charAt(0).toUpperCase() + tipo.slice(1));
+            if (btnAtivo) {
+                btnAtivo.className = 'btn';
+                btnAtivo.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+            }
+            
+            // Filtrar dados
+            let dadosFiltrados = animais;
+            
+            switch(tipo) {
+                case 'femeas':
+                    dadosFiltrados = animais.filter(a => a.sexo === 'F');
+                    break;
+                case 'machos':
+                    dadosFiltrados = animais.filter(a => a.sexo === 'M');
+                    break;
+                case 'gestantes':
+                    dadosFiltrados = animais.filter(a => a.gestante);
+                    break;
+                case 'bezerros':
+                    dadosFiltrados = animais.filter(a => a.amamentando);
+                    break;
+                case 'todos':
+                default:
+                    dadosFiltrados = animais;
+            }
+            
+            renderizarTabela(dadosFiltrados);
+        }
+
+                // DUPLICAR ANIMAL
+        function duplicarAnimal() {
+            if (!animalAtualId) {
+                alert('⚠️ Selecione um animal primeiro!');
+                return;
+            }
+            
+            const animal = animais.find(a => a.id === animalAtualId);
+            if (!animal) return;
+            
+            if (!confirm(`📋 Duplicar dados de:\n\n${animal.nome || 'Animal'} #${animal.numero}?\n\nO número/ID será gerado automaticamente.`)) {
+                return;
+            }
+            
+            // Limpar ID e número
+            animalAtualId = null;
+            document.getElementById('numero').value = '';
+            
+            // Manter os outros campos preenchidos
+            // Os dados já estão nos campos, só limpar ID
+            
+            alert('✅ Dados duplicados!\n\n📝 Altere o que for necessário e salve.\n🔢 Use o botão 🔢 para gerar novo número.');
+            
+            // Focar no campo número
+            document.getElementById('numero').focus();
+        }
+
+                function selecionarAnimal(id) {
             const a = animais.find(x => x.id === id);
             if (!a) return;
             
@@ -1642,7 +1746,127 @@ Exemplos de uso:
         let itensPorPagina = 10;
         let dadosAtuais = [];
 
-        function renderizarTabela(data = animais) {
+
+        // RESUMO VISUAL DO REBANHO
+        function atualizarResumoRebanho() {
+            const container = document.getElementById('resumoRebanho');
+            if (!container) return;
+            
+            // Calcular estatísticas
+            const total = animais.length;
+            const femeas = animais.filter(a => a.sexo === 'F').length;
+            const machos = animais.filter(a => a.sexo === 'M').length;
+            const gestantes = animais.filter(a => a.gestante).length;
+            
+            // Por local
+            const porLocal = {};
+            animais.forEach(a => {
+                porLocal[a.local] = (porLocal[a.local] || 0) + 1;
+            });
+            
+            // Reprodutores ativos
+            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo').length;
+            
+            // Gerar HTML dos cards
+            let html = `
+                <!-- Card Total -->
+                <div style="
+                    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                    color: white;
+                    padding: 1.5rem;
+                    border-radius: 1rem;
+                    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+                ">
+                    <div style="font-size: 0.85rem; opacity: 0.9; font-weight: 600; margin-bottom: 0.5rem;">
+                        🐮 TOTAL
+                    </div>
+                    <div style="font-size: 2.5rem; font-weight: 800; line-height: 1;">
+                        ${total}
+                    </div>
+                    <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.5rem;">
+                        animais cadastrados
+                    </div>
+                </div>
+                
+                <!-- Card Fêmeas -->
+                <div style="
+                    background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+                    color: white;
+                    padding: 1.5rem;
+                    border-radius: 1rem;
+                    box-shadow: 0 4px 6px rgba(236, 72, 153, 0.3);
+                ">
+                    <div style="font-size: 0.85rem; opacity: 0.9; font-weight: 600; margin-bottom: 0.5rem;">
+                        ♀️ FÊMEAS
+                    </div>
+                    <div style="font-size: 2.5rem; font-weight: 800; line-height: 1;">
+                        ${femeas}
+                    </div>
+                    <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.5rem;">
+                        ${gestantes > 0 ? `🤰 ${gestantes} gestante(s)` : 'nenhuma gestante'}
+                    </div>
+                </div>
+                
+                <!-- Card Machos -->
+                <div style="
+                    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+                    color: white;
+                    padding: 1.5rem;
+                    border-radius: 1rem;
+                    box-shadow: 0 4px 6px rgba(6, 182, 212, 0.3);
+                ">
+                    <div style="font-size: 0.85rem; opacity: 0.9; font-weight: 600; margin-bottom: 0.5rem;">
+                        ♂️ MACHOS
+                    </div>
+                    <div style="font-size: 2.5rem; font-weight: 800; line-height: 1;">
+                        ${machos}
+                    </div>
+                    <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.5rem;">
+                        ${reprodutoresAtivos > 0 ? `🐂 ${reprodutoresAtivos} reprodutor(es)` : 'sem reprodutores'}
+                    </div>
+                </div>
+            `;
+            
+            // Cards por local (até 3)
+            const locaisChaves = Object.keys(porLocal).slice(0, 3);
+            const coresLocais = ['#10b981', '#f59e0b', '#8b5cf6'];
+            const coresLocaisDark = ['#059669', '#d97706', '#7c3aed'];
+            
+            locaisChaves.forEach((local, index) => {
+                const cor = coresLocais[index] || '#6b7280';
+                const corDark = coresLocaisDark[index] || '#4b5563';
+                html += `
+                    <div style="
+                        background: linear-gradient(135deg, ${cor} 0%, ${corDark} 100%);
+                        color: white;
+                        padding: 1.5rem;
+                        border-radius: 1rem;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+                    ">
+                        <div style="font-size: 0.85rem; opacity: 0.9; font-weight: 600; margin-bottom: 0.5rem;">
+                            📍 ${local}
+                        </div>
+                        <div style="font-size: 2.5rem; font-weight: 800; line-height: 1;">
+                            ${porLocal[local]}
+                        </div>
+                        <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.5rem;">
+                            animais
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Chamar ao renderizar tabela
+        const renderizarTabelaOriginalComResumo = renderizarTabela;
+        renderizarTabela = function(data = animais) {
+            renderizarTabelaOriginalComResumo(data);
+            atualizarResumoRebanho();
+        };
+
+                function renderizarTabela(data = animais) {
             const tbody = document.getElementById('tabelaAnimais');
             
             const animaisOrdenados = ordenarAnimaisPorNumero(data);
