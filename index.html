@@ -749,9 +749,14 @@
                         </div>
                     </div>
                     <div id="previewRelatorio" style="margin-top: 2rem; display: none;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
-                            <h3 id="tituloRelatorio"></h3>
-                            <button class="btn btn-warning" onclick="fecharRelatorio()">✖️ Fechar</button>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+                            <h3 id="tituloRelatorio" style="margin: 0;"></h3>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button class="btn" onclick="salvarRelatorioAtualPDF()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; font-weight: 600;">
+                                    📄 Salvar PDF
+                                </button>
+                                <button class="btn btn-warning" onclick="fecharRelatorio()">✖️ Fechar</button>
+                            </div>
                         </div>
                         <div id="conteudoRelatorio" style="padding: 2rem; background: #f8fafc; border-radius: 1rem;"></div>
                     </div>
@@ -854,6 +859,32 @@ Exemplos de uso:
                         <strong>Última modificação:</strong> <span id="ultimaModificacao">-</span>
                     </div>
                 </div>
+
+                <!-- Exportar PDF -->
+                <div style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); padding: 2rem; border-radius: 1rem; border: 2px solid #6366f1; margin-top: 2rem;">
+                    <h3 style="color: #4338ca; margin-bottom: 1rem;">📄 Exportar Relatórios em PDF</h3>
+                    <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem;">
+                        Gere relatórios em PDF para impressão ou arquivo.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <button class="btn" onclick="gerarPDFRebanho()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 1rem; font-weight: 600;">
+                            📄 Rebanho Completo
+                        </button>
+                        <button class="btn" onclick="gerarPDFFemeas()" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; border: none; padding: 1rem; font-weight: 600;">
+                            ♀️ Fêmeas
+                        </button>
+                        <button class="btn" onclick="gerarPDFPorLocal()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 1rem; font-weight: 600;">
+                            📍 Por Local
+                        </button>
+                        <button class="btn" onclick="gerarPDFAnimalSelecionado()" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border: none; padding: 1rem; font-weight: 600;">
+                            📋 Ficha Individual
+                        </button>
+                    </div>
+                    <p style="color: #64748b; margin-top: 1rem; font-size: 0.85rem; font-style: italic;">
+                        💡 <strong>Ficha Individual:</strong> Selecione um animal na aba Rebanho antes de clicar neste botão.
+                    </p>
+                </div>
+
             </div>
         </div>
 
@@ -912,30 +943,7 @@ Exemplos de uso:
                     </div>
                 </div>
                 
-                <!-- Exportar PDF -->
-                <div style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); padding: 2rem; border-radius: 1rem; border: 2px solid #6366f1; margin-top: 2rem;">
-                    <h3 style="color: #4338ca; margin-bottom: 1rem;">📄 Exportar Relatórios em PDF</h3>
-                    <p style="color: #64748b; margin-bottom: 1.5rem; font-size: 0.9rem;">
-                        Gere relatórios em PDF para impressão ou arquivo.
-                    </p>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                        <button class="btn" onclick="gerarPDFRebanho()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 1rem; font-weight: 600;">
-                            📄 Rebanho Completo
-                        </button>
-                        <button class="btn" onclick="gerarPDFFemeas()" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; border: none; padding: 1rem; font-weight: 600;">
-                            ♀️ Fêmeas
-                        </button>
-                        <button class="btn" onclick="gerarPDFPorLocal()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 1rem; font-weight: 600;">
-                            📍 Por Local
-                        </button>
-                        <button class="btn" onclick="gerarPDFAnimalSelecionado()" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border: none; padding: 1rem; font-weight: 600;">
-                            📋 Ficha Individual
-                        </button>
-                    </div>
-                    <p style="color: #64748b; margin-top: 1rem; font-size: 0.85rem; font-style: italic;">
-                        💡 <strong>Ficha Individual:</strong> Selecione um animal na aba Rebanho antes de clicar neste botão.
-                    </p>
-                </div>
+
             </div>
         </div>
     </div>
@@ -1526,10 +1534,15 @@ Exemplos de uso:
             // Encontrar números faltantes na faixa
             const vagasEncontradas = [];
             for (let i = menor; i <= maior; i++) {
+                // Verificar se NÃO existe nos números cadastrados
                 if (!numerosExistentes.includes(i)) {
                     vagasEncontradas.push(i);
                 }
             }
+            
+            console.log('🔍 Verificação detalhada:');
+            console.log('   Números existentes:', numerosExistentes);
+            console.log('   Vagas encontradas:', vagasEncontradas);
             
             console.log(`🔢 Vagas detectadas: ${vagasEncontradas.length}`);
             console.log(`📋 Lista: ${vagasEncontradas.join(', ')}`);
@@ -1541,12 +1554,19 @@ Exemplos de uso:
         function sincronizarVagas() {
             const vagasDetectadas = detectarVagasAutomaticamente();
             
+            // Obter números já cadastrados para filtrar
+            const numerosExistentes = animais.map(a => parseInt(a.numero)).filter(n => !isNaN(n));
+            
             // Mesclar com vagas já existentes (sem duplicar)
             vagasDetectadas.forEach(vaga => {
-                if (!vagasDisponiveis.includes(vaga)) {
+                // CRÍTICO: Não adicionar se o número JÁ ESTÁ CADASTRADO
+                if (!vagasDisponiveis.includes(vaga) && !numerosExistentes.includes(vaga)) {
                     vagasDisponiveis.push(vaga);
                 }
             });
+            
+            // Limpar vagas que foram preenchidas
+            vagasDisponiveis = vagasDisponiveis.filter(vaga => !numerosExistentes.includes(vaga));
             
             // Ordenar
             vagasDisponiveis.sort((a, b) => a - b);
@@ -2691,7 +2711,89 @@ Exemplos de uso:
         }
 
         // RELATÓRIOS COM REPRODUTORES ATIVOS
-        function gerarRelatorioCompleto() {
+
+        // ========================================
+        // PDF DOS RELATÓRIOS GERENCIAIS
+        // ========================================
+        
+        function salvarRelatorioPDF(titulo, conteudo) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const margemEsq = 15;
+            let y = 20;
+            
+            // Título
+            doc.setFontSize(18);
+            doc.setFont(undefined, 'bold');
+            doc.text(titulo, margemEsq, y);
+            
+            y += 10;
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            
+            // Dividir conteúdo em linhas
+            const linhas = conteudo.split('\n');
+            
+            linhas.forEach(linha => {
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+                
+                // Detectar títulos (linhas com ===)
+                if (linha.includes('===')) {
+                    doc.setFont(undefined, 'bold');
+                    doc.setFontSize(12);
+                } else if (linha.startsWith('--')) {
+                    doc.setFont(undefined, 'bold');
+                    doc.setFontSize(11);
+                } else {
+                    doc.setFont(undefined, 'normal');
+                    doc.setFontSize(10);
+                }
+                
+                // Quebrar linhas longas
+                const linhasQuebradas = doc.splitTextToSize(linha, 180);
+                linhasQuebradas.forEach(l => {
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    doc.text(l, margemEsq, y);
+                    y += 6;
+                });
+            });
+            
+            // Rodapé
+            const dataGeracao = new Date().toLocaleDateString('pt-BR');
+            doc.setFontSize(8);
+            doc.text(`Gerado em: ${dataGeracao}`, margemEsq, 285);
+            
+            // Salvar
+            const nomeArquivo = titulo.replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+            doc.save(nomeArquivo);
+            
+            alert('✅ PDF salvo com sucesso!');
+        }
+        
+        function salvarRelatorioAtualPDF() {
+            const modalRelatorio = document.getElementById('modalRelatorio');
+            if (!modalRelatorio || modalRelatorio.style.display === 'none') {
+                alert('⚠️ Nenhum relatório aberto!\n\nAbra um relatório primeiro.');
+                return;
+            }
+            
+            const conteudoDiv = document.getElementById('conteudoRelatorio');
+            if (!conteudoDiv) return;
+            
+            const titulo = conteudoDiv.querySelector('h2, h3')?.textContent || 'Relatório';
+            const conteudo = conteudoDiv.innerText;
+            
+            salvarRelatorioPDF(titulo, conteudo);
+        }
+
+                function gerarRelatorioCompleto() {
             const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
             const total = animais.length + reprodutoresAtivos.length;
             
