@@ -322,6 +322,7 @@
                                 <button type="button" class="btn btn-warning" onclick="limparForm()">🔄 Novo</button>
                             </div>
                             <button type="button" class="btn btn-danger" onclick="excluirAnimal()" style="width: 100%; margin-top: 10px;">🗑️ Excluir</button>
+                            
                         </form>
                     </div>
 
@@ -330,6 +331,7 @@
                             <input type="text" id="campoPesquisa" placeholder="🔍 Pesquisar..." style="flex: 1; min-width: 200px; padding: 0.8rem; border: 2px solid #e2e8f0; border-radius: 0.7rem;" onkeyup="pesquisarAnimais(this.value)">
                             <button class="btn btn-success" onclick="exportarExcel()">📊 Excel</button>
                         </div>
+                        
                         
                         <!-- RESUMO VISUAL DO REBANHO -->
                         <div id="resumoRebanho" style="
@@ -917,19 +919,22 @@ Exemplos de uso:
                         Gere relatórios em PDF para impressão ou arquivo.
                     </p>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                        <button class="btn btn-primary" onclick="exportarPDFCompleto()">
+                        <button class="btn" onclick="gerarPDFRebanho()" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; padding: 1rem; font-weight: 600;">
                             📄 Rebanho Completo
                         </button>
-                        <button class="btn btn-primary" onclick="exportarPDFReprodutores()">
-                            🐂 Reprodutores
+                        <button class="btn" onclick="gerarPDFFemeas()" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%); color: white; border: none; padding: 1rem; font-weight: 600;">
+                            ♀️ Fêmeas
                         </button>
-                        <button class="btn btn-primary" onclick="exportarPDFPorRaca()">
-                            🏷️ Por Raça
+                        <button class="btn" onclick="gerarPDFPorLocal()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none; padding: 1rem; font-weight: 600;">
+                            📍 Por Local
                         </button>
-                        <button class="btn btn-primary" onclick="exportarPDFPorIdade()">
-                            📅 Por Idade
+                        <button class="btn" onclick="gerarPDFAnimalSelecionado()" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; border: none; padding: 1rem; font-weight: 600;">
+                            📋 Ficha Individual
                         </button>
                     </div>
+                    <p style="color: #64748b; margin-top: 1rem; font-size: 0.85rem; font-style: italic;">
+                        💡 <strong>Ficha Individual:</strong> Selecione um animal na aba Rebanho antes de clicar neste botão.
+                    </p>
                 </div>
             </div>
         </div>
@@ -1488,18 +1493,24 @@ Exemplos de uso:
 
         // DETECTAR VAGAS AUTOMATICAMENTE - Escanear números faltantes
         function detectarVagasAutomaticamente() {
-            console.log('🔍 Escaneando números para detectar vagas...');
+            console.log('🔍 ========================================');
+            console.log('🔍 INICIANDO ESCANEAMENTO DE VAGAS');
+            console.log('🔍 ========================================');
             
             if (animais.length === 0) {
                 console.log('⚠️ Nenhum animal cadastrado');
                 return [];
             }
             
+            console.log('📊 Total de animais:', animais.length);
+            
             // Obter todos os números existentes
             const numerosExistentes = animais
                 .map(a => parseInt(a.numero))
                 .filter(n => !isNaN(n))
                 .sort((a, b) => a - b);
+            
+            console.log('📋 Números existentes:', numerosExistentes);
             
             if (numerosExistentes.length === 0) {
                 console.log('⚠️ Nenhum número válido encontrado');
@@ -1566,12 +1577,16 @@ Exemplos de uso:
 
                 // SELETOR VISUAL DE VAGAS - Escolha entre vagas disponíveis
         function gerarNumero() {
-            alert('🔢 FUNÇÃO CHAMADA! Vagas: ' + (vagasDisponiveis ? vagasDisponiveis.length : 'undefined'));
+            // FORÇAR ESCANEAMENTO ANTES DE ABRIR
+            console.log('🔍 Forçando escaneamento de vagas...');
+            sincronizarVagas();
+            
             console.log('🔢 gerarNumero() CHAMADA!');
-            console.log('📋 vagasDisponiveis:', vagasDisponiveis);
+            console.log('📋 vagasDisponiveis APÓS SCAN:', vagasDisponiveis);
             console.log('🐮 animais.length:', animais.length);
             
             if (vagasDisponiveis.length > 0) {
+                console.log('✅ ENCONTRADAS ' + vagasDisponiveis.length + ' VAGAS:', vagasDisponiveis);
                 console.log('✅ TEM VAGAS! Abrindo modal...');
                 // Ordenar vagas em ordem crescente
                 vagasDisponiveis.sort((a, b) => a - b);
@@ -4534,6 +4549,401 @@ Exemplos de uso:
         }
 
         console.log('✅ Sistema de Gestão de Vagas ativado!');
+
+
+        // ========================================
+        // SISTEMA DE GERAÇÃO DE PDF
+        // ========================================
+        
+
+        // Função auxiliar para gerar PDF do animal selecionado na tabela
+        function gerarPDFAnimalSelecionado() {
+            if (!animalAtualId) {
+                alert('⚠️ Selecione um animal na aba Rebanho primeiro!\n\n1. Vá na aba "🐮 Rebanho"\n2. Clique em um animal na tabela\n3. Volte aqui e clique novamente');
+                return;
+            }
+            gerarPDFAnimal(animalAtualId);
+        }
+
+                // PDF - Ficha Individual do Animal
+        function gerarPDFAnimal(animalId) {
+            const animal = animais.find(a => a.id === animalId);
+            if (!animal) {
+                alert('⚠️ Animal não encontrado!');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Configurações
+            const margemEsq = 20;
+            let y = 20;
+            
+            // Título
+            doc.setFontSize(20);
+            doc.setFont(undefined, 'bold');
+            doc.text('FICHA DO ANIMAL', margemEsq, y);
+            
+            y += 15;
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            
+            // Dados básicos
+            doc.setFont(undefined, 'bold');
+            doc.text('IDENTIFICAÇÃO', margemEsq, y);
+            y += 8;
+            doc.setFont(undefined, 'normal');
+            
+            doc.text(`Número/ID: ${animal.numero}`, margemEsq + 5, y);
+            y += 6;
+            doc.text(`Nome: ${animal.nome || 'Não informado'}`, margemEsq + 5, y);
+            y += 6;
+            doc.text(`Sexo: ${animal.sexo === 'F' ? 'Fêmea' : 'Macho'}`, margemEsq + 5, y);
+            y += 6;
+            doc.text(`Raça: ${animal.raca}`, margemEsq + 5, y);
+            y += 6;
+            
+            if (animal.brinco) {
+                doc.text(`Brinco: ${animal.brinco}`, margemEsq + 5, y);
+                y += 6;
+            }
+            
+            if (animal.po) {
+                doc.text(`PO (Puro de Origem): ${animal.po}`, margemEsq + 5, y);
+                y += 6;
+            }
+            
+            y += 5;
+            doc.setFont(undefined, 'bold');
+            doc.text('LOCALIZAÇÃO', margemEsq, y);
+            y += 8;
+            doc.setFont(undefined, 'normal');
+            
+            doc.text(`Local: ${animal.local}`, margemEsq + 5, y);
+            y += 6;
+            doc.text(`Proprietário: ${animal.proprietario || 'Não informado'}`, margemEsq + 5, y);
+            y += 6;
+            
+            y += 5;
+            doc.setFont(undefined, 'bold');
+            doc.text('DADOS FÍSICOS', margemEsq, y);
+            y += 8;
+            doc.setFont(undefined, 'normal');
+            
+            const idade = calcularIdade(animal.dataNascimento);
+            doc.text(`Data de Nascimento: ${animal.dataNascimento}`, margemEsq + 5, y);
+            y += 6;
+            doc.text(`Idade: ${idade}`, margemEsq + 5, y);
+            y += 6;
+            doc.text(`Peso: ${animal.peso || 'Não informado'} kg`, margemEsq + 5, y);
+            y += 6;
+            
+            y += 5;
+            doc.setFont(undefined, 'bold');
+            doc.text('SITUAÇÃO', margemEsq, y);
+            y += 8;
+            doc.setFont(undefined, 'normal');
+            
+            if (animal.sexo === 'F') {
+                doc.text(`Gestante: ${animal.gestante ? 'SIM' : 'Não'}`, margemEsq + 5, y);
+                y += 6;
+            }
+            
+            doc.text(`Amamentando: ${animal.amamentando ? 'SIM' : 'Não'}`, margemEsq + 5, y);
+            y += 6;
+            doc.text(`Sem Ferro: ${animal.semFerro ? 'SIM' : 'Não'}`, margemEsq + 5, y);
+            y += 6;
+            
+            // Histórico Sanitário
+            if (animal.historicoSanitario && animal.historicoSanitario.length > 0) {
+                y += 10;
+                doc.setFont(undefined, 'bold');
+                doc.text('HISTÓRICO SANITÁRIO', margemEsq, y);
+                y += 8;
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                
+                animal.historicoSanitario.slice(0, 10).forEach(h => {
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                    doc.text(`• ${h.data} - ${h.tipo}: ${h.descricao}`, margemEsq + 5, y);
+                    y += 5;
+                });
+            }
+            
+            // Rodapé
+            const dataGeracao = new Date().toLocaleDateString('pt-BR');
+            doc.setFontSize(8);
+            doc.text(`Gerado em: ${dataGeracao}`, margemEsq, 285);
+            
+            // Salvar
+            doc.save(`Ficha_Animal_${animal.numero}.pdf`);
+            
+            alert('✅ PDF gerado com sucesso!');
+        }
+        
+        // PDF - Relatório Completo do Rebanho
+        function gerarPDFRebanho() {
+            if (animais.length === 0) {
+                alert('⚠️ Nenhum animal cadastrado!');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            
+            const margemEsq = 10;
+            let y = 15;
+            
+            // Título
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('RELATÓRIO DO REBANHO', margemEsq, y);
+            
+            y += 8;
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Total de Animais: ${animais.length}`, margemEsq, y);
+            y += 5;
+            const femeas = animais.filter(a => a.sexo === 'F').length;
+            const machos = animais.filter(a => a.sexo === 'M').length;
+            doc.text(`Fêmeas: ${femeas} | Machos: ${machos}`, margemEsq, y);
+            
+            y += 10;
+            
+            // Cabeçalho da tabela
+            doc.setFont(undefined, 'bold');
+            doc.setFontSize(9);
+            
+            const colunas = {
+                numero: { x: margemEsq, largura: 15, titulo: 'Nº' },
+                nome: { x: margemEsq + 15, largura: 35, titulo: 'Nome' },
+                sexo: { x: margemEsq + 50, largura: 15, titulo: 'Sexo' },
+                raca: { x: margemEsq + 65, largura: 30, titulo: 'Raça' },
+                local: { x: margemEsq + 95, largura: 35, titulo: 'Local' },
+                idade: { x: margemEsq + 130, largura: 20, titulo: 'Idade' },
+                peso: { x: margemEsq + 150, largura: 20, titulo: 'Peso' },
+                proprietario: { x: margemEsq + 170, largura: 50, titulo: 'Proprietário' }
+            };
+            
+            // Desenhar cabeçalho
+            Object.values(colunas).forEach(col => {
+                doc.text(col.titulo, col.x, y);
+            });
+            
+            y += 2;
+            doc.line(margemEsq, y, 280, y);
+            y += 5;
+            
+            // Dados
+            doc.setFont(undefined, 'normal');
+            
+            const animaisOrdenados = ordenarAnimaisPorNumero(animais);
+            
+            animaisOrdenados.forEach(animal => {
+                if (y > 190) {
+                    doc.addPage('landscape');
+                    y = 15;
+                    
+                    // Repetir cabeçalho
+                    doc.setFont(undefined, 'bold');
+                    Object.values(colunas).forEach(col => {
+                        doc.text(col.titulo, col.x, y);
+                    });
+                    y += 2;
+                    doc.line(margemEsq, y, 280, y);
+                    y += 5;
+                    doc.setFont(undefined, 'normal');
+                }
+                
+                doc.text(animal.numero, colunas.numero.x, y);
+                doc.text((animal.nome || '-').substring(0, 15), colunas.nome.x, y);
+                doc.text(animal.sexo === 'F' ? '♀ F' : '♂ M', colunas.sexo.x, y);
+                doc.text(animal.raca.substring(0, 12), colunas.raca.x, y);
+                doc.text(animal.local.substring(0, 15), colunas.local.x, y);
+                doc.text(calcularIdade(animal.dataNascimento), colunas.idade.x, y);
+                doc.text((animal.peso || '-') + ' kg', colunas.peso.x, y);
+                doc.text((animal.proprietario || '-').substring(0, 20), colunas.proprietario.x, y);
+                
+                y += 6;
+            });
+            
+            // Rodapé
+            const dataGeracao = new Date().toLocaleDateString('pt-BR');
+            doc.setFontSize(8);
+            doc.text(`Gerado em: ${dataGeracao}`, margemEsq, 200);
+            
+            doc.save('Relatorio_Rebanho.pdf');
+            
+            alert('✅ PDF gerado com sucesso!');
+        }
+        
+        // PDF - Relatório de Fêmeas
+        function gerarPDFFemeas() {
+            const femeas = animais.filter(a => a.sexo === 'F');
+            
+            if (femeas.length === 0) {
+                alert('⚠️ Nenhuma fêmea cadastrada!');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('landscape');
+            
+            const margemEsq = 10;
+            let y = 15;
+            
+            // Título
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('RELATÓRIO DE FÊMEAS', margemEsq, y);
+            
+            y += 8;
+            doc.setFontSize(10);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Total de Fêmeas: ${femeas.length}`, margemEsq, y);
+            y += 5;
+            const gestantes = femeas.filter(a => a.gestante).length;
+            doc.text(`Gestantes: ${gestantes}`, margemEsq, y);
+            
+            y += 10;
+            
+            // Tabela (similar ao rebanho)
+            doc.setFont(undefined, 'bold');
+            doc.setFontSize(9);
+            
+            const colunas = {
+                numero: { x: margemEsq, largura: 15, titulo: 'Nº' },
+                nome: { x: margemEsq + 15, largura: 40, titulo: 'Nome' },
+                raca: { x: margemEsq + 55, largura: 30, titulo: 'Raça' },
+                local: { x: margemEsq + 85, largura: 35, titulo: 'Local' },
+                idade: { x: margemEsq + 120, largura: 20, titulo: 'Idade' },
+                peso: { x: margemEsq + 140, largura: 20, titulo: 'Peso' },
+                gestante: { x: margemEsq + 160, largura: 25, titulo: 'Gestante' },
+                proprietario: { x: margemEsq + 185, largura: 50, titulo: 'Proprietário' }
+            };
+            
+            Object.values(colunas).forEach(col => {
+                doc.text(col.titulo, col.x, y);
+            });
+            
+            y += 2;
+            doc.line(margemEsq, y, 280, y);
+            y += 5;
+            
+            doc.setFont(undefined, 'normal');
+            
+            const femeasOrdenadas = ordenarAnimaisPorNumero(femeas);
+            
+            femeasOrdenadas.forEach(animal => {
+                if (y > 190) {
+                    doc.addPage('landscape');
+                    y = 15;
+                    doc.setFont(undefined, 'bold');
+                    Object.values(colunas).forEach(col => {
+                        doc.text(col.titulo, col.x, y);
+                    });
+                    y += 2;
+                    doc.line(margemEsq, y, 280, y);
+                    y += 5;
+                    doc.setFont(undefined, 'normal');
+                }
+                
+                doc.text(animal.numero, colunas.numero.x, y);
+                doc.text((animal.nome || '-').substring(0, 18), colunas.nome.x, y);
+                doc.text(animal.raca.substring(0, 12), colunas.raca.x, y);
+                doc.text(animal.local.substring(0, 15), colunas.local.x, y);
+                doc.text(calcularIdade(animal.dataNascimento), colunas.idade.x, y);
+                doc.text((animal.peso || '-') + ' kg', colunas.peso.x, y);
+                doc.text(animal.gestante ? 'SIM' : 'Não', colunas.gestante.x, y);
+                doc.text((animal.proprietario || '-').substring(0, 20), colunas.proprietario.x, y);
+                
+                y += 6;
+            });
+            
+            const dataGeracao = new Date().toLocaleDateString('pt-BR');
+            doc.setFontSize(8);
+            doc.text(`Gerado em: ${dataGeracao}`, margemEsq, 200);
+            
+            doc.save('Relatorio_Femeas.pdf');
+            
+            alert('✅ PDF de Fêmeas gerado com sucesso!');
+        }
+        
+        // PDF - Relatório por Local
+        function gerarPDFPorLocal() {
+            if (animais.length === 0) {
+                alert('⚠️ Nenhum animal cadastrado!');
+                return;
+            }
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const margemEsq = 15;
+            let y = 15;
+            
+            // Título
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.text('RELATÓRIO POR LOCAL', margemEsq, y);
+            
+            y += 10;
+            
+            // Agrupar por local
+            const porLocal = {};
+            animais.forEach(a => {
+                if (!porLocal[a.local]) {
+                    porLocal[a.local] = [];
+                }
+                porLocal[a.local].push(a);
+            });
+            
+            // Gerar relatório para cada local
+            Object.keys(porLocal).sort().forEach(local => {
+                if (y > 260) {
+                    doc.addPage();
+                    y = 15;
+                }
+                
+                doc.setFontSize(12);
+                doc.setFont(undefined, 'bold');
+                doc.text(`📍 ${local}`, margemEsq, y);
+                y += 6;
+                
+                doc.setFontSize(10);
+                doc.setFont(undefined, 'normal');
+                doc.text(`Total: ${porLocal[local].length} animais`, margemEsq + 5, y);
+                y += 8;
+                
+                doc.setFontSize(9);
+                
+                porLocal[local].forEach(animal => {
+                    if (y > 270) {
+                        doc.addPage();
+                        y = 15;
+                    }
+                    
+                    const sexo = animal.sexo === 'F' ? '♀' : '♂';
+                    const linha = `  • ${animal.numero} - ${animal.nome || 'S/N'} (${sexo} ${animal.raca}) - ${calcularIdade(animal.dataNascimento)}`;
+                    doc.text(linha, margemEsq + 5, y);
+                    y += 5;
+                });
+                
+                y += 5;
+            });
+            
+            const dataGeracao = new Date().toLocaleDateString('pt-BR');
+            doc.setFontSize(8);
+            doc.text(`Gerado em: ${dataGeracao}`, margemEsq, 285);
+            
+            doc.save('Relatorio_Por_Local.pdf');
+            
+            alert('✅ PDF por Local gerado com sucesso!');
+        }
 
     </script>
 </body>
