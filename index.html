@@ -12,6 +12,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getDatabase, ref, set, get, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getAuth, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         
         const firebaseConfig = {
             apiKey: "AIzaSyC7SscZZ2uhic2JXaQYfmnvh5mRgwpk0y8",
@@ -28,6 +29,7 @@
         const database = getDatabase(app);
         
         window.firebaseDB = { database, ref, set, get, remove };
+        window.firebaseAuth = { auth: getAuth(app), signInWithEmailAndPassword, signOut };
     </script>
     
     <style>
@@ -292,6 +294,10 @@
                                 <label>Nascimento</label>
                                 <input type="date" id="dataNascimento">
                             </div>
+                            <div class="form-group">
+                                <label>⚖️ Peso (kg)</label>
+                                <input type="number" id="peso" min="0" step="0.1" placeholder="Ex: 320.5">
+                            </div>
                             <div class="grid-2">
                                 <div class="form-group">
                                     <label>Pai</label>
@@ -315,6 +321,7 @@
                             <div class="checkbox-group">
                                 <label><input type="checkbox" id="semFerro"> Sem Ferro</label>
                                 <label><input type="checkbox" id="amamentando"> Mamando</label>
+                                <label><input type="checkbox" id="gestante"> 🤰 Gestante</label>
                             </div>
                             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <button type="submit" class="btn btn-primary">💾 Salvar</button>
@@ -679,6 +686,24 @@
                         <div id="totalMachos" style="font-size: 3rem; font-weight: 800; color: #3b82f6;">0</div>
                     </div>
                 </div>
+                <!-- FILTROS RÁPIDOS -->
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; justify-content: center;">
+                    <button onclick="filtrarGraficos('todos')" id="btnTodosReports" class="btn" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); font-size: 0.85rem; padding: 0.6rem 1.2rem; color: white; border: none; font-weight: 600;">
+                        🐮 Todos
+                    </button>
+                    <button onclick="filtrarGraficos('femeas')" id="btnFemeasReports" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                        ♀️ Fêmeas
+                    </button>
+                    <button onclick="filtrarGraficos('machos')" id="btnMachosReports" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                        ♂️ Machos
+                    </button>
+                    <button onclick="filtrarGraficos('gestantes')" id="btnGestantesReports" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                        🤰 Gestantes
+                    </button>
+                    <button onclick="filtrarGraficos('bezerros')" id="btnBezerrosReports" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                        🍼 Bezerros
+                    </button>
+                </div>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 2rem;">
                     <div class="card"><canvas id="racaChart"></canvas></div>
                     <div class="card"><canvas id="localChart"></canvas></div>
@@ -689,6 +714,31 @@
             <!-- TAB RELATÓRIOS -->
             <div id="tab-relatorios" class="tab-content hidden">
                 <div class="card">
+                <!-- FILTROS RÁPIDOS -->
+                <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 1.5rem; border-radius: 1rem; border: 2px solid #7dd3fc; margin-bottom: 2rem;">
+                    <h3 style="color: #0369a1; margin-bottom: 1rem; font-size: 1.1rem;">🔍 Filtros Rápidos</h3>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        <button onclick="filtrarRelatoriosTextuais('todos')" id="btnTodosRelTextuais" class="btn" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); font-size: 0.85rem; padding: 0.6rem 1.2rem; color: white; border: none; font-weight: 600;">
+                            🐮 Todos
+                        </button>
+                        <button onclick="filtrarRelatoriosTextuais('femeas')" id="btnFemeasRelTextuais" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                            ♀️ Fêmeas
+                        </button>
+                        <button onclick="filtrarRelatoriosTextuais('machos')" id="btnMachosRelTextuais" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                            ♂️ Machos
+                        </button>
+                        <button onclick="filtrarRelatoriosTextuais('gestantes')" id="btnGestantesRelTextuais" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                            🤰 Gestantes
+                        </button>
+                        <button onclick="filtrarRelatoriosTextuais('bezerros')" id="btnBezerrosRelTextuais" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                            🍼 Bezerros
+                        </button>
+                    </div>
+                    <p style="color: #64748b; font-size: 0.85rem; margin-top: 0.75rem; margin-bottom: 0;">
+                        💡 Selecione múltiplos filtros para combinações (ex: Fêmeas + Gestantes)
+                    </p>
+                </div>
+
                     <h2>📄 Relatórios Gerenciais</h2>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
                         <div class="item-box" onclick="gerarRelatorioCompleto()" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); cursor: pointer;">
@@ -956,6 +1006,11 @@ Exemplos de uso:
 
     <script>
         // SISTEMA DE LOGIN
+        // ⚙️ SEGURANÇA: mude para true DEPOIS de configurar o Firebase Authentication
+        // no console (Authentication > Email/Senha > criar usuário) e aplicar as
+        // regras de segurança no Realtime Database. Com true, o campo "Usuário"
+        // passa a ser o E-MAIL cadastrado no Firebase.
+        const USAR_FIREBASE_AUTH = false;
         const USUARIO_MASTER = 'master';
         const SENHA_MASTER = '05048989';
         
@@ -969,13 +1024,29 @@ Exemplos de uso:
             return false;
         }
         
-        function realizarLogin(event) {
+        async function realizarLogin(event) {
             event.preventDefault();
             
             const usuario = document.getElementById('loginUsuario').value.trim();
             const senha = document.getElementById('loginSenha').value;
             
-            if (usuario === USUARIO_MASTER && senha === SENHA_MASTER) {
+            let autenticado = false;
+            
+            if (USAR_FIREBASE_AUTH) {
+                // Login seguro via Firebase Authentication (usuário = e-mail)
+                try {
+                    const { auth, signInWithEmailAndPassword } = window.firebaseAuth;
+                    await signInWithEmailAndPassword(auth, usuario, senha);
+                    autenticado = true;
+                } catch (e) {
+                    console.error('Erro de autenticação Firebase:', e.code);
+                    autenticado = false;
+                }
+            } else {
+                autenticado = (usuario === USUARIO_MASTER && senha === SENHA_MASTER);
+            }
+            
+            if (autenticado) {
                 sessionStorage.setItem('sisgadoLogado', 'true');
                 document.getElementById('loginError').style.display = 'none';
                 document.getElementById('loginScreen').style.display = 'none';
@@ -998,6 +1069,9 @@ Exemplos de uso:
         function fazerLogout() {
             if (confirm('🚪 Deseja realmente sair do sistema?')) {
                 sessionStorage.removeItem('sisgadoLogado');
+                if (USAR_FIREBASE_AUTH && window.firebaseAuth) {
+                    window.firebaseAuth.signOut(window.firebaseAuth.auth).catch(() => {});
+                }
                 location.reload();
             }
         }
@@ -1100,6 +1174,57 @@ Exemplos de uso:
             }
         }
 
+        // ===== SALVAMENTO GRANULAR (por registro) =====
+        // Evita sobrescrever o banco inteiro a cada alteração — protege contra
+        // perda de dados quando dois dispositivos estão abertos ao mesmo tempo.
+        async function salvarChaveOnline(chave, valor) {
+            if (!window.firebaseDB) return false;
+            const { database, ref, set } = window.firebaseDB;
+            try {
+                await set(ref(database, chave), valor);
+                atualizarStatusSync(true);
+                return true;
+            } catch (e) {
+                console.error('Erro ao salvar ' + chave + ':', e);
+                atualizarStatusSync(false);
+                return false;
+            }
+        }
+        
+        async function salvarAnimalOnline(animal) {
+            return salvarChaveOnline('animais/' + animal.id, animal);
+        }
+        
+        async function removerAnimalOnline(id) {
+            if (!window.firebaseDB) return false;
+            const { database, ref, remove } = window.firebaseDB;
+            try {
+                await remove(ref(database, 'animais/' + id));
+                atualizarStatusSync(true);
+                return true;
+            } catch (e) {
+                console.error('Erro ao remover animal:', e);
+                return false;
+            }
+        }
+        
+        async function salvarReprodutorOnline(reprodutor) {
+            return salvarChaveOnline('reprodutores/' + reprodutor.id, reprodutor);
+        }
+        
+        async function removerReprodutorOnline(id) {
+            if (!window.firebaseDB) return false;
+            const { database, ref, remove } = window.firebaseDB;
+            try {
+                await remove(ref(database, 'reprodutores/' + id));
+                atualizarStatusSync(true);
+                return true;
+            } catch (e) {
+                console.error('Erro ao remover reprodutor:', e);
+                return false;
+            }
+        }
+        
         async function sincronizarDados() {
             const btn = document.getElementById('syncStatus');
             const txt = document.getElementById('syncText');
@@ -1147,6 +1272,19 @@ Exemplos de uso:
         // FORMATAÇÃO DE NÚMERO COM MÍNIMO 2 DÍGITOS
         function formatarNumero(num) {
             return num.toString().padStart(2, '0');
+        }
+
+        // Toast de mensagem (era chamada no fluxo de vagas mas não existia)
+        function mostrarMensagem(texto, tipo = 'success') {
+            const antiga = document.getElementById('toastMensagem');
+            if (antiga) antiga.remove();
+            const cor = tipo === 'success' ? '#22c55e' : (tipo === 'error' ? '#ef4444' : '#3b82f6');
+            const div = document.createElement('div');
+            div.id = 'toastMensagem';
+            div.textContent = texto;
+            div.style.cssText = `position:fixed; bottom:2rem; left:50%; transform:translateX(-50%); background:${cor}; color:white; padding:0.9rem 1.6rem; border-radius:0.75rem; font-weight:600; z-index:10001; box-shadow:0 8px 20px rgba(0,0,0,0.25); animation:fadeIn 0.3s ease;`;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3500);
         }
 
         function ordenarAnimaisPorNumero(lista) {
@@ -1241,8 +1379,10 @@ Exemplos de uso:
             
             const numero = document.getElementById('numero').value.trim();
             
+            // Comparar números normalizados (evita cadastrar "5" quando já existe "05")
+            const numeroNormalizado = parseInt(numero);
             const numeroJaExiste = animais.some(a => 
-                a.numero === numero && a.id !== animalAtualId
+                parseInt(a.numero) === numeroNormalizado && a.id !== animalAtualId
             );
             
             if (numeroJaExiste) {
@@ -1277,10 +1417,36 @@ Exemplos de uso:
                 mae: maeValue,
                 semFerro: document.getElementById('semFerro').checked,
                 amamentando: document.getElementById('amamentando').checked,
+                peso: document.getElementById('peso').value.trim(),
+                gestante: document.getElementById('sexo').value === 'F' && document.getElementById('gestante').checked,
                 observacoes: document.getElementById('observacoes').value.trim(),
                 foto: fotoAtual || ''
             };
 
+            // MARCAÇÃO AUTOMÁTICA: Se bezerro está mamando, marcar mãe
+            let maeModificada = null;
+            if (animal.amamentando && animal.mae) {
+                console.log('🍼 Bezerro mamando! Buscando mãe:', animal.mae);
+                
+                // Buscar a mãe pelo nome ou número
+                const mae = animais.find(a => 
+                    (a.nome && a.nome.toLowerCase() === animal.mae.toLowerCase()) || 
+                    a.numero === animal.mae ||
+                    a.id === animal.mae
+                );
+                
+                if (mae && mae.sexo === 'F') {
+                    console.log('✅ Mãe encontrada:', mae.nome || mae.numero);
+                    mae.amamentando = true;
+                    maeModificada = mae;
+                    console.log('🍼 Mãe marcada como amamentando automaticamente');
+                } else if (mae && mae.sexo !== 'F') {
+                    console.log('⚠️ Animal encontrado não é fêmea');
+                } else {
+                    console.log('⚠️ Mãe não encontrada no sistema');
+                }
+            }
+            
             if (animalAtualId) {
                 const idx = animais.findIndex(a => a.id === animalAtualId);
                 if (idx !== -1) {
@@ -1290,7 +1456,8 @@ Exemplos de uso:
                 animais.push(animal);
             }
 
-            await salvarDadosOnline();
+            await salvarAnimalOnline(animal);
+            if (maeModificada) await salvarAnimalOnline(maeModificada);
             renderizarTabela();
             atualizarSelects();
             limparForm();
@@ -1313,49 +1480,273 @@ Exemplos de uso:
 
 
 
-        // FILTROS RÁPIDOS
-        let filtroRapidoAtivo = 'todos';
+
+        // FILTROS RÁPIDOS PARA GRÁFICOS - MÚLTIPLA SELEÇÃO
+        let filtrosGraficosAtivos = new Set(['todos']);
+        
+        function filtrarGraficos(tipo) {
+            // Se clicar em "Todos", desativa tudo e ativa só "Todos"
+            if (tipo === 'todos') {
+                filtrosGraficosAtivos.clear();
+                filtrosGraficosAtivos.add('todos');
+            } else {
+                // Remove "Todos" se existir
+                filtrosGraficosAtivos.delete('todos');
+                
+                // Adiciona ou remove o filtro clicado
+                if (filtrosGraficosAtivos.has(tipo)) {
+                    filtrosGraficosAtivos.delete(tipo);
+                    // Se ficou vazio, volta para "Todos"
+                    if (filtrosGraficosAtivos.size === 0) {
+                        filtrosGraficosAtivos.add('todos');
+                    }
+                } else {
+                    filtrosGraficosAtivos.add(tipo);
+                }
+            }
+            
+            // Atualizar botões visuais
+            ['btnTodosReports', 'btnFemeasReports', 'btnMachosReports', 'btnGestantesReports', 'btnBezerrosReports'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    const tipoBtn = id.replace('btn', '').replace('Reports', '').toLowerCase();
+                    if (filtrosGraficosAtivos.has(tipoBtn)) {
+                        btn.className = 'btn';
+                        btn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+                        btn.style.color = 'white';
+                        btn.style.border = 'none';
+                        btn.style.fontWeight = '600';
+                    } else {
+                        btn.className = 'btn btn-secondary';
+                        btn.style.background = '';
+                        btn.style.color = '';
+                        btn.style.fontWeight = '';
+                    }
+                }
+            });
+            
+            // Aplicar filtros combinados
+            let dadosFiltrados = animais;
+            
+            if (!filtrosGraficosAtivos.has('todos')) {
+                dadosFiltrados = animais.filter(a => {
+                    let passou = true;
+                    
+                    // Se tem filtro de sexo (fêmeas OU machos)
+                    if (filtrosGraficosAtivos.has('femeas') || filtrosGraficosAtivos.has('machos')) {
+                        passou = false;
+                        if (filtrosGraficosAtivos.has('femeas') && a.sexo === 'F') passou = true;
+                        if (filtrosGraficosAtivos.has('machos') && a.sexo === 'M') passou = true;
+                        if (!passou) return false;
+                    }
+                    
+                    // Filtros adicionais (todos devem passar - AND)
+                    if (filtrosGraficosAtivos.has('gestantes') && !a.gestante) return false;
+                    if (filtrosGraficosAtivos.has('bezerros') && !a.amamentando) return false;
+                    
+                    return true;
+                });
+            }
+            
+            // Atualizar estatísticas
+            document.getElementById('totalAnimais').textContent = dadosFiltrados.length;
+            document.getElementById('totalFemeas').textContent = dadosFiltrados.filter(a => a.sexo === 'F').length;
+            document.getElementById('totalMachos').textContent = dadosFiltrados.filter(a => a.sexo === 'M').length;
+            
+            // Atualizar gráficos com dados filtrados
+            atualizarGraficosComDados(dadosFiltrados);
+        }
+        
+
+        // FILTROS PARA RELATÓRIOS TEXTUAIS
+        let filtrosRelTextuaisAtivos = new Set(['todos']);
+        
+        function filtrarRelatoriosTextuais(tipo) {
+            // Se clicar em "Todos", desativa tudo
+            if (tipo === 'todos') {
+                filtrosRelTextuaisAtivos.clear();
+                filtrosRelTextuaisAtivos.add('todos');
+            } else {
+                filtrosRelTextuaisAtivos.delete('todos');
+                
+                if (filtrosRelTextuaisAtivos.has(tipo)) {
+                    filtrosRelTextuaisAtivos.delete(tipo);
+                    if (filtrosRelTextuaisAtivos.size === 0) {
+                        filtrosRelTextuaisAtivos.add('todos');
+                    }
+                } else {
+                    filtrosRelTextuaisAtivos.add(tipo);
+                }
+            }
+            
+            // Atualizar visual dos botões
+            ['btnTodosRelTextuais', 'btnFemeasRelTextuais', 'btnMachosRelTextuais', 'btnGestantesRelTextuais', 'btnBezerrosRelTextuais'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    const tipoBtn = id.replace('btn', '').replace('RelTextuais', '').toLowerCase();
+                    if (filtrosRelTextuaisAtivos.has(tipoBtn)) {
+                        btn.className = 'btn';
+                        btn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+                        btn.style.color = 'white';
+                        btn.style.border = 'none';
+                        btn.style.fontWeight = '600';
+                    } else {
+                        btn.className = 'btn btn-secondary';
+                        btn.style.background = '';
+                        btn.style.color = '';
+                    }
+                }
+            });
+            
+            console.log('🔍 Filtros ativos (relatórios):', Array.from(filtrosRelTextuaisAtivos).join(', '));
+        }
+        
+        // Função auxiliar para aplicar filtros nos relatórios
+        function aplicarFiltrosRelatorios(dados) {
+            if (filtrosRelTextuaisAtivos.has('todos')) {
+                return dados;
+            }
+            
+            return dados.filter(a => {
+                // Filtro de sexo (OU)
+                if (filtrosRelTextuaisAtivos.has('femeas') || filtrosRelTextuaisAtivos.has('machos')) {
+                    let passSexo = false;
+                    if (filtrosRelTextuaisAtivos.has('femeas') && a.sexo === 'F') passSexo = true;
+                    if (filtrosRelTextuaisAtivos.has('machos') && a.sexo === 'M') passSexo = true;
+                    if (!passSexo) return false;
+                }
+                
+                // Filtros adicionais (E)
+                if (filtrosRelTextuaisAtivos.has('gestantes') && !a.gestante) return false;
+                if (filtrosRelTextuaisAtivos.has('bezerros') && !a.amamentando) return false;
+                
+                return true;
+            });
+        }
+
+                function atualizarGraficosComDados(dados) {
+            // Atualizar gráfico de raças
+            const racaCounts = {};
+            dados.forEach(a => {
+                racaCounts[a.raca] = (racaCounts[a.raca] || 0) + 1;
+            });
+            
+            if (charts.raca) {
+                charts.raca.data.labels = Object.keys(racaCounts);
+                charts.raca.data.datasets[0].data = Object.values(racaCounts);
+                charts.raca.update();
+            }
+            
+            // Atualizar gráfico de locais
+            const localCounts = {};
+            dados.forEach(a => {
+                localCounts[a.local] = (localCounts[a.local] || 0) + 1;
+            });
+            
+            if (charts.local) {
+                charts.local.data.labels = Object.keys(localCounts);
+                charts.local.data.datasets[0].data = Object.values(localCounts);
+                charts.local.update();
+            }
+            
+            // Atualizar gráfico de idade
+            const idadeCounts = { '0-1 ano': 0, '1-2 anos': 0, '2-3 anos': 0, '3+ anos': 0 };
+            dados.forEach(a => {
+                const idade = calcularIdadeEmAnos(a.dataNascimento);
+                if (idade < 1) idadeCounts['0-1 ano']++;
+                else if (idade < 2) idadeCounts['1-2 anos']++;
+                else if (idade < 3) idadeCounts['2-3 anos']++;
+                else idadeCounts['3+ anos']++;
+            });
+            
+            if (charts.idade) {
+                charts.idade.data.datasets[0].data = Object.values(idadeCounts);
+                charts.idade.update();
+            }
+        }
+        
+        function calcularIdadeEmAnos(dataNascimento) {
+            if (!dataNascimento) return 0;
+            const hoje = new Date();
+            const nascimento = new Date(dataNascimento);
+            const diff = hoje - nascimento;
+            return diff / (1000 * 60 * 60 * 24 * 365);
+        }
+
+                // FILTROS RÁPIDOS - MÚLTIPLA SELEÇÃO
+        let filtrosAtivos = new Set(['todos']);
         
         function filtrarRapido(tipo) {
-            filtroRapidoAtivo = tipo;
+            // Se clicar em "Todos", desativa tudo e ativa só "Todos"
+            if (tipo === 'todos') {
+                filtrosAtivos.clear();
+                filtrosAtivos.add('todos');
+            } else {
+                // Remove "Todos" se existir
+                filtrosAtivos.delete('todos');
+                
+                // Adiciona ou remove o filtro clicado
+                if (filtrosAtivos.has(tipo)) {
+                    filtrosAtivos.delete(tipo);
+                    // Se ficou vazio, volta para "Todos"
+                    if (filtrosAtivos.size === 0) {
+                        filtrosAtivos.add('todos');
+                    }
+                } else {
+                    filtrosAtivos.add(tipo);
+                }
+            }
             
             // Atualizar botões visuais
             ['btnTodos', 'btnFemeas', 'btnMachos', 'btnGestantes', 'btnBezerros'].forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) {
-                    btn.className = 'btn btn-secondary';
-                    btn.style.background = '';
+                    const tipoBtn = id.replace('btn', '').toLowerCase();
+                    if (filtrosAtivos.has(tipoBtn)) {
+                        btn.className = 'btn';
+                        btn.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
+                        btn.style.color = 'white';
+                        btn.style.border = 'none';
+                        btn.style.fontWeight = '600';
+                    } else {
+                        btn.className = 'btn btn-secondary';
+                        btn.style.background = '';
+                        btn.style.color = '';
+                        btn.style.fontWeight = '';
+                    }
                 }
             });
             
-            const btnAtivo = document.getElementById('btn' + tipo.charAt(0).toUpperCase() + tipo.slice(1));
-            if (btnAtivo) {
-                btnAtivo.className = 'btn';
-                btnAtivo.style.background = 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)';
-            }
-            
-            // Filtrar dados
+            // Aplicar filtros combinados
             let dadosFiltrados = animais;
             
-            switch(tipo) {
-                case 'femeas':
-                    dadosFiltrados = animais.filter(a => a.sexo === 'F');
-                    break;
-                case 'machos':
-                    dadosFiltrados = animais.filter(a => a.sexo === 'M');
-                    break;
-                case 'gestantes':
-                    dadosFiltrados = animais.filter(a => a.gestante);
-                    break;
-                case 'bezerros':
-                    dadosFiltrados = animais.filter(a => a.amamentando);
-                    break;
-                case 'todos':
-                default:
-                    dadosFiltrados = animais;
+            if (!filtrosAtivos.has('todos')) {
+                dadosFiltrados = animais.filter(a => {
+                    let passou = true;
+                    
+                    // Se tem filtro de sexo (fêmeas OU machos)
+                    if (filtrosAtivos.has('femeas') || filtrosAtivos.has('machos')) {
+                        passou = false;
+                        if (filtrosAtivos.has('femeas') && a.sexo === 'F') passou = true;
+                        if (filtrosAtivos.has('machos') && a.sexo === 'M') passou = true;
+                        if (!passou) return false;
+                    }
+                    
+                    // Filtros adicionais (todos devem passar - AND)
+                    if (filtrosAtivos.has('gestantes') && !a.gestante) return false;
+                    if (filtrosAtivos.has('bezerros') && !a.amamentando) return false;
+                    
+                    return true;
+                });
             }
             
             renderizarTabela(dadosFiltrados);
+            
+            // Mostrar filtros ativos
+            if (filtrosAtivos.size > 1 || !filtrosAtivos.has('todos')) {
+                console.log('🔍 Filtros ativos:', Array.from(filtrosAtivos).join(', '));
+                console.log('📊 Resultados:', dadosFiltrados.length, 'animais');
+            }
         }
 
                 // DUPLICAR ANIMAL
@@ -1461,6 +1852,8 @@ Exemplos de uso:
             
             document.getElementById('semFerro').checked = a.semFerro || false;
             document.getElementById('amamentando').checked = a.amamentando || false;
+            document.getElementById('peso').value = a.peso || '';
+            document.getElementById('gestante').checked = a.gestante || false;
             document.getElementById('observacoes').value = a.observacoes || '';
             
             // Carregar foto
@@ -1568,11 +1961,16 @@ Exemplos de uso:
             // Limpar vagas que foram preenchidas
             vagasDisponiveis = vagasDisponiveis.filter(vaga => !numerosExistentes.includes(vaga));
             
+            // Limpar vagas acima do maior número cadastrado (fim da sequência não é vaga)
+            if (numerosExistentes.length > 0) {
+                const maiorAtual = Math.max(...numerosExistentes);
+                vagasDisponiveis = vagasDisponiveis.filter(vaga => vaga < maiorAtual);
+            } else {
+                vagasDisponiveis = [];
+            }
+            
             // Ordenar
             vagasDisponiveis.sort((a, b) => a - b);
-            
-            // Salvar
-            localStorage.setItem('vagasDisponiveis', JSON.stringify(vagasDisponiveis));
             
             console.log(`✅ Vagas sincronizadas! Total: ${vagasDisponiveis.length}`);
             console.log(`📋 Lista completa: ${vagasDisponiveis.join(', ')}`);
@@ -2378,7 +2776,7 @@ Exemplos de uso:
             if (!val) return alert('⚠️ Digite o nome!');
             if (racas.includes(val)) return alert('⚠️ Já existe!');
             racas.push(val);
-            await salvarDadosOnline();
+            await salvarChaveOnline('racas', racas);
             document.getElementById('novaRaca').value = '';
             renderListas();
             atualizarSelects();
@@ -2396,14 +2794,16 @@ Exemplos de uso:
                 return;
             }
             
+            const modificados = [];
             animais.forEach(a => {
-                if (a.raca === racaAntiga) a.raca = racaEditada;
+                if (a.raca === racaAntiga) { a.raca = racaEditada; modificados.push(a); }
             });
             
             const idx = racas.indexOf(racaAntiga);
             if (idx !== -1) racas[idx] = racaEditada;
             
-            await salvarDadosOnline();
+            await salvarChaveOnline('racas', racas);
+            for (const a of modificados) await salvarAnimalOnline(a);
             renderListas();
             atualizarSelects();
             renderizarTabela();
@@ -2419,7 +2819,7 @@ Exemplos de uso:
             if (!confirm(`🗑️ Excluir a raça "${raca}"?`)) return;
             
             racas = racas.filter(r => r !== raca);
-            await salvarDadosOnline();
+            await salvarChaveOnline('racas', racas);
             renderListas();
             atualizarSelects();
         }
@@ -2429,7 +2829,7 @@ Exemplos de uso:
             if (!val) return alert('⚠️ Digite o nome!');
             if (locais.includes(val)) return alert('⚠️ Já existe!');
             locais.push(val);
-            await salvarDadosOnline();
+            await salvarChaveOnline('locais', locais);
             document.getElementById('novoLocal').value = '';
             renderListas();
             atualizarSelects();
@@ -2447,14 +2847,16 @@ Exemplos de uso:
                 return;
             }
             
+            const modificados = [];
             animais.forEach(a => {
-                if (a.local === localAntigo) a.local = localEditado;
+                if (a.local === localAntigo) { a.local = localEditado; modificados.push(a); }
             });
             
             const idx = locais.indexOf(localAntigo);
             if (idx !== -1) locais[idx] = localEditado;
             
-            await salvarDadosOnline();
+            await salvarChaveOnline('locais', locais);
+            for (const a of modificados) await salvarAnimalOnline(a);
             renderListas();
             atualizarSelects();
             renderizarTabela();
@@ -2473,7 +2875,7 @@ Exemplos de uso:
             if (!confirm(`🗑️ Excluir o pasto "${local}"?`)) return;
             
             locais = locais.filter(l => l !== local);
-            await salvarDadosOnline();
+            await salvarChaveOnline('locais', locais);
             renderListas();
             atualizarSelects();
         }
@@ -2483,7 +2885,7 @@ Exemplos de uso:
             if (!val) return alert('⚠️ Digite o nome!');
             if (proprietarios.includes(val)) return alert('⚠️ Já existe!');
             proprietarios.push(val);
-            await salvarDadosOnline();
+            await salvarChaveOnline('proprietarios', proprietarios);
             document.getElementById('novoProprietario').value = '';
             renderListas();
             atualizarSelects();
@@ -2501,14 +2903,16 @@ Exemplos de uso:
                 return;
             }
             
+            const modificados = [];
             animais.forEach(a => {
-                if (a.proprietario === propAntigo) a.proprietario = propEditado;
+                if (a.proprietario === propAntigo) { a.proprietario = propEditado; modificados.push(a); }
             });
             
             const idx = proprietarios.indexOf(propAntigo);
             if (idx !== -1) proprietarios[idx] = propEditado;
             
-            await salvarDadosOnline();
+            await salvarChaveOnline('proprietarios', proprietarios);
+            for (const a of modificados) await salvarAnimalOnline(a);
             renderListas();
             atualizarSelects();
             renderizarTabela();
@@ -2524,7 +2928,7 @@ Exemplos de uso:
             if (!confirm(`🗑️ Excluir o proprietário "${prop}"?`)) return;
             
             proprietarios = proprietarios.filter(p => p !== prop);
-            await salvarDadosOnline();
+            await salvarChaveOnline('proprietarios', proprietarios);
             renderListas();
             atualizarSelects();
         }
@@ -2794,15 +3198,17 @@ Exemplos de uso:
         }
 
                 function gerarRelatorioCompleto() {
+            // Aplicar filtros
+            const animaisFiltrados = aplicarFiltrosRelatorios(animais);
             const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
-            const total = animais.length + reprodutoresAtivos.length;
+            const total = animaisFiltrados.length + reprodutoresAtivos.length;
             
             if (total === 0) return alert('⚠️ Sem dados!');
             
             document.getElementById('tituloRelatorio').innerText = '📋 Relatório Completo';
             document.getElementById('previewRelatorio').style.display = 'block';
             
-            const ordenados = ordenarAnimaisPorNumero(animais);
+            const ordenados = ordenarAnimaisPorNumero(animaisFiltrados);
             
             let html = '<table style="width:100%; background:white; border-radius:0.7rem;"><thead><tr style="background:#f1f5f9;"><th style="padding:1rem;">Nº</th><th style="padding:1rem;">Nome</th><th style="padding:1rem;">Sexo</th><th style="padding:1rem;">Raça</th><th style="padding:1rem;">Local</th><th style="padding:1rem;">Tipo</th></tr></thead><tbody>';
             
@@ -2815,7 +3221,7 @@ Exemplos de uso:
             });
             
             html += '</tbody></table>';
-            html += `<div style="margin-top:1rem; padding:1rem; background:#f1f5f9; border-radius:0.5rem;"><strong>Total:</strong> ${total} (${animais.length} animais + ${reprodutoresAtivos.length} reprodutores ativos)</div>`;
+            html += `<div style="margin-top:1rem; padding:1rem; background:#f1f5f9; border-radius:0.5rem;"><strong>Total:</strong> ${total} (${animaisFiltrados.length} animais + ${reprodutoresAtivos.length} reprodutores ativos)</div>`;
             
             document.getElementById('conteudoRelatorio').innerHTML = html;
         }
@@ -3551,7 +3957,7 @@ Exemplos de uso:
                 reprodutores.push(reprodutor);
             }
 
-            await salvarDadosOnline();
+            await salvarReprodutorOnline(reprodutor);
             renderizarTabelaReprodutores();
             atualizarSelects();
             limparFormReprodutor();
@@ -3665,8 +4071,9 @@ Exemplos de uso:
                 return;
             }
             if (confirm("🗑️ Excluir este reprodutor?")) {
+                const idRemovido = reprodutorAtualId;
                 reprodutores = reprodutores.filter(r => r.id !== reprodutorAtualId);
-                await salvarDadosOnline();
+                await removerReprodutorOnline(idRemovido);
                 renderizarTabelaReprodutores();
                 atualizarSelects();
                 limparFormReprodutor();
@@ -4159,8 +4566,8 @@ Exemplos de uso:
             document.getElementById('ultimaModificacao').textContent = agora;
             document.getElementById('statusNotas').style.display = 'block';
             
-            // Salvar no Firebase
-            salvarDadosOnline();
+            // Salvar no Firebase (apenas as notas)
+            salvarChaveOnline('notas', notas || '');
             
             // Esconder mensagem após 3 segundos
             setTimeout(() => {
@@ -4232,26 +4639,25 @@ Exemplos de uso:
             
             if (!confirm(`🗑️ Excluir ${nomeExibicao} (#${numero})?`)) return;
             
-            // Adicionar à lista de vagas
-            console.log('➕ Adicionando à lista de vagas...');
-            if (!isNaN(numero) && !vagasDisponiveis.includes(numero)) {
-                vagasDisponiveis.push(numero);
-                vagasDisponiveis.sort((a, b) => a - b);
-                // SALVAR IMEDIATAMENTE no localStorage
-                localStorage.setItem('vagasDisponiveis', JSON.stringify(vagasDisponiveis));
-                console.log('✅ Vaga adicionada! Total:', vagasDisponiveis.length, 'Lista:', vagasDisponiveis);
-                console.log('💾 Salvo no localStorage:', localStorage.getItem('vagasDisponiveis'));
-            } else {
-                console.log('⚠️ Não adicionou. isNaN:', isNaN(numero), 'includes:', vagasDisponiveis.includes(numero));
-            }
-            
+            const idRemovido = animal.id;
             animais = animais.filter(a => a.id !== animalAtualId);
-            await salvarDadosOnline();
+            
+            // Vagas 100% derivadas do escaneamento: buracos NO MEIO da sequência
+            // viram vaga; o fim da sequência apenas encolhe (número do último
+            // excluído é reutilizado naturalmente pelo "Gerar Novo").
+            sincronizarVagas();
+            const virouVaga = !isNaN(numero) && vagasDisponiveis.includes(numero);
+            
+            await removerAnimalOnline(idRemovido);
             renderizarTabela();
             atualizarSelects();
             limparForm();
             
-            alert(`✅ Excluído!\n🔢 Vaga ${numero} disponível\n📋 Total vagas: ${vagasDisponiveis.length}`);
+            if (virouVaga) {
+                alert(`✅ Excluído!\n🔢 Vaga ${numero} disponível para reutilização\n📋 Total vagas: ${vagasDisponiveis.length}`);
+            } else {
+                alert(`✅ Excluído!\n🔢 O número ${numero} era o último da sequência — o próximo cadastro continuará a partir dele.`);
+            }
         };
         
         // Funções auxiliares
@@ -4264,63 +4670,28 @@ Exemplos de uso:
             alert(`📋 VAGAS DISPONÍVEIS (${vagasDisponiveis.length})\n\n${vagasDisponiveis.join(', ')}\n\n💡 Use o botão 🔢 ao cadastrar novo animal`);
         }
         
-        function limparVagas() {
-            if (vagasDisponiveis.length === 0) return alert('✅ Nenhuma vaga!');
-            if (!confirm(`Limpar ${vagasDisponiveis.length} vaga(s)?\n\nIsso removerá os números da lista de reutilização.`)) return;
-            vagasDisponiveis = [];
-            salvarDadosOnline();
-            alert('✅ Vagas limpas com sucesso!');
-        }
+        // Vagas são 100% derivadas do escaneamento dos animais cadastrados —
+        // não há mais persistência em localStorage (elimina vagas fantasmas
+        // e inconsistência entre dispositivos).
+        localStorage.removeItem('vagasDisponiveis'); // limpeza de versões antigas
         
-        
-        // Patch para salvar/carregar vagas
-        const salvarDadosOnlineOriginal = salvarDadosOnline;
-        salvarDadosOnline = async function() {
-            // Salvar vagas no localStorage
-            localStorage.setItem('vagasDisponiveis', JSON.stringify(vagasDisponiveis));
-            // Chamar função original
-            return await salvarDadosOnlineOriginal();
-        };
-        
-        // Interceptar carregamento
         window.addEventListener('load', function() {
-            const vagasSalvas = localStorage.getItem('vagasDisponiveis');
-            console.log('🔍 Carregando vagas do localStorage...');
-            console.log('📦 localStorage contém:', vagasSalvas);
-            if (vagasSalvas) {
-                try {
-                    vagasDisponiveis = JSON.parse(vagasSalvas);
-                    console.log(`✅ ${vagasDisponiveis.length} vaga(s) carregada(s):`, vagasDisponiveis);
-                } catch (e) {
-                    console.error('❌ Erro ao parsear vagas:', e);
-                    vagasDisponiveis = [];
-                }
-            } else {
-                console.log('⚠️ Nenhuma vaga salva no localStorage');
-            }
-            
             // ESCANEAR VAGAS AUTOMATICAMENTE ao carregar
             setTimeout(() => {
                 if (animais && animais.length > 0) {
-                    console.log('🔍 Iniciando escaneamento automático de vagas...');
+                    console.log('🔍 Escaneamento automático de vagas...');
                     sincronizarVagas();
+                    renderizarTabela();
                 }
             }, 1000);
         });
         
-        // Interceptar salvarAnimal para remover vaga quando usada
+        // Interceptar salvarAnimal para re-escanear vagas após salvar
         const salvarAnimalOriginal = salvarAnimal;
         salvarAnimal = async function(event) {
-            const numeroUsado = parseInt(document.getElementById('numero').value);
             const resultado = await salvarAnimalOriginal(event);
-            
-            // Remover da lista de vagas se foi usada
-            if (vagasDisponiveis.includes(numeroUsado)) {
-                vagasDisponiveis = vagasDisponiveis.filter(v => v !== numeroUsado);
-                console.log(`🔢 Vaga ${numeroUsado} preenchida e removida`);
-                await salvarDadosOnline();
-            }
-            
+            sincronizarVagas();
+            renderizarTabela();
             return resultado;
         };
 
@@ -4362,7 +4733,7 @@ Exemplos de uso:
                     html += `
                         <tr onclick="selecionarAnimal('${animal.id}')" style="cursor: pointer;">
                             <td><strong>${animal.numero}</strong></td>
-                            <td>${animal.nome || '-'}</td>
+                            <td>${animal.nome || '-'} ${animal.amamentando ? '🍼' : ''}</td>
                             <td>${sexoIcon} ${animal.sexo}${gestanteIcon}</td>
                             <td>${animal.raca}</td>
                             <td>${animal.local}</td>
@@ -4501,7 +4872,7 @@ Exemplos de uso:
                         html += `<tr onclick="selecionarAnimal('${animal.id}')" style="cursor: pointer; ${corLinha}">
                                 <td>${fotoHTML}</td>
                                 <td><strong>${animal.numero}</strong></td>
-                                <td>${animal.nome || '-'}</td>
+                                <td>${animal.nome || '-'} ${animal.amamentando ? '🍼' : ''}</td>
                                 <td>${sexoBadge}</td>
                                 <td>${animal.raca}</td>
                                 <td>${animal.local}</td>
