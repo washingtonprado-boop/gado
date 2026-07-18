@@ -2592,7 +2592,9 @@ Exemplos de uso:
             const tbody = document.getElementById('tabelaAnimais');
             
             const animaisOrdenados = ordenarAnimaisPorNumero(animaisFiltrados);
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            // Esta função só roda com filtros/pesquisa ativos:
+            // reprodutores NÃO entram em resultados filtrados.
+            const reprodutoresAtivos = [];
             
             let proximoNumero = 1;
             if (animais.length > 0) {
@@ -4823,7 +4825,12 @@ Exemplos de uso:
             if (!tbody) return;
             
             const animaisOrdenados = ordenarAnimaisPorNumero(data);
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            
+            // Reprodutores e vagas só aparecem na VISÃO COMPLETA.
+            // Com qualquer filtro rápido ativo (fêmeas, machos, mamando, gestantes),
+            // a tabela mostra apenas os animais que passaram no filtro.
+            const visaoCompleta = (data === animais);
+            const reprodutoresAtivos = visaoCompleta ? reprodutores.filter(r => r.status === 'Ativo') : [];
             
             // Calcular próximo número para reprodutores
             let proximoNumero = 1;
@@ -4834,7 +4841,7 @@ Exemplos de uso:
             
             // Criar lista de números dos animais + vagas
             const numerosAnimais = animaisOrdenados.map(a => parseInt(a.numero)).filter(n => !isNaN(n));
-            const todosNumerosAnimais = [...numerosAnimais, ...vagasDisponiveis];
+            const todosNumerosAnimais = visaoCompleta ? [...numerosAnimais, ...vagasDisponiveis] : [...numerosAnimais];
             const numerosUnicosAnimais = [...new Set(todosNumerosAnimais)].sort((a, b) => a - b);
             
             // Criar registros de reprodutores com numeração após os animais
