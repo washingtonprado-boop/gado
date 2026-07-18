@@ -12,7 +12,7 @@
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getDatabase, ref, set, get, remove } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-        import { getAuth, signInWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         
         const firebaseConfig = {
             apiKey: "AIzaSyC7SscZZ2uhic2JXaQYfmnvh5mRgwpk0y8",
@@ -29,7 +29,7 @@
         const database = getDatabase(app);
         
         window.firebaseDB = { database, ref, set, get, remove };
-        window.firebaseAuth = { auth: getAuth(app), signInWithEmailAndPassword, signOut };
+        window.firebaseAuth = { auth: getAuth(app), signInWithEmailAndPassword, signOut, onAuthStateChanged };
     </script>
     
     <style>
@@ -1010,11 +1010,14 @@ Exemplos de uso:
         // no console (Authentication > Email/Senha > criar usuário) e aplicar as
         // regras de segurança no Realtime Database. Com true, o campo "Usuário"
         // passa a ser o E-MAIL cadastrado no Firebase.
-        const USAR_FIREBASE_AUTH = false;
+        const USAR_FIREBASE_AUTH = true;
         const USUARIO_MASTER = 'master';
         const SENHA_MASTER = '05048989';
         
         function verificarLogin() {
+            // Com Firebase Auth ativo, o atalho do sessionStorage NÃO vale:
+            // a sessão real é a do Firebase (verificada no window.onload).
+            if (USAR_FIREBASE_AUTH) return false;
             const logado = sessionStorage.getItem('sisgadoLogado');
             if (logado === 'true') {
                 document.getElementById('loginScreen').style.display = 'none';
@@ -1022,6 +1025,16 @@ Exemplos de uso:
                 return true;
             }
             return false;
+        }
+        
+        async function entrarNoSistema() {
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            await carregarDados();
+            renderizarTabela();
+            atualizarSelects();
+            renderListas();
         }
         
         async function realizarLogin(event) {
@@ -1048,17 +1061,7 @@ Exemplos de uso:
             
             if (autenticado) {
                 sessionStorage.setItem('sisgadoLogado', 'true');
-                document.getElementById('loginError').style.display = 'none';
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('appContainer').style.display = 'block';
-                
-                // Carregar dados após login
-                setTimeout(async () => {
-                    await carregarDados();
-                    renderizarTabela();
-                    atualizarSelects();
-                    renderListas();
-                }, 100);
+                await entrarNoSistema();
             } else {
                 document.getElementById('loginError').style.display = 'block';
                 document.getElementById('loginSenha').value = '';
@@ -1093,7 +1096,24 @@ Exemplos de uso:
         let fotoAtualReprodutor = null;
 
         window.onload = () => {
-            // Verificar se está logado
+            if (USAR_FIREBASE_AUTH) {
+                // A sessão do Firebase persiste entre visitas: se já autenticado,
+                // entra direto; senão, mostra a tela de login.
+                const { auth, onAuthStateChanged } = window.firebaseAuth;
+                let jaProcessado = false;
+                onAuthStateChanged(auth, (user) => {
+                    if (jaProcessado) return;
+                    jaProcessado = true;
+                    if (user) {
+                        console.log('🔐 Sessão Firebase ativa:', user.email);
+                        entrarNoSistema();
+                    } else {
+                        document.getElementById('loginUsuario').focus();
+                    }
+                });
+                return;
+            }
+            // Modo login simples (legado)
             if (!verificarLogin()) {
                 document.getElementById('loginUsuario').focus();
             } else {
