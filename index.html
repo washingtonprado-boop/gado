@@ -430,9 +430,29 @@
                                     <option value="nao">Não</option>
                                 </select>
                             </div>
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">📅 ANO</label>
+                                <select id="filtroAno" onchange="aplicarFiltrosAnimais()" style="width: 100%; padding: 0.6rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.9rem;">
+                                    <option value="">Todos</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">🐂 PAI</label>
+                                <select id="filtroPai" onchange="aplicarFiltrosAnimais()" style="width: 100%; padding: 0.6rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.9rem;">
+                                    <option value="">Todos</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">🐄 MÃE</label>
+                                <select id="filtroMae" onchange="aplicarFiltrosAnimais()" style="width: 100%; padding: 0.6rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.9rem;">
+                                    <option value="">Todas</option>
+                                </select>
+                            </div>
                             <div style="display: flex; align-items: flex-end;">
                                 <button onclick="limparFiltrosAnimais()" class="btn btn-secondary" style="width: 100%; padding: 0.6rem; font-size: 0.85rem;">🔄 Limpar Filtros</button>
                             </div>
+                        </div>
+                        <div id="filhasMaeInfo" style="display:none; margin-bottom: 1rem; padding: 0.8rem 1.2rem; background: linear-gradient(135deg, #fdf4ff 0%, #fae8ff 100%); border: 2px solid #e9d5ff; border-radius: 0.7rem; font-size: 0.9rem; color: #6b21a8; font-weight: 600;">
                         </div>
                         
                         <div style="overflow-x: auto;">
@@ -2780,10 +2800,13 @@ Exemplos de uso:
             const filtroSexo = document.getElementById('filtroSexo').value;
             const filtroMamando = document.getElementById('filtroMamando').value;
             const filtroSemFerro = document.getElementById('filtroSemFerro').value;
+            const filtroAno = document.getElementById('filtroAno').value;
+            const filtroPai = document.getElementById('filtroPai').value;
+            const filtroMae = document.getElementById('filtroMae').value;
             const campoPesquisa = document.getElementById('campoPesquisa').value;
             
             // Verificar se há algum filtro ativo
-            const temFiltros = filtroProprietario || filtroRaca || filtroSexo || filtroMamando || filtroSemFerro || campoPesquisa;
+            const temFiltros = filtroProprietario || filtroRaca || filtroSexo || filtroMamando || filtroSemFerro || filtroAno || filtroPai || filtroMae || campoPesquisa;
             
             let filtrados = [...animais]; // Criar cópia do array
             
@@ -2814,6 +2837,35 @@ Exemplos de uso:
                 filtrados = filtrados.filter(a => a.semFerro === true);
             } else if (filtroSemFerro === 'nao') {
                 filtrados = filtrados.filter(a => !a.semFerro);
+            }
+            
+            // Aplicar filtro de ano (ano de nascimento)
+            if (filtroAno) {
+                filtrados = filtrados.filter(a => a.dataNascimento && a.dataNascimento.substring(0, 4) === filtroAno);
+            }
+            
+            // Aplicar filtro de pai
+            if (filtroPai) {
+                filtrados = filtrados.filter(a => a.pai === filtroPai);
+            }
+            
+            // Aplicar filtro de mãe (mostra as filhas/crias da mãe selecionada)
+            if (filtroMae) {
+                filtrados = filtrados.filter(a => a.mae === filtroMae);
+            }
+            
+            // Mensagem informativa quando filtro de mãe está ativo
+            const filhasMaeInfo = document.getElementById('filhasMaeInfo');
+            if (filhasMaeInfo) {
+                if (filtroMae) {
+                    const maeAnimal = animais.find(a => a.id === filtroMae);
+                    const maeLabel = maeAnimal ? `${maeAnimal.numero} - ${maeAnimal.nome || 'Sem nome'}` : filtroMae;
+                    const qtdFilhas = filtrados.length;
+                    filhasMaeInfo.textContent = `👩‍👧 Exibindo ${qtdFilhas} filho(a)/cria(s) da mãe ${maeLabel}`;
+                    filhasMaeInfo.style.display = 'block';
+                } else {
+                    filhasMaeInfo.style.display = 'none';
+                }
             }
             
             // Aplicar pesquisa de texto se houver
@@ -2938,7 +2990,12 @@ Exemplos de uso:
             document.getElementById('filtroSexo').value = '';
             document.getElementById('filtroMamando').value = '';
             document.getElementById('filtroSemFerro').value = '';
+            document.getElementById('filtroAno').value = '';
+            document.getElementById('filtroPai').value = '';
+            document.getElementById('filtroMae').value = '';
             document.getElementById('campoPesquisa').value = '';
+            const filhasMaeInfo = document.getElementById('filhasMaeInfo');
+            if (filhasMaeInfo) filhasMaeInfo.style.display = 'none';
             itensPorPagina = 10; // Restaurar paginação padrão
             paginaAtual = 1;
             renderizarTabela(animais);
@@ -2961,6 +3018,70 @@ Exemplos de uso:
                 filtroRaca.innerHTML = '<option value="">Todas</option>' + 
                     racas.map(r => `<option value="${r}">${r}</option>`).join('');
                 filtroRaca.value = valorAtual;
+            }
+            
+            // Atualizar filtro de ano (anos de nascimento presentes no rebanho)
+            const filtroAno = document.getElementById('filtroAno');
+            if (filtroAno) {
+                const valorAtual = filtroAno.value;
+                const anosSet = new Set();
+                animais.forEach(a => {
+                    if (a.dataNascimento) anosSet.add(a.dataNascimento.substring(0, 4));
+                });
+                const anosOrdenados = Array.from(anosSet).sort((a, b) => b.localeCompare(a));
+                filtroAno.innerHTML = '<option value="">Todos</option>' +
+                    anosOrdenados.map(ano => `<option value="${ano}">${ano}</option>`).join('');
+                filtroAno.value = valorAtual;
+            }
+            
+            // Função auxiliar para rotular o valor de pai/mãe (reprodutor, animal do rebanho ou texto manual)
+            function rotularGenitor(valor, tipo) {
+                if (!valor || valor === 'desconhecido') return null;
+                if (tipo === 'pai' && valor.startsWith('reprodutor_')) {
+                    const repId = valor.replace('reprodutor_', '');
+                    const rep = reprodutores.find(r => r.id === repId);
+                    return rep ? `🐂 ${rep.registro} - ${rep.nome}` : null;
+                }
+                const animalRef = animais.find(a => a.id === valor);
+                if (animalRef) {
+                    return `${animalRef.numero} - ${animalRef.nome || 'Sem nome'}`;
+                }
+                // Entrada manual (texto livre)
+                return valor;
+            }
+            
+            // Atualizar filtro de pai (a partir dos pais já cadastrados nos animais)
+            const filtroPai = document.getElementById('filtroPai');
+            if (filtroPai) {
+                const valorAtual = filtroPai.value;
+                const paisMap = new Map();
+                animais.forEach(a => {
+                    if (a.pai && a.pai !== 'desconhecido' && !paisMap.has(a.pai)) {
+                        const rotulo = rotularGenitor(a.pai, 'pai');
+                        if (rotulo) paisMap.set(a.pai, rotulo);
+                    }
+                });
+                const paisOrdenados = Array.from(paisMap.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+                filtroPai.innerHTML = '<option value="">Todos</option>' +
+                    paisOrdenados.map(([valor, rotulo]) => `<option value="${valor}">${rotulo}</option>`).join('');
+                filtroPai.value = valorAtual;
+            }
+            
+            // Atualizar filtro de mãe (a partir das mães já cadastradas nos animais)
+            const filtroMae = document.getElementById('filtroMae');
+            if (filtroMae) {
+                const valorAtual = filtroMae.value;
+                const maesMap = new Map();
+                animais.forEach(a => {
+                    if (a.mae && a.mae !== 'desconhecido' && !maesMap.has(a.mae)) {
+                        const rotulo = rotularGenitor(a.mae, 'mae');
+                        if (rotulo) maesMap.set(a.mae, rotulo);
+                    }
+                });
+                const maesOrdenadas = Array.from(maesMap.entries()).sort((a, b) => a[1].localeCompare(b[1]));
+                filtroMae.innerHTML = '<option value="">Todas</option>' +
+                    maesOrdenadas.map(([valor, rotulo]) => `<option value="${valor}">${rotulo}</option>`).join('');
+                filtroMae.value = valorAtual;
             }
         }
 
