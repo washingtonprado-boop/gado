@@ -2477,7 +2477,6 @@ Exemplos de uso:
             if (!container) return;
             
             // Calcular estatísticas
-            const total = animais.length;
             const femeas = animais.filter(a => a.sexo === 'F').length;
             const machos = animais.filter(a => a.sexo === 'M').length;
             const gestantes = animais.filter(a => a.gestante).length;
@@ -2490,6 +2489,9 @@ Exemplos de uso:
             
             // Reprodutores ativos
             const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo').length;
+            
+            // Total geral = animais do rebanho + reprodutores ativos
+            const total = animais.length + reprodutoresAtivos;
             
             // Gerar HTML dos cards
             let html = `
@@ -2508,7 +2510,7 @@ Exemplos de uso:
                         ${total}
                     </div>
                     <div style="font-size: 0.75rem; opacity: 0.8; margin-top: 0.5rem;">
-                        animais cadastrados
+                        ${reprodutoresAtivos > 0 ? `${animais.length} animais + ${reprodutoresAtivos} reprodutor(es)` : 'animais cadastrados'}
                     </div>
                 </div>
                 
@@ -3443,51 +3445,40 @@ Exemplos de uso:
                 }
             });
 
-            // Gráfico por Idade
+            // Gráfico por Idade (ano a ano - ano de nascimento)
             if (charts.idadeChart) charts.idadeChart.destroy();
             
-            const idadeCounts = {
-                'Até 6 meses': 0,
-                '6m - 1 ano': 0,
-                '1 - 2 anos': 0,
-                '2 - 4 anos': 0,
-                'Mais de 4 anos': 0,
-                'Sem data': 0
-            };
+            const idadeCounts = {};
             
             [...animais, ...reprodutoresAtivos].forEach(item => {
                 if (!item.dataNascimento) {
-                    idadeCounts['Sem data']++;
+                    idadeCounts['Sem data'] = (idadeCounts['Sem data'] || 0) + 1;
                     return;
                 }
                 
-                const hoje = new Date();
-                const nasc = new Date(item.dataNascimento);
-                const diffDays = Math.ceil((hoje - nasc) / (1000 * 60 * 60 * 24));
-                const diffMonths = diffDays / 30;
-                const diffYears = diffDays / 365;
-                
-                if (diffMonths <= 6) {
-                    idadeCounts['Até 6 meses']++;
-                } else if (diffYears < 1) {
-                    idadeCounts['6m - 1 ano']++;
-                } else if (diffYears < 2) {
-                    idadeCounts['1 - 2 anos']++;
-                } else if (diffYears < 4) {
-                    idadeCounts['2 - 4 anos']++;
-                } else {
-                    idadeCounts['Mais de 4 anos']++;
-                }
+                const ano = item.dataNascimento.substring(0, 4);
+                idadeCounts[ano] = (idadeCounts[ano] || 0) + 1;
             });
+            
+            // Ordenar anos cronologicamente, deixando "Sem data" por último
+            const anosOrdenados = Object.keys(idadeCounts)
+                .filter(k => k !== 'Sem data')
+                .sort((a, b) => a.localeCompare(b));
+            const idadeLabelsOrdenados = [...anosOrdenados, ...(idadeCounts['Sem data'] ? ['Sem data'] : [])];
+            const idadeValoresOrdenados = idadeLabelsOrdenados.map(k => idadeCounts[k]);
+            
+            // Gerar uma cor para cada ano
+            const paletaIdade = ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#ef4444', '#10b981', '#f97316', '#6366f1'];
+            const coresIdade = idadeLabelsOrdenados.map((label, i) => label === 'Sem data' ? '#94a3b8' : paletaIdade[i % paletaIdade.length]);
             
             charts.idadeChart = new Chart(document.getElementById('idadeChart'), {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(idadeCounts),
+                    labels: idadeLabelsOrdenados,
                     datasets: [{
                         label: 'Quantidade',
-                        data: Object.values(idadeCounts),
-                        backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899', '#8b5cf6', '#94a3b8'],
+                        data: idadeValoresOrdenados,
+                        backgroundColor: coresIdade,
                         borderRadius: 8
                     }]
                 },
@@ -3495,7 +3486,7 @@ Exemplos de uso:
                     plugins: {
                         title: {
                             display: true,
-                            text: 'Distribuição por Idade',
+                            text: 'Distribuição por Ano de Nascimento',
                             font: { size: 16 }
                         },
                         legend: { display: false }
