@@ -1238,6 +1238,11 @@ Exemplos de uso:
             }
         };
 
+        // Só permite gravação do banco inteiro depois que animais e reprodutores
+        // foram lidos com sucesso (evita apagar a nuvem com uma lista local vazia).
+        let leituraAnimaisOk = false;
+        let leituraReprodutoresOk = false;
+
         async function carregarDados() {
             if (!window.firebaseDB) return;
             const { database, ref, get } = window.firebaseDB;
@@ -1248,6 +1253,7 @@ Exemplos de uso:
                     animais = Object.values(snapshot.val());
                     atualizarStatusSync(true);
                 }
+                leituraAnimaisOk = true;
             } catch (e) {
                 console.log('Erro ao carregar animais:', e);
             }
@@ -1270,6 +1276,7 @@ Exemplos de uso:
             try {
                 const reprodSnap = await get(ref(database, 'reprodutores'));
                 if (reprodSnap.exists()) reprodutores = Object.values(reprodSnap.val());
+                leituraReprodutoresOk = true;
             } catch (e) {}
 
             try {
@@ -1288,6 +1295,10 @@ Exemplos de uso:
 
         async function salvarDadosOnline() {
             if (!window.firebaseDB) return false;
+            if (!leituraAnimaisOk || !leituraReprodutoresOk) {
+                console.error('⛔ Gravação completa bloqueada: os dados da nuvem não foram carregados com sucesso nesta sessão.');
+                return false;
+            }
             const { database, ref, set } = window.firebaseDB;
             
             try {
@@ -1570,6 +1581,12 @@ Exemplos de uso:
             }
         }
 
+        // Reprodutores ativos (status tolerante a maiúsculas/espaços em registros antigos).
+        // Reprodutor não possui campo "sexo": todo reprodutor ativo é contado como MACHO.
+        function getReprodutoresAtivos() {
+            return reprodutores.filter(r => r && String(r.status || '').trim().toLowerCase() === 'ativo');
+        }
+
         function ordenarAnimaisPorNumero(lista) {
             return [...lista].sort((a, b) => {
                 const numA = parseInt(a.numero) || 0;
@@ -1832,9 +1849,14 @@ Exemplos de uso:
             }
             
             // Atualizar estatísticas
-            document.getElementById('totalAnimais').textContent = dadosFiltrados.length;
+            // CORREÇÃO: reprodutores ativos (machos) entram quando o filtro é "Todos" ou
+            // inclui Machos sem restrições de gestante/bezerro — igual ao Dashboard sem filtro.
+            const incluiReprodutores = filtrosGraficosAtivos.has('todos') ||
+                (filtrosGraficosAtivos.has('machos') && !filtrosGraficosAtivos.has('gestantes') && !filtrosGraficosAtivos.has('bezerros'));
+            const qtdReprodutores = incluiReprodutores ? getReprodutoresAtivos().length : 0;
+            document.getElementById('totalAnimais').textContent = dadosFiltrados.length + qtdReprodutores;
             document.getElementById('totalFemeas').textContent = dadosFiltrados.filter(a => a.sexo === 'F').length;
-            document.getElementById('totalMachos').textContent = dadosFiltrados.filter(a => a.sexo === 'M').length;
+            document.getElementById('totalMachos').textContent = dadosFiltrados.filter(a => a.sexo === 'M').length + qtdReprodutores;
             
             // Atualizar gráficos com dados filtrados
             atualizarGraficosComDados(dadosFiltrados);
@@ -1908,44 +1930,44 @@ Exemplos de uso:
         }
 
                 function atualizarGraficosComDados(dados) {
-            // Atualizar gráfico de raças
+            // Usa as mesmas métricas dos gráficos criados em atualizarDashboard():
+            // raça, proprietário e ano de nascimento (chaves reais: racaChart/localChart/idadeChart).
+            const atualizar = (chart, contagem, ordenar) => {
+                if (!chart) return;
+                const labels = ordenar ? ordenar(Object.keys(contagem)) : Object.keys(contagem);
+                chart.data.labels = labels;
+                chart.data.datasets[0].data = labels.map(l => contagem[l]);
+                chart.update();
+            };
+            
             const racaCounts = {};
+            const propCounts = {};
+            const anoCounts = {};
             dados.forEach(a => {
                 racaCounts[a.raca] = (racaCounts[a.raca] || 0) + 1;
+                propCounts[a.proprietario] = (propCounts[a.proprietario] || 0) + 1;
+                const ano = a.dataNascimento ? a.dataNascimento.substring(0, 4) : 'Sem data';
+                anoCounts[ano] = (anoCounts[ano] || 0) + 1;
             });
             
-            if (charts.raca) {
-                charts.raca.data.labels = Object.keys(racaCounts);
-                charts.raca.data.datasets[0].data = Object.values(racaCounts);
-                charts.raca.update();
+            // Reprodutores ativos (machos) entram nos mesmos casos em que entram nos totais
+            const incluiReprodutores = filtrosGraficosAtivos.has('todos') ||
+                (filtrosGraficosAtivos.has('machos') && !filtrosGraficosAtivos.has('gestantes') && !filtrosGraficosAtivos.has('bezerros'));
+            if (incluiReprodutores) {
+                getReprodutoresAtivos().forEach(r => {
+                    racaCounts[r.raca] = (racaCounts[r.raca] || 0) + 1;
+                    propCounts[r.proprietario] = (propCounts[r.proprietario] || 0) + 1;
+                    const ano = r.dataNascimento ? r.dataNascimento.substring(0, 4) : 'Sem data';
+                    anoCounts[ano] = (anoCounts[ano] || 0) + 1;
+                });
             }
             
-            // Atualizar gráfico de locais
-            const localCounts = {};
-            dados.forEach(a => {
-                localCounts[a.local] = (localCounts[a.local] || 0) + 1;
-            });
-            
-            if (charts.local) {
-                charts.local.data.labels = Object.keys(localCounts);
-                charts.local.data.datasets[0].data = Object.values(localCounts);
-                charts.local.update();
-            }
-            
-            // Atualizar gráfico de idade
-            const idadeCounts = { '0-1 ano': 0, '1-2 anos': 0, '2-3 anos': 0, '3+ anos': 0 };
-            dados.forEach(a => {
-                const idade = calcularIdadeEmAnos(a.dataNascimento);
-                if (idade < 1) idadeCounts['0-1 ano']++;
-                else if (idade < 2) idadeCounts['1-2 anos']++;
-                else if (idade < 3) idadeCounts['2-3 anos']++;
-                else idadeCounts['3+ anos']++;
-            });
-            
-            if (charts.idade) {
-                charts.idade.data.datasets[0].data = Object.values(idadeCounts);
-                charts.idade.update();
-            }
+            atualizar(charts.racaChart, racaCounts);
+            atualizar(charts.localChart, propCounts);
+            atualizar(charts.idadeChart, anoCounts, chaves => [
+                ...chaves.filter(k => k !== 'Sem data').sort((a, b) => a.localeCompare(b)),
+                ...chaves.filter(k => k === 'Sem data')
+            ]);
         }
         
         function calcularIdadeEmAnos(dataNascimento) {
@@ -2478,17 +2500,17 @@ Exemplos de uso:
             
             // Calcular estatísticas
             const femeas = animais.filter(a => a.sexo === 'F').length;
-            const machos = animais.filter(a => a.sexo === 'M').length;
+            // Reprodutores ativos
+            const reprodutoresAtivos = getReprodutoresAtivos().length;
+            // CORREÇÃO: reprodutores ativos também são machos (antes ficavam fora deste cartão)
+            const machos = animais.filter(a => a.sexo === 'M').length + reprodutoresAtivos;
             const gestantes = animais.filter(a => a.gestante).length;
-            
+
             // Por local
             const porLocal = {};
             animais.forEach(a => {
                 porLocal[a.local] = (porLocal[a.local] || 0) + 1;
             });
-            
-            // Reprodutores ativos
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo').length;
             
             // Total geral = animais do rebanho + reprodutores ativos
             const total = animais.length + reprodutoresAtivos;
@@ -2596,7 +2618,7 @@ Exemplos de uso:
             const tbody = document.getElementById('tabelaAnimais');
             
             const animaisOrdenados = ordenarAnimaisPorNumero(data);
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const reprodutoresAtivos = getReprodutoresAtivos();
             
             let proximoNumero = 1;
             if (animais.length > 0) {
@@ -3365,7 +3387,7 @@ Exemplos de uso:
 
         function atualizarDashboard() {
             // Incluir reprodutores ativos nas contagens
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const reprodutoresAtivos = getReprodutoresAtivos();
             
             const totalFemeas = animais.filter(a => a.sexo === 'F').length;
             const totalMachos = animais.filter(a => a.sexo === 'M').length + reprodutoresAtivos.length;
@@ -3569,7 +3591,7 @@ Exemplos de uso:
         }
         
         function salvarRelatorioAtualPDF() {
-            const modalRelatorio = document.getElementById('modalRelatorio');
+            const modalRelatorio = document.getElementById('previewRelatorio');
             if (!modalRelatorio || modalRelatorio.style.display === 'none') {
                 alert('⚠️ Nenhum relatório aberto!\n\nAbra um relatório primeiro.');
                 return;
@@ -3578,8 +3600,11 @@ Exemplos de uso:
             const conteudoDiv = document.getElementById('conteudoRelatorio');
             if (!conteudoDiv) return;
             
-            const titulo = conteudoDiv.querySelector('h2, h3')?.textContent || 'Relatório';
-            const conteudo = conteudoDiv.innerText;
+            // A fonte padrão do jsPDF não suporta emojis/símbolos: mantém letras acentuadas (Latin-1)
+            const limpar = t => (t || '').replace(/[^\u0000-\u00FF]/g, '').replace(/[ \t]+\n/g, '\n').trim();
+            const tituloEl = document.getElementById('tituloRelatorio');
+            const titulo = limpar(tituloEl ? tituloEl.innerText : '') || 'Relatório';
+            const conteudo = limpar(conteudoDiv.innerText);
             
             salvarRelatorioPDF(titulo, conteudo);
         }
@@ -3587,7 +3612,7 @@ Exemplos de uso:
                 function gerarRelatorioCompleto() {
             // Aplicar filtros
             const animaisFiltrados = aplicarFiltrosRelatorios(animais);
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const reprodutoresAtivos = getReprodutoresAtivos();
             const total = animaisFiltrados.length + reprodutoresAtivos.length;
             
             if (total === 0) return alert('⚠️ Sem dados!');
@@ -3614,7 +3639,7 @@ Exemplos de uso:
         }
 
         function gerarRelatorioPorRaca() {
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const reprodutoresAtivos = getReprodutoresAtivos();
             const total = animais.length + reprodutoresAtivos.length;
             
             if (total === 0) return alert('⚠️ Sem dados!');
@@ -3670,7 +3695,7 @@ Exemplos de uso:
 
         function gerarRelatorioMachos() {
             const machos = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'M'));
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const reprodutoresAtivos = getReprodutoresAtivos();
             const totalMachos = machos.length + reprodutoresAtivos.length;
             
             if (totalMachos === 0) return alert('⚠️ Sem machos!');
@@ -3708,7 +3733,7 @@ Exemplos de uso:
         }
 
         function gerarRelatorioPorProprietario() {
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const reprodutoresAtivos = getReprodutoresAtivos();
             const total = animais.length + reprodutoresAtivos.length;
             
             if (total === 0) return alert('⚠️ Sem dados!');
@@ -3825,7 +3850,7 @@ Exemplos de uso:
         }
 
         function gerarRelatorioPorIdade() {
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const reprodutoresAtivos = getReprodutoresAtivos();
             const total = animais.length + reprodutoresAtivos.length;
             
             if (total === 0) return alert('⚠️ Sem dados!');
@@ -4346,6 +4371,7 @@ Exemplos de uso:
 
             await salvarReprodutorOnline(reprodutor);
             renderizarTabelaReprodutores();
+            renderizarTabela(); // CORREÇÃO: atualiza resumo/contador da aba Rebanho
             atualizarSelects();
             limparFormReprodutor();
             alert("✅ Reprodutor salvo com sucesso!");
@@ -4396,7 +4422,7 @@ Exemplos de uso:
             
             // Atualizar estatísticas
             document.getElementById('totalReprodutores').innerText = reprodutores.length;
-            document.getElementById('reprodutoresAtivos').innerText = reprodutores.filter(r => r.status === 'Ativo').length;
+            document.getElementById('reprodutoresAtivos').innerText = getReprodutoresAtivos().length;
             document.getElementById('reprodutoresTouros').innerText = reprodutores.filter(r => r.tipo === 'Touro').length;
             document.getElementById('reprodutoresSemen').innerText = reprodutores.filter(r => r.tipo === 'Sêmen').length;
         }
@@ -4462,6 +4488,7 @@ Exemplos de uso:
                 reprodutores = reprodutores.filter(r => r.id !== reprodutorAtualId);
                 await removerReprodutorOnline(idRemovido);
                 renderizarTabelaReprodutores();
+                renderizarTabela(); // CORREÇÃO: atualiza resumo/contador da aba Rebanho
                 atualizarSelects();
                 limparFormReprodutor();
             }
@@ -4577,6 +4604,10 @@ Exemplos de uso:
                     locais = backup.dados.locais || [];
                     proprietarios = backup.dados.proprietarios || [];
                     
+                    // Restauração é uma substituição intencional: libera a gravação completa
+                    leituraAnimaisOk = true;
+                    leituraReprodutoresOk = true;
+                    
                     // Salvar no Firebase
                     await salvarDadosOnline();
                     
@@ -4611,7 +4642,7 @@ Exemplos de uso:
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const reprodutoresAtivos = getReprodutoresAtivos();
             const ordenados = ordenarAnimaisPorNumero(animais);
             
             // Título
@@ -4764,7 +4795,7 @@ Exemplos de uso:
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const reprodutoresAtivos = getReprodutoresAtivos();
             
             // Título
             doc.setFontSize(18);
@@ -4846,7 +4877,7 @@ Exemplos de uso:
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const reprodutoresAtivos = getReprodutoresAtivos();
             
             // Título
             doc.setFontSize(18);
@@ -4990,8 +5021,8 @@ Exemplos de uso:
             document.getElementById('notasGerais').value = '';
             document.getElementById('statusNotas').style.display = 'none';
             
-            // Salvar no Firebase
-            salvarDadosOnline();
+            // Salvar no Firebase (apenas a chave de notas, sem regravar o banco inteiro)
+            salvarChaveOnline('notas', '');
             
             alert('🗑️ Notas apagadas com sucesso!');
         }
@@ -5090,7 +5121,7 @@ Exemplos de uso:
             if (!tbody) return;
             
             const animaisOrdenados = ordenarAnimaisPorNumero(data);
-            const reprodutoresAtivos = reprodutores.filter(r => r.status === 'Ativo');
+            const reprodutoresAtivos = getReprodutoresAtivos();
             
             // Aplicar paginação
             const inicio = (paginaAtual - 1) * itensPorPagina;
@@ -5201,7 +5232,7 @@ Exemplos de uso:
                 && !filtrosAtivos.has('bezerros')
                 && !filtrosAtivos.has('bezerras');
             const mostrarReprodutores = visaoCompleta || filtroMachosAtivo;
-            const reprodutoresAtivos = mostrarReprodutores ? reprodutores.filter(r => r.status === 'Ativo') : [];
+            const reprodutoresAtivos = mostrarReprodutores ? getReprodutoresAtivos() : [];
             
             // BUGFIX: contador não incluía os reprodutores ativos, mesmo quando
             // eles aparecem como linhas na tabela (visão completa / filtro Machos).
