@@ -423,14 +423,6 @@
                                 </select>
                             </div>
                             <div>
-                                <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">🐄 PARIDA</label>
-                                <select id="filtroParida" onchange="aplicarFiltrosAnimais()" style="width: 100%; padding: 0.6rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.9rem;">
-                                    <option value="">Todos</option>
-                                    <option value="sim">Sim</option>
-                                    <option value="nao">Não</option>
-                                </select>
-                            </div>
-                            <div>
                                 <label style="display: block; font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 0.5rem;">🔧 SEM FERRO</label>
                                 <select id="filtroSemFerro" onchange="aplicarFiltrosAnimais()" style="width: 100%; padding: 0.6rem; border: 2px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.9rem;">
                                     <option value="">Todos</option>
@@ -833,13 +825,6 @@
                                 <div style="color: #64748b; font-size: 0.9rem;">Fêmeas lactantes</div>
                             </div>
                             <div style="font-size: 2rem;">👶</div>
-                        </div>
-                        <div class="item-box" onclick="gerarRelatorioParidas()" style="background: linear-gradient(135deg, #d1fae5, #a7f3d0); cursor: pointer;">
-                            <div>
-                                <div style="font-size: 1.2rem; font-weight: 700;">🐄 Paridas</div>
-                                <div style="color: #64748b; font-size: 0.9rem;">Mães com bezerro mamando</div>
-                            </div>
-                            <div style="font-size: 2rem;">🐄</div>
                         </div>
                         <div class="item-box" onclick="gerarRelatorioSemFerro()" style="background: linear-gradient(135deg, #fed7aa, #fdba74); cursor: pointer;">
                             <div>
@@ -1754,28 +1739,6 @@ Exemplos de uso:
             return resultado;
         }
 
-        // Mapa mãeId -> lista de bezerros/bezerras que estão MAMANDO nela agora.
-        // Quem está parida não é gravado: depende só de existir um filhote mamando.
-        function mapaParidas(lista) {
-            lista = lista || animais;
-            const mapa = new Map();
-            lista.forEach(filhote => {
-                if (!filhote || filhote.amamentando !== true || !filhote.mae) return;
-                const r = localizarMae(filhote.mae, lista, filhote.id);
-                if (r.animal && r.animal.sexo === 'F') {
-                    const k = String(r.animal.id);
-                    if (!mapa.has(k)) mapa.set(k, []);
-                    mapa.get(k).push(filhote);
-                }
-            });
-            return mapa;
-        }
-
-        // Conjunto de IDs das fêmeas paridas (mãe com bezerro mamando)
-        function obterIdsParidas(lista) {
-            return new Set(mapaParidas(lista).keys());
-        }
-
         async function salvarAnimal(e) {
             e.preventDefault();
             
@@ -1825,9 +1788,30 @@ Exemplos de uso:
                 foto: fotoAtual || ''
             };
 
-            // OBS: a condição "parida" não é gravada. É calculada automaticamente: a mãe é considerada
-            // parida enquanto existir um bezerro/bezerra mamando ligado a ela (ver obterIdsParidas()).
-            // Ao desmamar ou excluir o filhote, a mãe deixa de ser parida sozinha.
+            // MARCAÇÃO AUTOMÁTICA: Se bezerro está mamando, marcar mãe
+            let maeModificada = null;
+            if (animal.amamentando && animal.mae) {
+                console.log('🍼 Bezerro mamando! Buscando mãe:', animal.mae);
+                
+                // Buscar a mãe: ID interno (dropdown), número ou nome (digitação manual)
+                const resultadoMae = localizarMae(animal.mae, animais, animal.id);
+                const mae = resultadoMae.animal;
+                
+                if (resultadoMae.ambiguo) {
+                    console.log('⚠️ Mais de um animal corresponde a "' + animal.mae + '". Nenhuma mãe foi marcada para evitar associação errada.');
+                }
+                
+                if (mae && mae.sexo === 'F') {
+                    console.log('✅ Mãe encontrada:', mae.nome || mae.numero);
+                    mae.amamentando = true;
+                    maeModificada = mae;
+                    console.log('🍼 Mãe marcada como amamentando automaticamente');
+                } else if (mae && mae.sexo !== 'F') {
+                    console.log('⚠️ Animal encontrado não é fêmea');
+                } else {
+                    console.log('⚠️ Mãe não encontrada no sistema');
+                }
+            }
             
             if (animalAtualId) {
                 const idx = animais.findIndex(a => a.id === animalAtualId);
@@ -1839,6 +1823,7 @@ Exemplos de uso:
             }
 
             await salvarAnimalOnline(animal);
+            if (maeModificada) await salvarAnimalOnline(maeModificada);
             renderizarTabela();
             atualizarSelects();
             limparForm();
@@ -2696,7 +2681,6 @@ Exemplos de uso:
         };
 
                 function renderizarTabela(data = animais) {
-                    const idsParidas = obterIdsParidas(); // paridas = mães com bezerro mamando agora
             const tbody = document.getElementById('tabelaAnimais');
             
             const animaisOrdenados = ordenarAnimaisPorNumero(data);
@@ -2762,7 +2746,7 @@ Exemplos de uso:
                 
                 const nomeExibir = a.isReprodutor 
                     ? `<strong>${a.nome}</strong> <span class="badge" style="background: #3b82f6; color: white; font-size: 0.7rem;">🐂 REPRODUTOR</span>`
-                    : ((a.nome || '-') + (!a.isReprodutor && idsParidas.has(String(a.id)) ? ' 🐄' : ''));
+                    : (a.nome || '-');
                 
                 const onclickAction = a.isReprodutor 
                     ? `selecionarReprodutor('${a.reprodutorOriginal.id}')`
@@ -2901,12 +2885,10 @@ Exemplos de uso:
 
         // Funções de filtro
         function aplicarFiltrosAnimais() {
-            const idsParidas = obterIdsParidas(); // paridas = mães com bezerro mamando agora
             const filtroProprietario = document.getElementById('filtroProprietario').value;
             const filtroRaca = document.getElementById('filtroRaca').value;
             const filtroSexo = document.getElementById('filtroSexo').value;
             const filtroMamando = document.getElementById('filtroMamando').value;
-            const filtroParida = document.getElementById('filtroParida').value;
             const filtroSemFerro = document.getElementById('filtroSemFerro').value;
             const filtroAno = document.getElementById('filtroAno').value;
             const filtroPai = document.getElementById('filtroPai').value;
@@ -2914,7 +2896,7 @@ Exemplos de uso:
             const campoPesquisa = document.getElementById('campoPesquisa').value;
             
             // Verificar se há algum filtro ativo
-            const temFiltros = filtroProprietario || filtroRaca || filtroSexo || filtroMamando || filtroParida || filtroSemFerro || filtroAno || filtroPai || filtroMae || campoPesquisa;
+            const temFiltros = filtroProprietario || filtroRaca || filtroSexo || filtroMamando || filtroSemFerro || filtroAno || filtroPai || filtroMae || campoPesquisa;
             
             let filtrados = [...animais]; // Criar cópia do array
             
@@ -2938,13 +2920,6 @@ Exemplos de uso:
                 filtrados = filtrados.filter(a => a.amamentando === true);
             } else if (filtroMamando === 'nao') {
                 filtrados = filtrados.filter(a => !a.amamentando);
-            }
-            
-            // Aplicar filtro de parida
-            if (filtroParida === 'sim') {
-                filtrados = filtrados.filter(a => idsParidas.has(String(a.id)));
-            } else if (filtroParida === 'nao') {
-                filtrados = filtrados.filter(a => !idsParidas.has(String(a.id)));
             }
             
             // Aplicar filtro de sem ferro
@@ -3007,7 +2982,6 @@ Exemplos de uso:
         }
         
         function renderizarTabelaComFiltros(animaisFiltrados) {
-            const idsParidas = obterIdsParidas(); // paridas = mães com bezerro mamando agora
             const tbody = document.getElementById('tabelaAnimais');
             
             const animaisOrdenados = ordenarAnimaisPorNumero(animaisFiltrados);
@@ -3065,7 +3039,7 @@ Exemplos de uso:
                 
                 const nomeExibir = a.isReprodutor 
                     ? `<strong>${a.nome}</strong> <span class="badge" style="background: #3b82f6; color: white; font-size: 0.7rem;">🐂 REPRODUTOR</span>`
-                    : ((a.nome || '-') + (!a.isReprodutor && idsParidas.has(String(a.id)) ? ' 🐄' : ''));
+                    : (a.nome || '-');
                 
                 const onclickAction = a.isReprodutor 
                     ? `selecionarReprodutor('${a.reprodutorOriginal.id}')`
@@ -3105,7 +3079,6 @@ Exemplos de uso:
             document.getElementById('filtroRaca').value = '';
             document.getElementById('filtroSexo').value = '';
             document.getElementById('filtroMamando').value = '';
-            document.getElementById('filtroParida').value = '';
             document.getElementById('filtroSemFerro').value = '';
             document.getElementById('filtroAno').value = '';
             document.getElementById('filtroPai').value = '';
@@ -3875,47 +3848,6 @@ Exemplos de uso:
             document.getElementById('conteudoRelatorio').innerHTML = html;
         }
 
-        function gerarRelatorioParidas() {
-            const mapa = mapaParidas(animais);
-            const paridas = ordenarAnimaisPorNumero(animais.filter(a => mapa.has(String(a.id))));
-            if (paridas.length === 0) return alert('⚠️ Nenhuma fêmea parida! (parida = mãe com bezerro/bezerra mamando)');
-            document.getElementById('tituloRelatorio').innerText = '🐄 Fêmeas Paridas';
-            document.getElementById('previewRelatorio').style.display = 'block';
-            const totalFilhotes = paridas.reduce((t, m) => t + mapa.get(String(m.id)).length, 0);
-            let html = `<div style="background:white; padding:1.5rem; border-radius:0.7rem;">
-                <div style="background:#d1fae5; padding:1rem; border-radius:0.5rem; margin-bottom:1rem; text-align:center;">
-                    <strong style="font-size:1.5rem; color:#047857;">${paridas.length}</strong>
-                    <div style="color:#64748b;">fêmeas paridas (${totalFilhotes} filhote(s) mamando)</div>
-                </div>`;
-            paridas.forEach(m => {
-                const filhotes = ordenarAnimaisPorNumero(mapa.get(String(m.id)));
-                const textoFilhotes = filhotes.map(f =>
-                    `${f.sexo === 'F' ? 'Bezerra' : 'Bezerro'} ${f.numero}${f.nome ? ' - ' + f.nome : ''}`
-                ).join(', ');
-                html += `<div style="padding:1rem; background:#ecfdf5; margin:0.5rem 0; border-radius:0.5rem; border-left:4px solid #10b981;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-                        <div>
-                            <strong style="font-size:1.1rem;">${m.numero} - ${m.nome || '-'}</strong>
-                            <div style="color:#64748b; font-size:0.9rem; margin-top:0.3rem;">
-                                ${m.raca || '-'} | ${m.local || '-'} | ${m.proprietario || '-'}
-                            </div>
-                            <div style="color:#047857; font-size:0.9rem; margin-top:0.3rem;">
-                                Cria: ${textoFilhotes}
-                            </div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div style="background:#10b981; color:white; padding:0.3rem 0.8rem; border-radius:1rem; font-size:0.8rem; font-weight:700;">
-                                🐄 Parida
-                            </div>
-                            <div style="color:#64748b; font-size:0.85rem; margin-top:0.3rem;">Idade: ${calcularIdade(m.dataNascimento)}</div>
-                        </div>
-                    </div>
-                </div>`;
-            });
-            html += '</div>';
-            document.getElementById('conteudoRelatorio').innerHTML = html;
-        }
-
         function gerarRelatorioAmamentando() {
             const amamentando = ordenarAnimaisPorNumero(animais.filter(a => a.amamentando === true));
             if (amamentando.length === 0) return alert('⚠️ Nenhuma fêmea amamentando!');
@@ -4397,7 +4329,6 @@ Exemplos de uso:
         }
 
         function exportarExcel() {
-            const idsParidas = obterIdsParidas(); // paridas = mães com bezerro mamando agora
             if (animais.length === 0) return alert('⚠️ Sem dados!');
             const ordenados = ordenarAnimaisPorNumero(animais);
             
@@ -4432,8 +4363,7 @@ Exemplos de uso:
                     'Pai': paiTexto,
                     'Mãe': mae ? `${mae.numero} - ${mae.nome || 'Sem nome'}` : '-',
                     'Sem Ferro': a.semFerro ? 'Sim' : 'Não',
-                    'Mamando': a.amamentando ? 'Sim' : 'Não',
-                    'Parida': idsParidas.has(String(a.id)) ? 'Sim' : 'Não'
+                    'Mamando': a.amamentando ? 'Sim' : 'Não'
                 };
             });
             
@@ -5216,7 +5146,6 @@ Exemplos de uso:
         
         // Funções auxiliares
         function visualizarVagas() {
-            const idsParidas = obterIdsParidas(); // paridas = mães com bezerro mamando agora
             if (vagasDisponiveis.length === 0) {
                 alert('✅ Nenhuma vaga disponível!');
                 return;
@@ -5288,7 +5217,7 @@ Exemplos de uso:
                     html += `
                         <tr onclick="selecionarAnimal('${animal.id}')" style="cursor: pointer;">
                             <td><strong>${animal.numero}</strong></td>
-                            <td>${animal.nome || '-'} ${animal.amamentando ? '🍼' : ''}${idsParidas.has(String(animal.id)) ? '🐄' : ''}</td>
+                            <td>${animal.nome || '-'} ${animal.amamentando ? '🍼' : ''}</td>
                             <td>${sexoIcon} ${animal.sexo}${gestanteIcon}</td>
                             <td>${animal.raca}</td>
                             <td>${animal.local}</td>
@@ -5341,7 +5270,6 @@ Exemplos de uso:
         }
         
         function mudarItensPorPagina() {
-            const idsParidas = obterIdsParidas(); // paridas = mães com bezerro mamando agora
             const select = document.getElementById('itensPorPagina');
             itensPorPagina = parseInt(select.value);
             paginaAtual = 1;
@@ -5446,7 +5374,7 @@ Exemplos de uso:
                         html += `<tr onclick="selecionarAnimal('${animal.id}')" style="cursor: pointer; ${corLinha}">
                                 <td>${fotoHTML}</td>
                                 <td><strong>${animal.numero}</strong></td>
-                                <td>${animal.nome || '-'} ${animal.amamentando ? '🍼' : ''}${idsParidas.has(String(animal.id)) ? '🐄' : ''}</td>
+                                <td>${animal.nome || '-'} ${animal.amamentando ? '🍼' : ''}</td>
                                 <td>${sexoBadge}</td>
                                 <td>${animal.raca}</td>
                                 <td>${animal.local}</td>
@@ -5616,7 +5544,6 @@ Exemplos de uso:
 
                 // PDF - Ficha Individual do Animal
         function gerarPDFAnimal(animalId) {
-            const idsParidas = obterIdsParidas(); // paridas = mães com bezerro mamando agora
             const animal = animais.find(a => a.id === animalId);
             if (!animal) {
                 alert('⚠️ Animal não encontrado!');
@@ -5697,11 +5624,6 @@ Exemplos de uso:
             
             if (animal.sexo === 'F') {
                 doc.text(`Gestante: ${animal.gestante ? 'SIM' : 'Não'}`, margemEsq + 5, y);
-                y += 6;
-            }
-            
-            if (animal.sexo === 'F') {
-                doc.text(`Parida: ${idsParidas.has(String(animal.id)) ? 'SIM' : 'Não'}`, margemEsq + 5, y);
                 y += 6;
             }
             
