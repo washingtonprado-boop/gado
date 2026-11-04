@@ -1674,6 +1674,71 @@ Exemplos de uso:
             }
         }
 
+        // ===== IDENTIFICAÇÃO DA MÃE =====
+        // Normaliza texto: trata null/undefined, espaços extras, maiúsculas/minúsculas e acentos
+        function normalizarTexto(valor) {
+            if (valor === null || valor === undefined) return '';
+            return String(valor)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase();
+        }
+
+        // Compara números tratando "5" e "05" como iguais; se não for numérico, compara como texto
+        function numerosIguais(a, b) {
+            const ta = normalizarTexto(a);
+            const tb = normalizarTexto(b);
+            if (!ta || !tb) return false;
+            if (/^\d+$/.test(ta) && /^\d+$/.test(tb)) {
+                return parseInt(ta, 10) === parseInt(tb, 10);
+            }
+            return ta === tb;
+        }
+
+        // Localiza a mãe em ordem de confiabilidade: ID > número > nome.
+        // Só aceita correspondência exata e única; se houver empate, não adivinha.
+        // Retorna { animal: objeto|null, ambiguo: boolean, criterio: 'id'|'numero'|'nome'|null }
+        function localizarMae(valorMae, listaAnimais, idDoFilhote) {
+            const resultado = { animal: null, ambiguo: false, criterio: null };
+            const valor = normalizarTexto(valorMae);
+            if (!valor || valor === 'manual' || valor === 'desconhecido') return resultado;
+            if (!Array.isArray(listaAnimais)) return resultado;
+
+            // O próprio filhote nunca pode ser a mãe dele
+            const candidatos = listaAnimais.filter(a =>
+                a && (idDoFilhote === undefined || idDoFilhote === null || String(a.id) !== String(idDoFilhote))
+            );
+
+            const etapas = [
+                ['id',     a => a.id !== undefined && a.id !== null && String(a.id).trim() === String(valorMae).trim()],
+                ['numero', a => numerosIguais(a.numero, valorMae)],
+                ['nome',   a => normalizarTexto(a.nome) !== '' && normalizarTexto(a.nome) === valor]
+            ];
+
+            for (const [criterio, teste] of etapas) {
+                let encontrados = candidatos.filter(teste);
+                if (encontrados.length === 0) continue;
+
+                // Se houver mais de um, prefere fêmeas (mãe deve ser fêmea)
+                if (encontrados.length > 1) {
+                    const femeas = encontrados.filter(a => a.sexo === 'F');
+                    if (femeas.length >= 1) encontrados = femeas;
+                }
+
+                if (encontrados.length === 1) {
+                    resultado.animal = encontrados[0];
+                    resultado.criterio = criterio;
+                } else {
+                    resultado.ambiguo = true;
+                    resultado.criterio = criterio;
+                }
+                return resultado; // para na primeira etapa que encontrou algo
+            }
+            return resultado;
+        }
+
         async function salvarAnimal(e) {
             e.preventDefault();
             
@@ -1728,12 +1793,13 @@ Exemplos de uso:
             if (animal.amamentando && animal.mae) {
                 console.log('🍼 Bezerro mamando! Buscando mãe:', animal.mae);
                 
-                // Buscar a mãe pelo nome ou número
-                const mae = animais.find(a => 
-                    (a.nome && a.nome.toLowerCase() === animal.mae.toLowerCase()) || 
-                    a.numero === animal.mae ||
-                    a.id === animal.mae
-                );
+                // Buscar a mãe: ID interno (dropdown), número ou nome (digitação manual)
+                const resultadoMae = localizarMae(animal.mae, animais, animal.id);
+                const mae = resultadoMae.animal;
+                
+                if (resultadoMae.ambiguo) {
+                    console.log('⚠️ Mais de um animal corresponde a "' + animal.mae + '". Nenhuma mãe foi marcada para evitar associação errada.');
+                }
                 
                 if (mae && mae.sexo === 'F') {
                     console.log('✅ Mãe encontrada:', mae.nome || mae.numero);
