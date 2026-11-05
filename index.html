@@ -385,6 +385,9 @@
                             <button onclick="filtrarRapido('gestantes')" id="btnGestantes" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
                                 🤰 Gestantes
                             </button>
+                            <button onclick="filtrarRapido('lactantes')" id="btnLactantes" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                                🤱 Lactantes
+                            </button>
                             <button onclick="filtrarRapido('bezerros')" id="btnBezerros" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
                                 🍼 Bezerros
                             </button>
@@ -745,7 +748,10 @@
                     <button onclick="filtrarGraficos('gestantes')" id="btnGestantesReports" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
                         🤰 Gestantes
                     </button>
-                    <button onclick="filtrarGraficos('bezerros')" id="btnBezerrosReports" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                    <button onclick="filtrarGraficos('lactantes')" id="btnLactantesReports" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                                🤱 Lactantes
+                            </button>
+                            <button onclick="filtrarGraficos('bezerros')" id="btnBezerrosReports" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
                         🍼 Bezerros
                     </button>
                 </div>
@@ -775,7 +781,10 @@
                         <button onclick="filtrarRelatoriosTextuais('gestantes')" id="btnGestantesRelTextuais" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
                             🤰 Gestantes
                         </button>
-                        <button onclick="filtrarRelatoriosTextuais('bezerros')" id="btnBezerrosRelTextuais" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                        <button onclick="filtrarRelatoriosTextuais('lactantes')" id="btnLactantesRelTextuais" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
+                                🤱 Lactantes
+                            </button>
+                            <button onclick="filtrarRelatoriosTextuais('bezerros')" id="btnBezerrosRelTextuais" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.6rem 1.2rem;">
                             🍼 Bezerros
                         </button>
                     </div>
@@ -824,9 +833,16 @@
                         <div class="item-box" onclick="gerarRelatorioAmamentando()" style="background: linear-gradient(135deg, #fce7f3, #fbcfe8); cursor: pointer;">
                             <div>
                                 <div style="font-size: 1.2rem; font-weight: 700;">🍼 Mamando</div>
-                                <div style="color: #64748b; font-size: 0.9rem;">Fêmeas lactantes</div>
+                                <div style="color: #64748b; font-size: 0.9rem;">Bezerros e bezerras</div>
                             </div>
                             <div style="font-size: 2rem;">👶</div>
+                        </div>
+                        <div class="item-box" onclick="gerarRelatorioLactantes()" style="background: linear-gradient(135deg, #d1fae5, #a7f3d0); cursor: pointer;">
+                            <div>
+                                <div style="font-size: 1.2rem; font-weight: 700;">🤱 Lactantes (paridas)</div>
+                                <div style="color: #64748b; font-size: 0.9rem;">Mães amamentando</div>
+                            </div>
+                            <div style="font-size: 2rem;">🐄</div>
                         </div>
                         <div class="item-box" onclick="gerarRelatorioSemFerro()" style="background: linear-gradient(135deg, #fed7aa, #fdba74); cursor: pointer;">
                             <div>
@@ -1823,7 +1839,7 @@ Exemplos de uso:
             }
             
             // Atualizar botões visuais
-            ['btnTodosReports', 'btnFemeasReports', 'btnMachosReports', 'btnGestantesReports', 'btnBezerrosReports'].forEach(id => {
+            ['btnTodosReports', 'btnFemeasReports', 'btnMachosReports', 'btnGestantesReports', 'btnLactantesReports', 'btnBezerrosReports'].forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) {
                     const tipoBtn = id.replace('btn', '').replace('Reports', '').toLowerCase();
@@ -1859,6 +1875,7 @@ Exemplos de uso:
                     
                     // Filtros adicionais (todos devem passar - AND)
                     if (filtrosGraficosAtivos.has('gestantes') && !a.gestante) return false;
+                    if (filtrosGraficosAtivos.has('lactantes') && !a.lactante) return false;
                     if (filtrosGraficosAtivos.has('bezerros') && !a.amamentando) return false;
                     
                     return true;
@@ -1869,7 +1886,7 @@ Exemplos de uso:
             // CORREÇÃO: reprodutores ativos (machos) entram quando o filtro é "Todos" ou
             // inclui Machos sem restrições de gestante/bezerro — igual ao Dashboard sem filtro.
             const incluiReprodutores = filtrosGraficosAtivos.has('todos') ||
-                (filtrosGraficosAtivos.has('machos') && !filtrosGraficosAtivos.has('gestantes') && !filtrosGraficosAtivos.has('bezerros'));
+                (filtrosGraficosAtivos.has('machos') && !filtrosGraficosAtivos.has('gestantes') && !filtrosGraficosAtivos.has('lactantes') && !filtrosGraficosAtivos.has('bezerros'));
             const qtdReprodutores = incluiReprodutores ? getReprodutoresAtivos().length : 0;
             document.getElementById('totalAnimais').textContent = dadosFiltrados.length + qtdReprodutores;
             document.getElementById('totalFemeas').textContent = dadosFiltrados.filter(a => a.sexo === 'F').length;
@@ -1902,7 +1919,7 @@ Exemplos de uso:
             }
             
             // Atualizar visual dos botões
-            ['btnTodosRelTextuais', 'btnFemeasRelTextuais', 'btnMachosRelTextuais', 'btnGestantesRelTextuais', 'btnBezerrosRelTextuais'].forEach(id => {
+            ['btnTodosRelTextuais', 'btnFemeasRelTextuais', 'btnMachosRelTextuais', 'btnGestantesRelTextuais', 'btnLactantesRelTextuais', 'btnBezerrosRelTextuais'].forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) {
                     const tipoBtn = id.replace('btn', '').replace('RelTextuais', '').toLowerCase();
@@ -1940,6 +1957,7 @@ Exemplos de uso:
                 
                 // Filtros adicionais (E)
                 if (filtrosRelTextuaisAtivos.has('gestantes') && !a.gestante) return false;
+                if (filtrosRelTextuaisAtivos.has('lactantes') && !a.lactante) return false;
                 if (filtrosRelTextuaisAtivos.has('bezerros') && !a.amamentando) return false;
                 
                 return true;
@@ -1969,7 +1987,7 @@ Exemplos de uso:
             
             // Reprodutores ativos (machos) entram nos mesmos casos em que entram nos totais
             const incluiReprodutores = filtrosGraficosAtivos.has('todos') ||
-                (filtrosGraficosAtivos.has('machos') && !filtrosGraficosAtivos.has('gestantes') && !filtrosGraficosAtivos.has('bezerros'));
+                (filtrosGraficosAtivos.has('machos') && !filtrosGraficosAtivos.has('gestantes') && !filtrosGraficosAtivos.has('lactantes') && !filtrosGraficosAtivos.has('bezerros'));
             if (incluiReprodutores) {
                 getReprodutoresAtivos().forEach(r => {
                     racaCounts[r.raca] = (racaCounts[r.raca] || 0) + 1;
@@ -2020,7 +2038,7 @@ Exemplos de uso:
             }
             
             // Atualizar botões visuais
-            ['btnTodos', 'btnFemeas', 'btnMachos', 'btnGestantes', 'btnBezerros', 'btnBezerras'].forEach(id => {
+            ['btnTodos', 'btnFemeas', 'btnMachos', 'btnGestantes', 'btnLactantes', 'btnBezerros', 'btnBezerras'].forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) {
                     const tipoBtn = id.replace('btn', '').toLowerCase();
@@ -2056,6 +2074,7 @@ Exemplos de uso:
                     
                     // Filtros adicionais (todos devem passar - AND)
                     if (filtrosAtivos.has('gestantes') && !a.gestante) return false;
+                    if (filtrosAtivos.has('lactantes') && !a.lactante) return false;
                     
                     // Bezerros (machos mamando) / Bezerras (fêmeas mamando) — OR entre si
                     if (filtrosAtivos.has('bezerros') || filtrosAtivos.has('bezerras')) {
@@ -3801,30 +3820,77 @@ Exemplos de uso:
         }
 
         function gerarRelatorioAmamentando() {
-            const amamentando = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'F' && a.lactante === true));
-            if (amamentando.length === 0) return alert('⚠️ Nenhuma fêmea amamentando!');
-            document.getElementById('tituloRelatorio').innerText = '🍼 Fêmeas Mamando';
+            // Bezerros e bezerras que estão mamando
+            const mamando = ordenarAnimaisPorNumero(animais.filter(a => a.amamentando === true));
+            if (mamando.length === 0) return alert('⚠️ Nenhum bezerro ou bezerra mamando!');
+            const bezerros = mamando.filter(a => a.sexo === 'M');
+            const bezerras = mamando.filter(a => a.sexo === 'F');
+            document.getElementById('tituloRelatorio').innerText = '🍼 Bezerros e Bezerras Mamando';
             document.getElementById('previewRelatorio').style.display = 'block';
-            let html = `<div style="background:white; padding:1.5rem; border-radius:0.7rem;">
-                <div style="background:#fce7f3; padding:1rem; border-radius:0.5rem; margin-bottom:1rem; text-align:center;">
-                    <strong style="font-size:1.5rem; color:#be185d;">${amamentando.length}</strong>
-                    <div style="color:#64748b;">fêmeas em lactação</div>
-                </div>`;
-            amamentando.forEach(a => {
-                const idade = calcularIdade(a.dataNascimento);
-                html += `<div style="padding:1rem; background:#fef3f2; margin:0.5rem 0; border-radius:0.5rem; border-left:4px solid #ec4899;">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
+
+            const nomeMae = a => {
+                if (!a.mae) return '-';
+                const m = animais.find(x => x.id === a.mae);
+                return m ? `${m.numero} - ${m.nome || 'Sem nome'}` : a.mae;
+            };
+            const linha = (a, cor, badge) => `<div style="padding:1rem; background:#f8fafc; margin:0.5rem 0; border-radius:0.5rem; border-left:4px solid ${cor};">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
                         <div>
                             <strong style="font-size:1.1rem;">${a.numero} - ${a.nome || '-'}</strong>
                             <div style="color:#64748b; font-size:0.9rem; margin-top:0.3rem;">
-                                ${a.raca} | ${a.local} | ${a.proprietario}
+                                ${a.raca} | ${a.local} | ${a.proprietario || '-'} | Mãe: ${nomeMae(a)}
                             </div>
                         </div>
                         <div style="text-align:right;">
-                            <div style="background:#ec4899; color:white; padding:0.3rem 0.8rem; border-radius:1rem; font-size:0.8rem; font-weight:700;">
-                                🍼 Lactante
+                            <div style="background:${cor}; color:white; padding:0.3rem 0.8rem; border-radius:1rem; font-size:0.8rem; font-weight:700;">${badge}</div>
+                            <div style="color:#64748b; font-size:0.85rem; margin-top:0.3rem;">Idade: ${calcularIdade(a.dataNascimento)}</div>
+                        </div>
+                    </div>
+                </div>`;
+
+            let html = `<div style="background:white; padding:1.5rem; border-radius:0.7rem;">
+                <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:0.8rem; margin-bottom:1rem; text-align:center;">
+                    <div style="background:#d1fae5; padding:1rem; border-radius:0.5rem;"><strong style="font-size:1.5rem; color:#047857;">${mamando.length}</strong><div style="color:#64748b;">mamando</div></div>
+                    <div style="background:#dbeafe; padding:1rem; border-radius:0.5rem;"><strong style="font-size:1.5rem; color:#1e40af;">${bezerros.length}</strong><div style="color:#64748b;">bezerros ♂</div></div>
+                    <div style="background:#fce7f3; padding:1rem; border-radius:0.5rem;"><strong style="font-size:1.5rem; color:#be185d;">${bezerras.length}</strong><div style="color:#64748b;">bezerras ♀</div></div>
+                </div>`;
+            if (bezerros.length > 0) {
+                html += '<h3 style="color:#1e40af; margin:1rem 0 0.5rem;">♂ Bezerros</h3>';
+                bezerros.forEach(a => { html += linha(a, '#3b82f6', '🍼 Bezerro'); });
+            }
+            if (bezerras.length > 0) {
+                html += '<h3 style="color:#be185d; margin:1rem 0 0.5rem;">♀ Bezerras</h3>';
+                bezerras.forEach(a => { html += linha(a, '#ec4899', '🍼 Bezerra'); });
+            }
+            html += '</div>';
+            document.getElementById('conteudoRelatorio').innerHTML = html;
+        }
+
+        function gerarRelatorioLactantes() {
+            // Mães (paridas) que estão amamentando
+            const lactantes = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'F' && a.lactante === true));
+            if (lactantes.length === 0) return alert('⚠️ Nenhuma fêmea lactante (parida)!');
+            document.getElementById('tituloRelatorio').innerText = '🤱 Lactantes (Paridas)';
+            document.getElementById('previewRelatorio').style.display = 'block';
+            let html = `<div style="background:white; padding:1.5rem; border-radius:0.7rem;">
+                <div style="background:#d1fae5; padding:1rem; border-radius:0.5rem; margin-bottom:1rem; text-align:center;">
+                    <strong style="font-size:1.5rem; color:#047857;">${lactantes.length}</strong>
+                    <div style="color:#64748b;">fêmeas lactantes (paridas)</div>
+                </div>`;
+            lactantes.forEach(a => {
+                const crias = animais.filter(x => x.mae === a.id);
+                const criasTxt = crias.length > 0 ? crias.map(c => `${c.numero}${c.nome ? ' - ' + c.nome : ''}`).join(', ') : '-';
+                html += `<div style="padding:1rem; background:#f0fdf4; margin:0.5rem 0; border-radius:0.5rem; border-left:4px solid #10b981;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                        <div>
+                            <strong style="font-size:1.1rem;">${a.numero} - ${a.nome || '-'}</strong>
+                            <div style="color:#64748b; font-size:0.9rem; margin-top:0.3rem;">
+                                ${a.raca} | ${a.local} | ${a.proprietario || '-'} | Crias: ${criasTxt}
                             </div>
-                            <div style="color:#64748b; font-size:0.85rem; margin-top:0.3rem;">Idade: ${idade}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="background:#10b981; color:white; padding:0.3rem 0.8rem; border-radius:1rem; font-size:0.8rem; font-weight:700;">🤱 Lactante</div>
+                            <div style="color:#64748b; font-size:0.85rem; margin-top:0.3rem;">Idade: ${calcularIdade(a.dataNascimento)}</div>
                         </div>
                     </div>
                 </div>`;
@@ -5247,6 +5313,7 @@ Exemplos de uso:
             const filtroMachosAtivo = typeof filtrosAtivos !== 'undefined'
                 && filtrosAtivos.has('machos')
                 && !filtrosAtivos.has('gestantes')
+                && !filtrosAtivos.has('lactantes')
                 && !filtrosAtivos.has('bezerros')
                 && !filtrosAtivos.has('bezerras');
             const mostrarReprodutores = visaoCompleta || filtroMachosAtivo;
