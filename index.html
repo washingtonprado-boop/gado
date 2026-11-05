@@ -340,6 +340,7 @@
                             <div class="checkbox-group">
                                 <label><input type="checkbox" id="semFerro"> Sem Ferro</label>
                                 <label><input type="checkbox" id="amamentando"> Mamando</label>
+                                <label><input type="checkbox" id="lactante"> 🤱 Amamentando</label>
                                 <label><input type="checkbox" id="gestante"> 🤰 Gestante</label>
                             </div>
                             <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -1674,71 +1675,6 @@ Exemplos de uso:
             }
         }
 
-        // ===== IDENTIFICAÇÃO DA MÃE =====
-        // Normaliza texto: trata null/undefined, espaços extras, maiúsculas/minúsculas e acentos
-        function normalizarTexto(valor) {
-            if (valor === null || valor === undefined) return '';
-            return String(valor)
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/\s+/g, ' ')
-                .trim()
-                .toLowerCase();
-        }
-
-        // Compara números tratando "5" e "05" como iguais; se não for numérico, compara como texto
-        function numerosIguais(a, b) {
-            const ta = normalizarTexto(a);
-            const tb = normalizarTexto(b);
-            if (!ta || !tb) return false;
-            if (/^\d+$/.test(ta) && /^\d+$/.test(tb)) {
-                return parseInt(ta, 10) === parseInt(tb, 10);
-            }
-            return ta === tb;
-        }
-
-        // Localiza a mãe em ordem de confiabilidade: ID > número > nome.
-        // Só aceita correspondência exata e única; se houver empate, não adivinha.
-        // Retorna { animal: objeto|null, ambiguo: boolean, criterio: 'id'|'numero'|'nome'|null }
-        function localizarMae(valorMae, listaAnimais, idDoFilhote) {
-            const resultado = { animal: null, ambiguo: false, criterio: null };
-            const valor = normalizarTexto(valorMae);
-            if (!valor || valor === 'manual' || valor === 'desconhecido') return resultado;
-            if (!Array.isArray(listaAnimais)) return resultado;
-
-            // O próprio filhote nunca pode ser a mãe dele
-            const candidatos = listaAnimais.filter(a =>
-                a && (idDoFilhote === undefined || idDoFilhote === null || String(a.id) !== String(idDoFilhote))
-            );
-
-            const etapas = [
-                ['id',     a => a.id !== undefined && a.id !== null && String(a.id).trim() === String(valorMae).trim()],
-                ['numero', a => numerosIguais(a.numero, valorMae)],
-                ['nome',   a => normalizarTexto(a.nome) !== '' && normalizarTexto(a.nome) === valor]
-            ];
-
-            for (const [criterio, teste] of etapas) {
-                let encontrados = candidatos.filter(teste);
-                if (encontrados.length === 0) continue;
-
-                // Se houver mais de um, prefere fêmeas (mãe deve ser fêmea)
-                if (encontrados.length > 1) {
-                    const femeas = encontrados.filter(a => a.sexo === 'F');
-                    if (femeas.length >= 1) encontrados = femeas;
-                }
-
-                if (encontrados.length === 1) {
-                    resultado.animal = encontrados[0];
-                    resultado.criterio = criterio;
-                } else {
-                    resultado.ambiguo = true;
-                    resultado.criterio = criterio;
-                }
-                return resultado; // para na primeira etapa que encontrou algo
-            }
-            return resultado;
-        }
-
         async function salvarAnimal(e) {
             e.preventDefault();
             
@@ -1782,6 +1718,7 @@ Exemplos de uso:
                 mae: maeValue,
                 semFerro: document.getElementById('semFerro').checked,
                 amamentando: document.getElementById('amamentando').checked,
+                lactante: document.getElementById('sexo').value === 'F' && document.getElementById('lactante').checked,
                 peso: document.getElementById('peso').value.trim(),
                 gestante: document.getElementById('sexo').value === 'F' && document.getElementById('gestante').checked,
                 observacoes: document.getElementById('observacoes').value.trim(),
@@ -1790,20 +1727,33 @@ Exemplos de uso:
 
             // MARCAÇÃO AUTOMÁTICA: Se bezerro está mamando, marcar mãe
             let maeModificada = null;
-            if (animal.amamentando && animal.mae) {
-                console.log('🍼 Bezerro mamando! Buscando mãe:', animal.mae);
-                
-                // Buscar a mãe: ID interno (dropdown), número ou nome (digitação manual)
-                const resultadoMae = localizarMae(animal.mae, animais, animal.id);
-                const mae = resultadoMae.animal;
-                
-                if (resultadoMae.ambiguo) {
-                    console.log('⚠️ Mais de um animal corresponde a "' + animal.mae + '". Nenhuma mãe foi marcada para evitar associação errada.');
+            // Regra: a mãe é marcada como AMAMENTANDO (campo "lactante") quando o bezerro
+            // está marcado como "Mamando" OU quando é um cadastro NOVO de animal recém-nascido
+            // (sem data de nascimento ou nascido há até 12 meses).
+            const ehNovoCadastro = !animalAtualId;
+            let recemNascido = false;
+            if (ehNovoCadastro) {
+                if (!animal.dataNascimento) {
+                    recemNascido = true;
+                } else {
+                    const mesesVida = (new Date() - new Date(animal.dataNascimento)) / (1000 * 60 * 60 * 24 * 30);
+                    recemNascido = mesesVida <= 12;
                 }
-                
+            }
+            if (animal.mae && (animal.amamentando || recemNascido)) {
+                console.log('🍼 Cria registrada! Buscando mãe:', animal.mae);
+
+                // Buscar a mãe pelo id, número ou nome
+                const maeTxt = String(animal.mae).toLowerCase();
+                const mae = animais.find(a => a.id !== animal.id && (
+                    a.id === animal.mae ||
+                    parseInt(a.numero) === parseInt(animal.mae) && !isNaN(parseInt(animal.mae)) && String(parseInt(animal.mae)) === String(animal.mae).trim() ||
+                    (a.nome && a.nome.toLowerCase() === maeTxt)
+                ));
+
                 if (mae && mae.sexo === 'F') {
                     console.log('✅ Mãe encontrada:', mae.nome || mae.numero);
-                    mae.amamentando = true;
+                    mae.lactante = true;
                     maeModificada = mae;
                     console.log('🍼 Mãe marcada como amamentando automaticamente');
                 } else if (mae && mae.sexo !== 'F') {
@@ -2231,6 +2181,7 @@ Exemplos de uso:
             
             document.getElementById('semFerro').checked = a.semFerro || false;
             document.getElementById('amamentando').checked = a.amamentando || false;
+            document.getElementById('lactante').checked = a.lactante || false;
             document.getElementById('peso').value = a.peso || '';
             document.getElementById('gestante').checked = a.gestante || false;
             document.getElementById('observacoes').value = a.observacoes || '';
@@ -3849,7 +3800,7 @@ Exemplos de uso:
         }
 
         function gerarRelatorioAmamentando() {
-            const amamentando = ordenarAnimaisPorNumero(animais.filter(a => a.amamentando === true));
+            const amamentando = ordenarAnimaisPorNumero(animais.filter(a => a.sexo === 'F' && a.lactante === true));
             if (amamentando.length === 0) return alert('⚠️ Nenhuma fêmea amamentando!');
             document.getElementById('tituloRelatorio').innerText = '🍼 Fêmeas Mamando';
             document.getElementById('previewRelatorio').style.display = 'block';
@@ -5366,7 +5317,7 @@ Exemplos de uso:
                     if (animal) {
                         const idade = calcularIdade(animal.dataNascimento);
                         const sexoBadge = animal.sexo === 'F' ? '<span class="badge badge-pink">♀</span>' : '<span class="badge badge-blue">♂</span>';
-                        const corLinha = animal.amamentando ? 'background: linear-gradient(90deg, #d1fae5 0%, #a7f3d0 100%);' : '';
+                        const corLinha = (animal.amamentando || animal.lactante) ? 'background: linear-gradient(90deg, #d1fae5 0%, #a7f3d0 100%);' : '';
                         const fotoHTML = animal.foto 
                             ? `<img src="${animal.foto}" style="width: 40px; height: 40px; border-radius: 0.5rem; object-fit: cover; cursor: pointer;" onclick="event.stopPropagation(); ampliarFotoTabela('${animal.foto}')">`
                             : '<div style="width: 40px; height: 40px; background: #f1f5f9; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">📷</div>';
@@ -5374,7 +5325,7 @@ Exemplos de uso:
                         html += `<tr onclick="selecionarAnimal('${animal.id}')" style="cursor: pointer; ${corLinha}">
                                 <td>${fotoHTML}</td>
                                 <td><strong>${animal.numero}</strong></td>
-                                <td>${animal.nome || '-'} ${animal.amamentando ? '🍼' : ''}</td>
+                                <td>${animal.nome || '-'} ${animal.amamentando ? '🍼' : ''}${animal.lactante ? ' 🤱' : ''}</td>
                                 <td>${sexoBadge}</td>
                                 <td>${animal.raca}</td>
                                 <td>${animal.local}</td>
